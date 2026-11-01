@@ -1,0 +1,357 @@
+import React, { useState } from 'react';
+import {
+  CreditCard,
+  Plus,
+  Printer,
+  CheckCircle2,
+  Receipt,
+  Search,
+  DollarSign,
+  AlertCircle
+} from 'lucide-react';
+import { useStore } from '../../context/StoreContext';
+import { Card } from '../../components/common/Card';
+import { Badge } from '../../components/common/Badge';
+import { Button } from '../../components/common/Button';
+import { Modal } from '../../components/common/Modal';
+import { Input } from '../../components/common/Input';
+import { Invoice } from '../../types';
+
+export const BillingView: React.FC = () => {
+  const { invoices, payInvoice, currentUser } = useStore();
+  const [search, setSearch] = useState('');
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(invoices[0] || null);
+
+  // Pay modal
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [payAmount, setPayAmount] = useState(0);
+  const [payMethod, setPayMethod] = useState<Invoice['paymentMethod']>('Tunai');
+
+  const filteredInvoices = invoices.filter((inv) => {
+    const q = search.toLowerCase();
+    return (
+      inv.invoiceNumber.toLowerCase().includes(q) ||
+      inv.patientName.toLowerCase().includes(q) ||
+      inv.mrNumber.toLowerCase().includes(q)
+    );
+  });
+
+  const totalPaidRevenue = invoices
+    .filter((i) => i.status === 'Paid')
+    .reduce((sum, i) => sum + i.total, 0);
+
+  const totalPendingRevenue = invoices
+    .filter((i) => i.status === 'Unpaid' || i.status === 'Partial')
+    .reduce((sum, i) => sum + (i.total - i.paidAmount), 0);
+
+  const handleOpenPay = (inv: Invoice) => {
+    setSelectedInvoice(inv);
+    setPayAmount(inv.total - inv.paidAmount);
+    setIsPayModalOpen(true);
+  };
+
+  const handleProcessPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoice) return;
+    payInvoice(selectedInvoice.id, payAmount, payMethod);
+    setIsPayModalOpen(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 tracking-tight">
+            Kasir & Penagihan (Billing Rawat Jalan)
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Pengelolaan faktur tagihan pelayanan medis, resep farmasi, dan kuitansi pembayaran.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <span className="text-[10px] text-slate-400 block uppercase font-bold">Total Penerimaan Lunas</span>
+            <span className="text-sm font-extrabold text-emerald-700 font-mono">
+              Rp {totalPaidRevenue.toLocaleString('id-ID')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid: Invoice List & Preview Receipt */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Invoice Table (2 Cols) */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card noPadding className="p-3 bg-white border border-slate-200">
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari nomor faktur invoice, nama pasien, atau No. RM..."
+                className="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-clinical-500"
+              />
+            </div>
+          </Card>
+
+          <Card noPadding>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-4">No. Invoice</th>
+                    <th className="py-3 px-4">Nama Pasien</th>
+                    <th className="py-3 px-4">Tanggal</th>
+                    <th className="py-3 px-4">Total Tagihan</th>
+                    <th className="py-3 px-4">Metode Bayar</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredInvoices.map((inv) => {
+                    const isSelected = selectedInvoice?.id === inv.id;
+                    const statusVariant = {
+                      Paid: 'success',
+                      Partial: 'warning',
+                      Unpaid: 'danger',
+                      Cancelled: 'neutral'
+                    }[inv.status] as 'success' | 'warning' | 'danger' | 'neutral';
+
+                    return (
+                      <tr
+                        key={inv.id}
+                        onClick={() => setSelectedInvoice(inv)}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected ? 'bg-clinical-50/70 font-medium' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                          {inv.invoiceNumber}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-bold text-slate-900 block">{inv.patientName}</span>
+                          <span className="text-[11px] font-mono text-slate-400">{inv.mrNumber}</span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 font-mono">{inv.date}</td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                          Rp {inv.total.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 font-medium">
+                          {inv.paymentMethod || '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge variant={statusVariant} size="sm" dot>
+                            {inv.status === 'Paid' ? 'LUNAS' : inv.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {inv.status !== 'Paid' ? (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenPay(inv);
+                              }}
+                            >
+                              Bayar
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedInvoice(inv);
+                              }}
+                            >
+                              Kuitansi
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right: Official Clinic Invoice / Receipt (1 Col) */}
+        <div>
+          {selectedInvoice ? (
+            <Card
+              title="Faktur Kuitansi Pembayaran"
+              subtitle={`Faktur: ${selectedInvoice.invoiceNumber}`}
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.print()}
+                  leftIcon={<Printer className="w-3.5 h-3.5" />}
+                >
+                  Cetak
+                </Button>
+              }
+            >
+              <div className="p-4 bg-white border border-slate-300 rounded-xl space-y-4 font-sans text-xs shadow-inner">
+                {/* Header */}
+                <div className="text-center border-b border-slate-300 pb-3">
+                  <h3 className="font-extrabold text-sm text-slate-900 uppercase">
+                    KLINIK TONG FANG ASHIAP
+                  </h3>
+                  <p className="text-[10px] text-slate-500">
+                    KUITANSI BUKTI PEMBAYARAN RAWAT JALAN
+                  </p>
+                  <span className="font-mono text-xs font-bold text-slate-800 block mt-1">
+                    {selectedInvoice.invoiceNumber}
+                  </span>
+                </div>
+
+                {/* Patient details */}
+                <div className="grid grid-cols-2 gap-2 text-[11px] pb-2 border-b border-slate-200">
+                  <div>
+                    <span className="text-slate-400">Pasien:</span>
+                    <strong className="block text-slate-800">{selectedInvoice.patientName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">No. RM:</span>
+                    <strong className="block font-mono text-slate-800">{selectedInvoice.mrNumber}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Tanggal:</span>
+                    <span className="block text-slate-700 font-mono">{selectedInvoice.date}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Status:</span>
+                    <strong className="block text-emerald-700">{selectedInvoice.status}</strong>
+                  </div>
+                </div>
+
+                {/* Itemized bill */}
+                <div className="space-y-1.5 py-1">
+                  {selectedInvoice.items.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center text-[11px]">
+                      <div>
+                        <span className="font-medium text-slate-800">{item.description}</span>
+                        <span className="text-slate-400 block text-[10px]">
+                          {item.quantity} x Rp {item.unitPrice.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <span className="font-mono font-bold text-slate-900">
+                        Rp {item.subtotal.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Totals */}
+                <div className="pt-3 border-t-2 border-slate-800 space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Subtotal:</span>
+                    <span className="font-mono">Rp {selectedInvoice.subtotal.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Diskon:</span>
+                    <span className="font-mono">- Rp {selectedInvoice.discount.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-sm text-slate-900 pt-1 border-t border-slate-200">
+                    <span>Total Pembayaran:</span>
+                    <span className="font-mono text-clinical-700">
+                      Rp {selectedInvoice.total.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer Signature */}
+                <div className="pt-6 border-t border-slate-200 flex justify-between items-end text-[10px] text-slate-500">
+                  <span>Metode: {selectedInvoice.paymentMethod || 'Klaim Faskes'}</span>
+                  <div className="text-center">
+                    <span className="block mb-6">Kasir Bertugas</span>
+                    <strong className="text-slate-900 border-t border-slate-400 pt-0.5 block font-sans">
+                      ({selectedInvoice.cashierName || currentUser.name})
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <Card>
+              <div className="text-center py-12 text-slate-400 text-xs">
+                Pilih faktur tagihan untuk melihat rincian kuitansi.
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Pay Modal */}
+      {selectedInvoice && (
+        <Modal
+          isOpen={isPayModalOpen}
+          onClose={() => setIsPayModalOpen(false)}
+          title={`Pelunasan Tagihan: ${selectedInvoice.invoiceNumber}`}
+          subtitle={`Pasien: ${selectedInvoice.patientName} (${selectedInvoice.mrNumber})`}
+          footer={
+            <>
+              <Button variant="secondary" size="sm" onClick={() => setIsPayModalOpen(false)}>
+                Batal
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleProcessPayment}>
+                Konfirmasi Pelunasan
+              </Button>
+            </>
+          }
+        >
+          <form onSubmit={handleProcessPayment} className="space-y-4 text-xs">
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex justify-between mb-1">
+                <span className="text-slate-500">Total Tagihan:</span>
+                <strong className="font-mono text-sm text-slate-900">
+                  Rp {selectedInvoice.total.toLocaleString('id-ID')}
+                </strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Sisa yang Belum Terbayar:</span>
+                <strong className="font-mono text-sm text-red-600">
+                  Rp {(selectedInvoice.total - selectedInvoice.paidAmount).toLocaleString('id-ID')}
+                </strong>
+              </div>
+            </div>
+
+            <Input
+              label="Nominal Pembayaran Diterima (Rp)"
+              type="number"
+              value={payAmount}
+              onChange={(e) => setPayAmount(parseInt(e.target.value) || 0)}
+              requiredIndicator
+            />
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Metode Pembayaran
+              </label>
+              <select
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value as Invoice['paymentMethod'])}
+                className="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 text-slate-900"
+              >
+                <option value="Tunai">Tunai / Cash</option>
+                <option value="QRIS">QRIS Statis/Dinamis</option>
+                <option value="Transfer Bank">Transfer Bank Mandiri/BCA</option>
+                <option value="Kartu Debit">Kartu Debit (EDC)</option>
+                <option value="Kartu Kredit">Kartu Kredit (EDC)</option>
+                <option value="Klaim BPJS">Klaim BPJS Kesehatan</option>
+              </select>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+};
