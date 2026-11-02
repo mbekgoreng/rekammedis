@@ -1,16 +1,1128 @@
 <!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Klinik Tong Fang Ashiap — Sistem Rekam Medis Elektronik Terpadu</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-slate-50 text-slate-900 antialiased font-sans selection:bg-clinical-100 selection:text-clinical-900">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RekamMedis.web.id — Sistem Rekam Medis Elektronik untuk Klinik</title>
+<meta name="description" content="Sistem rekam medis elektronik (RME) untuk klinik: pendaftaran & antrian, pemeriksaan SOAP berkode ICD, resep digital, farmasi, laboratorium, radiologi, sampai kasir — dalam satu alur kerja. Format pencatatan mengikuti Permenkes No. 24 Tahun 2022." />
+<meta property="og:title" content="RekamMedis.web.id — Rekam Medis Elektronik untuk Klinik" />
+<meta property="og:description" content="Dari pendaftaran sampai kasir dalam satu alur: antrian, SOAP, resep digital, farmasi, lab, radiologi, dan laporan. 11 modul, tanpa pindah aplikasi." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://rekammedis.web.id/" />
+<link rel="icon" type="image/png" href="data:image/png;base64,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" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --navy-950:#17155e; --navy-900:#17155e; --navy-800:#213a75; --navy-700:#2f698b;
+  --paper:#f6faf7; --paper-2:#e9f5ee; --white:#ffffff;
+  --ink:#17155e; --ink-2:#3c4a75; --ink-3:#71809f;
+  --line:#d8e8dd; --line-dark:#213a75;
+  --blue:#409da1; --blue-deep:#2f698b; --sky:#84e488; --sky-soft:#e3f9e5;
+  --teal:#54b79a; --amber:#d97706; --red:#dc2626;
+  --radius:18px;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --font:'Plus Jakarta Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+html:focus-within{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--blue);color:#fff}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--paper-2)}
+::-webkit-scrollbar-thumb{background:#b8d6c6;border-radius:6px;border:2px solid var(--paper-2)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-3)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.mono{font-family:var(--mono)}
+
+/* ---------- progress + nav ---------- */
+#progress{position:fixed;top:0;left:0;height:2px;background:var(--sky);width:0;z-index:120}
+header{position:fixed;top:0;left:0;right:0;z-index:110;transition:background .45s var(--ease),box-shadow .45s var(--ease),border-color .45s var(--ease);border-bottom:1px solid transparent}
+header.scrolled{background:rgba(23,21,94,.88);backdrop-filter:blur(14px);border-bottom-color:var(--line-dark);box-shadow:0 12px 32px -18px rgba(23,21,94,.55)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:72px;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;color:#fff;font-weight:800;font-size:19px;letter-spacing:-.02em}
+.brand .mark{width:38px;height:38px;border-radius:11px;background:var(--navy-700);border:1px solid var(--line-dark);display:grid;place-items:center;flex:none}
+.brand small{display:block;font-size:10.5px;font-weight:600;color:#8fcfad;letter-spacing:.14em;text-transform:uppercase;line-height:1.2}
+.nav-links{display:flex;gap:26px;align-items:center;flex:none}
+.brand-logo{height:47px;width:auto;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+.brand-logo.foot{height:42px;width:auto;display:inline-block;vertical-align:-15px;margin-right:11px}
+.nav-links a{color:#c3e4d2;font-size:14.5px;font-weight:600;position:relative;padding:6px 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:2px;background:var(--sky);transform:scaleX(0);transform-origin:right;transition:transform .4s var(--ease)}
+.nav-links a:hover{color:#fff}
+.nav-links a.btn-sky{color:var(--navy-950)}
+.nav-links a.btn-sky:hover{color:var(--navy-950)}
+.nav-links a.btn-app{padding:7px 7px 7px 19px}
+.nav-links a.btn-app::after{display:none}
+.nav-links a:hover::after{transform:scaleX(1);transform-origin:left}
+.btn{display:inline-flex;align-items:center;gap:9px;border:none;border-radius:12px;font-weight:700;font-size:15px;padding:13px 22px;white-space:nowrap;flex:none;transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease)}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn-sky{background:var(--sky);color:var(--navy-950);box-shadow:0 10px 26px -12px rgba(47,105,139,.75)}
+.btn-sky:hover{background:#409da1;transform:translateY(-2px);box-shadow:0 16px 32px -12px rgba(47,105,139,.8)}
+.btn-ghost{background:transparent;color:#84e488;border:1px solid var(--line-dark)}
+.btn-ghost:hover{border-color:var(--sky);color:#fff;transform:translateY(-2px)}
+.btn-navy{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px -14px rgba(23,21,94,.6)}
+.btn-navy:hover{background:var(--navy-700);transform:translateY(-2px)}
+.btn-sm{padding:10px 18px;font-size:14px;border-radius:10px}
+.btn-app{border-radius:999px;padding:7px 7px 7px 19px;gap:11px;font-size:14px;letter-spacing:.01em;box-shadow:0 10px 24px -10px rgba(132,228,136,.65),inset 0 0 0 1px rgba(23,21,94,.12)}
+.btn-app .chip{width:27px;height:27px;border-radius:50%;background:var(--navy-950);color:var(--sky);display:grid;place-items:center;flex:none;transition:transform .35s var(--ease)}
+.btn-app:hover{background:#6bce90;transform:translateY(-1px);box-shadow:0 15px 30px -10px rgba(132,228,136,.8),inset 0 0 0 1px rgba(23,21,94,.12)}
+.btn-app:hover .chip{transform:translate(2px,-2px)}
+.btn-app:active{transform:translateY(0)}
+.menu-btn{display:none;background:none;border:1px solid var(--line-dark);border-radius:10px;width:42px;height:42px;color:#fff;place-items:center}
+
+/* ---------- hero ---------- */
+.hero{background:var(--navy-900);color:#84e488;position:relative;overflow:hidden;padding:168px 0 0}
+.hero::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(rgba(47,105,139,.05) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(47,105,139,.05) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 30%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 30%,transparent 75%)}
+.hero-glow{position:absolute;top:-320px;left:50%;transform:translateX(-50%);width:900px;height:560px;background:radial-gradient(closest-side,rgba(64,157,161,.34),transparent);pointer-events:none}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(38px,4.6vw,58px);line-height:1.08;font-weight:800;letter-spacing:-.03em;color:#fff;text-wrap:balance}
+.hero h1 .hl{color:var(--sky)}
+.hero p.lead{margin-top:22px;font-size:18px;line-height:1.65;color:#a9d6be;max-width:34em}
+.hero-cta{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+.hero-facts{display:flex;gap:0;margin-top:44px;border-top:1px solid var(--line-dark);padding-top:24px;flex-wrap:wrap}
+.hero-facts div{padding-right:28px;margin-right:28px;border-right:1px solid var(--line-dark)}
+.hero-facts div:last-child{border-right:none;margin-right:0;padding-right:0}
+.hero-facts b{display:block;font-size:21px;color:#fff;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.hero-facts span{font-size:12.5px;color:#7eb196;font-weight:600}
+.ecg{position:relative;margin-top:64px;height:74px;border-top:1px solid var(--line-dark)}
+.ecg svg{width:100%;height:100%;display:block}
+.ecg path.trace{stroke:var(--sky);stroke-width:2;fill:none;stroke-dasharray:1400;stroke-dashoffset:1400;animation:ecgdraw 5.2s linear infinite;opacity:.85}
+.ecg path.base{stroke:#213a75;stroke-width:1.5;fill:none}
+@keyframes ecgdraw{0%{stroke-dashoffset:1400}55%{stroke-dashoffset:0}100%{stroke-dashoffset:-1400}}
+
+/* mock app window */
+.appwin{position:relative;background:#213a75;border:1px solid var(--line-dark);border-radius:20px;box-shadow:0 44px 90px -32px rgba(0,0,0,.65),0 0 0 1px rgba(47,105,139,.06);overflow:hidden;transform:perspective(1400px) rotateY(-4deg) rotateX(1deg);transition:transform .8s var(--ease)}
+.appwin:hover{transform:perspective(1400px) rotateY(0) rotateX(0)}
+.appwin-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line-dark);background:var(--navy-900)}
+.appwin-bar i{width:10px;height:10px;border-radius:50%;background:#2f698b;display:block}
+.appwin-bar i:first-child{background:#3d4994}
+.appwin-bar .url{margin-left:10px;font-family:var(--mono);font-size:11.5px;color:#7eb196;background:#17155e;border:1px solid var(--line-dark);padding:4px 12px;border-radius:7px}
+.appwin-body{display:grid;grid-template-columns:158px 1fr;min-height:342px}
+.appwin-side{border-right:1px solid var(--line-dark);padding:16px 12px;background:rgba(23,21,94,.35)}
+.appwin-side .mi{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;color:#8fcfad;padding:7px 9px;border-radius:8px;margin-bottom:2px;white-space:nowrap}
+.appwin-side .mi svg{width:13px;height:13px;flex:none}
+.appwin-side .mi.on{background:var(--blue);color:#fff}
+.appwin-main{padding:18px}
+.appwin-main h4{color:#fff;font-size:14.5px;letter-spacing:-.01em}
+.appwin-main .sub{font-size:11.5px;color:#7eb196;margin-bottom:14px}
+.qrow{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--line-dark);border-radius:12px;padding:10px 13px;margin-bottom:8px;transition:border-color .5s,background .5s}
+.qrow .qn{font-family:var(--mono);font-weight:600;font-size:12.5px;color:var(--sky);background:rgba(47,105,139,.1);border:1px solid rgba(47,105,139,.3);width:46px;text-align:center;padding:4px 0;border-radius:7px;flex:none}
+.qrow .qp{flex:1;min-width:0}
+.qrow .qp b{display:block;color:#84e488;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qrow .qp span{font-size:11px;color:#7eb196}
+.pill{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:99px;flex:none;transition:all .5s}
+.pill.wait{background:rgba(217,119,6,.16);color:#f5b04c;border:1px solid rgba(217,119,6,.4)}
+.pill.call{background:rgba(47,105,139,.18);color:#54b79a;border:1px solid rgba(47,105,139,.45)}
+.pill.done{background:rgba(47,105,139,.13);color:var(--sky);border:1px solid rgba(47,105,139,.35)}
+.qrow.called{border-color:rgba(47,105,139,.55);background:rgba(47,105,139,.07)}
+.vital{margin-top:14px;background:rgba(255,255,255,.03);border:1px solid var(--line-dark);border-radius:12px;padding:13px 15px}
+.vital .vh{display:flex;justify-content:space-between;font-size:11px;color:#7eb196;font-weight:600;margin-bottom:8px}
+.vital .vh b{color:#84e488;font-family:var(--mono);font-weight:600}
+.vital svg{width:100%;height:44px;display:block}
+.vital path{stroke:var(--sky);stroke-width:2;fill:none;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600}
+.vital.go path{animation:drawline 2.4s var(--ease) forwards .2s}
+@keyframes drawline{to{stroke-dashoffset:0}}
+.hero-note{position:relative;text-align:center;font-size:12px;color:#5f6695;padding:14px 0 30px;font-family:var(--mono)}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(26px);filter:blur(6px);transition:opacity .9s var(--ease),transform .9s var(--ease),filter .9s var(--ease)}
+.rv.in{opacity:1;transform:none;filter:blur(0)}
+.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+
+/* ---------- sections ---------- */
+section{padding:104px 0}
+.sec-head{max-width:720px;margin-bottom:54px}
+.sec-head h2{font-size:clamp(29px,3.4vw,41px);font-weight:800;letter-spacing:-.028em;line-height:1.16;text-wrap:balance}
+.sec-head p{margin-top:16px;font-size:17px;color:var(--ink-2);max-width:38em}
+
+/* workflow */
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:0;position:relative;margin-bottom:28px}
+.flow::before{content:"";position:absolute;top:25px;left:9%;right:9%;height:2px;background:var(--line)}
+.flow button{background:none;border:none;text-align:left;position:relative;padding:0 14px 0 0;z-index:1}
+.flow .dot{width:50px;height:50px;border-radius:50%;background:var(--white);border:2px solid var(--line);display:grid;place-items:center;color:var(--ink-3);transition:all .45s var(--ease);margin-bottom:16px}
+.flow .dot svg{width:21px;height:21px}
+.flow button.on .dot{background:var(--navy-800);border-color:var(--navy-800);color:var(--sky);transform:scale(1.08);box-shadow:0 14px 28px -12px rgba(23,21,94,.5)}
+.flow b{display:block;font-size:15.5px;letter-spacing:-.01em;color:var(--ink-3);transition:color .3s}
+.flow button.on b{color:var(--ink)}
+.flow span{font-size:13px;color:var(--ink-3);line-height:1.5;display:block;margin-top:5px}
+.flow-panel{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:30px 34px;display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center;box-shadow:0 24px 48px -30px rgba(23,21,94,.25)}
+.flow-panel h3{font-size:21px;letter-spacing:-.02em;margin-bottom:10px}
+.flow-panel p{color:var(--ink-2);font-size:15.5px}
+.flow-panel ul{list-style:none}
+.flow-panel li{display:flex;gap:11px;font-size:14.5px;color:var(--ink-2);padding:8px 0;border-bottom:1px dashed var(--line)}
+.flow-panel li:last-child{border-bottom:none}
+.flow-panel li svg{width:17px;height:17px;color:var(--teal);flex:none;margin-top:3px}
+.swap{animation:swapin .55s var(--ease)}
+@keyframes swapin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* module explorer */
+.explorer{display:grid;grid-template-columns:340px 1fr;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--white);box-shadow:0 24px 48px -30px rgba(23,21,94,.22)}
+.modlist{background:var(--paper-2);border-right:1px solid var(--line);padding:12px}
+.modlist button{display:flex;width:100%;align-items:center;gap:12px;background:none;border:none;text-align:left;padding:11px 13px;border-radius:11px;font-size:14.5px;font-weight:600;color:var(--ink-2);transition:all .3s var(--ease)}
+.modlist button svg{width:17px;height:17px;flex:none;color:var(--ink-3);transition:color .3s}
+.modlist button:hover{background:#e2f3ea;color:var(--ink)}
+.modlist button.on{background:var(--navy-800);color:#fff;box-shadow:0 10px 22px -12px rgba(23,21,94,.55)}
+.modlist button.on svg{color:var(--sky)}
+.moddetail{padding:38px 42px}
+.moddetail h3{font-size:25px;letter-spacing:-.025em;margin-bottom:12px}
+.moddetail>p{color:var(--ink-2);font-size:16px;max-width:44em}
+.moddetail .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.moddetail .tags span{font-size:12.5px;font-weight:600;background:var(--sky-soft);color:var(--blue-deep);border:1px solid #84e488;padding:6px 12px;border-radius:99px}
+.moddetail .mstat{margin-top:28px;padding-top:22px;border-top:1px solid var(--line);display:flex;gap:36px;flex-wrap:wrap}
+.moddetail .mstat b{display:block;font-size:19px;letter-spacing:-.02em}
+.moddetail .mstat span{font-size:12.5px;color:var(--ink-3);font-weight:600}
+
+/* security */
+.dark{background:var(--navy-900);color:#84e488}
+.dark .sec-head h2{color:#fff}
+.dark .sec-head p{color:#a9d6be}
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.auditlog{background:var(--navy-950);border:1px solid var(--line-dark);border-radius:var(--radius);overflow:hidden;font-size:13px}
+.auditlog .al-head{padding:15px 20px;border-bottom:1px solid var(--line-dark);display:flex;justify-content:space-between;align-items:center}
+.auditlog .al-head b{color:#fff;font-size:13.5px}
+.auditlog .al-head span{font-family:var(--mono);font-size:11px;color:#54b79a}
+.al-row{display:grid;grid-template-columns:74px 92px 1fr;gap:12px;padding:11px 20px;border-bottom:1px solid rgba(33,58,117,.55);align-items:baseline}
+.al-row:last-child{border-bottom:none}
+.al-row time{font-family:var(--mono);font-size:11.5px;color:#5f6695}
+.al-row .mod{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sky)}
+.al-row p{color:#b9dfcb;font-size:12.5px;line-height:1.5}
+.sec-points{display:grid;gap:26px}
+.sec-points h3{color:#fff;font-size:17.5px;letter-spacing:-.015em;display:flex;gap:12px;align-items:center}
+.sec-points h3 svg{width:20px;height:20px;color:var(--sky);flex:none}
+.sec-points p{color:#a9d6be;font-size:15px;margin-top:7px;max-width:36em}
+
+/* status / roadmap */
+.status-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.status-card{border-radius:var(--radius);padding:32px;border:1px solid var(--line);background:var(--white)}
+.status-card.planned{background:var(--navy-800);border-color:var(--navy-800);color:#84e488}
+.status-card h3{font-size:18px;letter-spacing:-.015em;display:flex;align-items:center;gap:11px;margin-bottom:18px}
+.status-card h3 .sdot{width:9px;height:9px;border-radius:50%;background:var(--teal);flex:none}
+.status-card.planned h3{color:#fff}
+.status-card.planned h3 .sdot{background:var(--amber)}
+.status-card ul{list-style:none}
+.status-card li{display:flex;gap:11px;padding:9px 0;font-size:15px;border-bottom:1px dashed var(--line)}
+.status-card.planned li{border-bottom-color:var(--line-dark);color:#b9dfcb}
+.status-card li:last-child{border-bottom:none}
+.status-card li svg{width:17px;height:17px;flex:none;margin-top:4px;color:var(--teal)}
+.status-card.planned li svg{color:#f5b04c}
+.status-note{margin-top:20px;font-size:14px;color:var(--ink-2);max-width:62em}
+.status-note b{color:var(--ink)}
+
+/* faq */
+.faq{max-width:820px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;padding:22px 34px 22px 0;font-size:17px;font-weight:700;letter-spacing:-.01em;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";position:absolute;right:4px;top:50%;width:11px;height:11px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:translateY(-70%) rotate(45deg);transition:transform .4s var(--ease)}
+.faq details[open ] summary::after{transform:translateY(-30%) rotate(225deg)}
+.faq details p{padding:0 40px 24px 0;color:var(--ink-2);font-size:15.5px;max-width:44em}
+
+/* cta + footer */
+.cta{background:var(--navy-900);border-radius:26px;padding:64px 56px;position:relative;overflow:hidden;color:#fff}
+.cta::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(47,105,139,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(47,105,139,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 70% 90% at 80% 50%,#000,transparent 70%);-webkit-mask-image:radial-gradient(ellipse 70% 90% at 80% 50%,#000,transparent 70%)}
+.cta h2{position:relative;font-size:clamp(27px,3.2vw,38px);letter-spacing:-.025em;line-height:1.2;max-width:16em;text-wrap:balance}
+.cta p{position:relative;margin-top:14px;color:#a9d6be;font-size:16.5px;max-width:36em}
+.cta .hero-cta{position:relative}
+footer{padding:56px 0 40px;color:var(--ink-3);font-size:13.5px}
+.foot{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:34px}
+.foot .brand{color:var(--ink);font-size:16px}
+.foot .brand small{color:var(--ink-3)}
+.foot nav{display:flex;gap:26px;flex-wrap:wrap}
+.foot nav a{font-weight:600;color:var(--ink-2)}
+.foot nav a:hover{color:var(--blue-deep)}
+
+@media(max-width:1020px){
+  .hero-grid{grid-template-columns:1fr;gap:44px}
+  .flow{grid-template-columns:repeat(5,1fr)}
+  .flow span{display:none}
+  .explorer{grid-template-columns:1fr}
+  .modlist{display:grid;grid-template-columns:1fr 1fr;border-right:none;border-bottom:1px solid var(--line)}
+  .sec-grid,.status-grid,.flow-panel{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+  .nav-links{display:none}
+  .menu-btn{display:grid}
+  .nav-links.open{display:flex;position:absolute;top:72px;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--navy-900);padding:12px 24px 20px;border-bottom:1px solid var(--line-dark)}
+  .nav-links.open a{padding:12px 0;border-bottom:1px solid var(--line-dark)}
+  .nav-links.open .btn{margin-top:14px;justify-content:center}
+}
+@media(max-width:720px){
+  section{padding:72px 0}
+  .hero{padding-top:132px}
+  .appwin-body{grid-template-columns:1fr}
+  .appwin-side{display:none}
+  .flow{grid-template-columns:1fr 1fr;gap:22px}
+  .flow::before{display:none}
+  .modlist{grid-template-columns:1fr}
+  .moddetail{padding:28px 24px}
+  .cta{padding:44px 28px}
+  .al-row{grid-template-columns:64px 1fr}
+  .al-row p{grid-column:2}
+  .hero-facts div{padding-right:18px;margin-right:18px}
+}
+/* ================= ANIMATION SYSTEM ================= */
+header{transition:background .45s var(--ease),box-shadow .45s var(--ease),border-color .45s var(--ease),transform .55s var(--ease)}
+header.hide{transform:translateY(-100%)}
+.blob{position:absolute;border-radius:50%;filter:blur(72px);pointer-events:none;z-index:0}
+.blob.b1{width:460px;height:460px;background:#213a75;opacity:.75;top:-140px;right:-60px;animation:drift1 17s ease-in-out infinite alternate}
+.blob.b2{width:380px;height:380px;background:#409da1;opacity:.30;bottom:-160px;left:-100px;animation:drift2 21s ease-in-out infinite alternate}
+.blob.b3{width:340px;height:340px;background:#2f698b;opacity:.55;top:-160px;right:6%;animation:drift1 19s ease-in-out infinite alternate}
+.blob.b4{width:260px;height:260px;background:#54b79a;opacity:.22;bottom:-150px;left:22%;animation:drift2 23s ease-in-out infinite alternate}
+@keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(-56px,42px) scale(1.14)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1.08)}to{transform:translate(64px,-36px) scale(.94)}}
+.spot{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(430px circle at var(--mx,72%) var(--my,18%),rgba(132,228,136,.10),transparent 65%)}
+.hero .wrap,.hero .ecg,.hero .hero-note{position:relative;z-index:2}
+.h1w{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.09em;margin-bottom:-.09em}
+.h1w>span{display:inline-block;transform:translateY(112%);animation:wordup .95s var(--ease) forwards;animation-delay:calc(var(--i)*68ms)}
+@keyframes wordup{to{transform:translateY(0)}}
+.hero p.lead{animation:loadup 1s var(--ease) backwards .45s}
+.hero .hero-cta{animation:loadup 1s var(--ease) backwards .62s}
+.hero .hero-facts{animation:loadup 1s var(--ease) backwards .78s}
+@keyframes loadup{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.appwin{animation:appin 1.25s var(--ease) backwards .35s}
+@keyframes appin{from{opacity:0;transform:perspective(1400px) rotateY(-10deg) rotateX(2.5deg) translateY(38px)}to{opacity:1;transform:perspective(1400px) rotateY(-4deg) rotateX(1deg) translateY(0)}}
+.apptost{position:absolute;top:54px;right:14px;z-index:6;width:252px;background:#ffffff;color:var(--ink);border-radius:13px;box-shadow:0 20px 38px -14px rgba(23,21,94,.5);padding:11px 13px;display:flex;gap:10px;align-items:flex-start;opacity:0;transform:translateY(-10px) scale(.97);pointer-events:none;transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.apptost.show{opacity:1;transform:none}
+.apptost .ticon{width:29px;height:29px;border-radius:9px;background:#e3f9e5;color:#2f698b;display:grid;place-items:center;flex:none}
+.apptost b{display:block;font-size:12.5px;line-height:1.35;letter-spacing:-.01em}
+.apptost small{display:block;font-size:11.5px;color:#71809f;line-height:1.45;margin-top:2px}
+.marquee{background:#fff;border-bottom:1px solid var(--line);overflow:hidden;padding:15px 0;position:relative}
+.marquee::before,.marquee::after{content:"";position:absolute;top:0;bottom:0;width:90px;z-index:2;pointer-events:none}
+.marquee::before{left:0;background:linear-gradient(90deg,#fff,transparent)}
+.marquee::after{right:0;background:linear-gradient(-90deg,#fff,transparent)}
+.mq-track{display:flex;width:max-content;animation:mqmove 32s linear infinite}
+.marquee:hover .mq-track{animation-play-state:paused}
+.mq-track span{display:inline-flex;align-items:center;gap:24px;padding-right:24px;font-weight:700;font-size:14px;color:var(--ink-2);white-space:nowrap;letter-spacing:.01em}
+.mq-track .dsep{width:7px;height:7px;border-radius:50%;background:var(--teal);flex:none;padding:0}
+@keyframes mqmove{to{transform:translateX(-50%)}}
+.btn-sky{position:relative;overflow:hidden}
+.btn-sky::after{content:"";position:absolute;top:0;left:-80%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);transition:left .7s var(--ease);pointer-events:none}
+.btn-sky:hover::after{left:135%}
+.nav-links a.act{color:#fff}
+.nav-links a.act::after{transform:scaleX(1)}
+.flow::after{content:"";position:absolute;top:25px;left:9%;height:2px;background:var(--teal);width:var(--fill,0%);transition:width .9s var(--ease);z-index:0}
+.al-row.new{animation:alIn .7s var(--ease)}
+@keyframes alIn{from{opacity:0;transform:translateY(-10px);background:rgba(84,183,154,.20)}to{opacity:1;transform:translateY(0)}}
+.status-card{transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.status-card:hover{transform:translateY(-5px);box-shadow:0 28px 46px -26px rgba(23,21,94,.35)}
+.modlist button.on{transform:translateX(4px)}
+.modlist button{transition:all .3s var(--ease),transform .3s var(--ease)}
+.faq details p{animation:swapin .5s var(--ease)}
+.qrow .qp b{transition:color .4s}
+#toTop{position:fixed;right:22px;bottom:22px;width:46px;height:46px;border-radius:50%;background:var(--navy-800);color:#fff;border:1px solid var(--line-dark);display:grid;place-items:center;opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .5s var(--ease),transform .5s var(--ease),background .3s;z-index:105;box-shadow:0 16px 30px -14px rgba(23,21,94,.55)}
+#toTop.show{opacity:1;transform:none;pointer-events:auto}
+#toTop:hover{background:var(--blue-deep)}
+@media(max-width:720px){.apptost{width:224px;top:48px}.blob.b1{width:300px;height:300px}.blob.b2{width:260px;height:260px}}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .rv{opacity:1;transform:none;filter:none}
+  .ecg path.trace{stroke-dashoffset:0;animation:none}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header id="hdr">
+  <div class="wrap nav">
+    <a class="brand" href="#atas" aria-label="RekamMedis.web.id">
+      <!-- Creator: CorelDRAW 2026 -->
+<svg class="brand-logo" role="img" aria-label="Logo Rekam Medis" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="1169" height="1411" version="1.0" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="8940 3440 11690 14110"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .fil5 {fill:#136C8C}
+    .fil3 {fill:#1B8B93}
+    .fil7 {fill:#23938D}
+    .fil15 {fill:#36978B}
+    .fil18 {fill:#73C5B4}
+    .fil17 {fill:#7ABEC3}
+    .fil16 {fill:#87C4BC}
+    .fil14 {fill:#98D2D1}
+    .fil19 {fill:#A2BACA}
+    .fil13 {fill:#BCCBDB}
+    .fil12 {fill:#BDCDDA}
+    .fil8 {fill:#BECEDC}
+    .fil9 {fill:#C1CEDD}
+    .fil11 {fill:#C1D1DE}
+    .fil10 {fill:#CAD4DD}
+    .fil0 {fill:#E4EDF5}
+    .fil1 {fill:white}
+    .fil2 {fill:url(#id0)}
+    .fil4 {fill:url(#id1)}
+    .fil6 {fill:url(#id2)}
+   ]]>
+  </style>
+  <linearGradient id="id0" gradientUnits="userSpaceOnUse" x1="9306.93" y1="14454.32" x2="19846.64" y2="14454.32">
+   <stop offset="0" style="stop-opacity:1; stop-color:#102D64"/>
+   <stop offset="1" style="stop-opacity:1; stop-color:#226881"/>
+  </linearGradient>
+  <linearGradient id="id1" gradientUnits="userSpaceOnUse" x1="9306.93" y1="6999.12" x2="17184.73" y2="6999.12">
+   <stop offset="0" style="stop-opacity:1; stop-color:#153C71"/>
+   <stop offset="1" style="stop-opacity:1; stop-color:#187B98"/>
+  </linearGradient>
+  <linearGradient id="id2" gradientUnits="userSpaceOnUse" x1="17390.55" y1="6864.52" x2="17838.17" y2="5629.94">
+   <stop offset="0" style="stop-opacity:1; stop-color:#267A64"/>
+   <stop offset="1" style="stop-opacity:1; stop-color:#3AB892"/>
+  </linearGradient>
+ </defs>
+ <g id="Layer_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_1573199620816">
+   <path class="fil0" d="M10817.76 15406.42l35.97 0 0 -35.93 7302.21 0 0 35.93 35.98 0 0 179.61 -35.98 0 0 35.93 -7302.21 0 0 -35.93 -35.97 0 0 -179.61zm0 -862.32l35.97 0 0 -35.93 7302.21 0 0 35.93 35.98 0 0 179.66 -35.98 0 0 35.93 -7302.21 0 0 -35.93 -35.97 0 0 -179.66zm7338.18 -646.68l-35.97 0 0 35.93 -3057.58 0 0 -215.59 71.95 0 0 -35.93 2985.63 0 0 35.93 71.95 0 0 143.73 -35.98 0 0 35.93zm-7338.18 -179.66l35.97 0 0 -35.93 2805.76 0 0 35.93 35.97 0 0 35.93 35.98 0 0 143.73 -35.98 0 0 35.93 -2805.76 0 0 -35.93 -35.97 0 0 -35.93 -35.97 0 0 -143.73zm4496.45 -862.27l1618.7 0 0 179.62 -35.97 0 0 35.93 -1546.76 0 0 -35.93 -35.97 0 0 -179.62zm-4496.45 0l35.97 0 0 -35.93 2518.01 0 0 35.93 35.97 0 0 179.62 -35.97 0 0 35.93 -2518.01 0 0 -35.93 -35.97 0 0 -179.62zm-1510.83 -1652.72l0 35.93 35.98 0 0 251.48 -71.95 0 0 71.86 -35.98 0 0 35.93 -35.97 0 0 35.93 35.97 0 0 574.87 35.98 0 0 3952.13 35.97 0 0 -4562.93 791.39 0 0 4491.06 35.97 0 0 71.87 35.98 0 0 71.86 35.97 0 0 35.93 35.97 0 0 35.93 35.94 0 0 35.93 35.97 0 0 35.93 35.97 0 0 35.94 71.95 0 0 35.93 107.92 0 0 35.93 8129.58 0 0 -35.93 71.95 0 0 -35.93 71.94 0 0 -35.94 35.98 0 0 -35.93 71.95 0 0 -71.86 35.97 0 0 -35.93 35.97 0 0 -71.86 35.98 0 0 -107.76 35.97 0 0 -4275.51 791.39 0 0 4419.2 35.97 0 0 -4455.13 -863.33 0 0 2658.72 -71.95 0 0 -71.86 -35.97 0 0 -35.93 35.97 0 0 -251.53 -35.97 0 0 -35.93 35.97 0 0 -179.61 -35.97 0 0 -35.93 -71.95 0 0 35.93 -35.98 0 0 -35.93 -107.92 0 0 -71.87 -71.95 0 0 -35.93 -35.93 0 0 -215.59 35.93 0 0 -35.89 -35.93 0 0 -143.72 -71.95 0 0 -35.93 -35.97 0 0 -107.8 -35.97 0 0 -35.93 -215.85 0 0 -35.93 -35.97 0 0 -35.93 359.74 0 0 -71.87 -1079.18 0 0 -35.89 -35.97 0 0 -35.93 -35.98 0 0 -35.93 -35.97 0 0 -1473.11 -1690.65 0 0 -35.89 -35.98 0 0 -71.86 -35.97 0 0 -143.73 -35.97 0 0 -107.79 -35.98 0 0 -71.86 -35.97 0 0 -179.62 -35.98 0 0 -71.86 -35.97 0 0 -107.8 -35.93 0 0 -107.79 -35.98 0 0 179.66 -143.89 0 0 179.61 35.97 0 0 71.87 35.98 0 0 179.65 35.97 0 0 71.87 35.97 0 0 107.79 35.98 0 0 143.68 -35.98 0 0 107.8 -35.97 0 0 107.79 -35.97 0 0 71.87 -35.98 0 0 179.61 -35.97 0 0 107.8 -35.98 0 0 107.79 -35.97 0 0 71.86 -35.97 0 0 143.73 -35.98 0 0 71.86 -35.97 0 0 107.76 -35.98 0 0 107.79 -35.97 0 0 107.79 -35.97 0 0 107.8 -35.98 0 0 179.61 -35.97 0 0 107.8 -35.98 0 0 107.79 -35.97 0 0 107.8 -35.93 0 0 107.79 -35.98 0 0 71.82 -35.97 0 0 143.73 -35.97 0 0 71.86 -35.98 0 0 35.93 -35.97 0 0 35.94 -35.98 0 0 35.93 -71.94 0 0 35.93 -143.9 0 0 -35.93 -71.95 0 0 -35.93 -35.97 0 0 -35.94 -35.98 0 0 -35.93 -35.97 0 0 -35.93 -35.93 0 0 -71.86 -35.98 0 0 -179.62 -35.97 0 0 -71.86 -35.97 0 0 -107.79 -35.98 0 0 -215.59 -35.97 0 0 -143.69 -35.98 0 0 -35.93 -35.97 0 0 -215.59 -35.97 0 0 -107.79 -35.98 0 0 -107.8 -35.97 0 0 -179.61 -35.98 0 0 -71.87 -35.97 0 0 -143.72 -35.97 0 0 -179.62 -35.98 0 0 -143.72 -35.97 0 0 -143.73 -35.98 0 0 -143.73 -35.97 0 0 -71.82 -35.93 0 0 71.82 -35.98 0 0 107.8 -35.97 0 0 107.79 -35.97 0 0 143.73 -35.98 0 0 107.75 -35.97 0 0 71.87 -35.98 0 0 71.86 -35.97 0 0 35.93 -35.97 0 0 35.93 -71.95 0 0 35.93 -215.85 0 0 -35.93 -71.9 0 0 -35.93 -35.97 0 0 -71.86 -35.98 0 0 -71.87 -35.97 0 0 -179.61 -35.98 0 0 -107.8 -35.97 0 0 -107.79 -35.98 0 0 -215.55 -35.97 0 0 -71.86 -35.97 0 0 -179.66 -35.98 0 0 -179.66 -35.97 0 0 -107.75 -35.98 0 0 -179.66 -35.97 0 0 -143.72 -35.97 0 0 -35.93 -35.98 0 0 -143.69 -35.97 0 0 -71.86 -35.98 0 0 71.86 -35.93 0 0 107.75 -35.97 0 0 107.8 -35.97 0 0 71.86 -35.98 0 0 107.8 -35.97 0 0 107.79 -35.98 0 0 71.82 -35.97 0 0 107.8 -35.97 0 0 107.79 -35.98 0 0 71.86 -35.97 0 0 71.87 -2553.99 0z"/>
+   <rect class="fil1" x="9486.78" y="5263.81" width="9933.71" height="11400.11" rx="1958.01" ry="1958.01"/>
+   <polygon class="fil2" points="10601.91,16484.28 10529.96,16484.28 10529.96,16448.35 10422.04,16448.35 10422.04,16412.42 10350.09,16412.42 10350.09,16376.48 10314.12,16376.48 10314.12,16340.55 10278.15,16340.55 10278.15,16304.62 10242.21,16304.62 10242.21,16268.69 10206.24,16268.69 10206.24,16232.76 10170.27,16232.76 10170.27,16160.9 10134.29,16160.9 10134.29,16089.03 10098.32,16089.03 10098.32,11597.97 9306.93,11597.97 9306.93,16304.62 9342.91,16304.62 9342.91,16412.42 9378.88,16412.42 9378.88,16520.21 9414.85,16520.21 9414.85,16627.96 9450.83,16627.96 9450.83,16663.89 9486.8,16663.89 9486.8,16735.76 9522.78,16735.76 9522.78,16807.62 9558.75,16807.62 9558.75,16843.55 9594.72,16843.55 9594.72,16879.48 9630.66,16879.48 9630.66,16915.42 9666.63,16915.42 9666.63,16951.35 9702.6,16951.35 9702.6,16987.28 9738.58,16987.28 9738.58,17023.21 9774.55,17023.21 9774.55,17059.14 9846.5,17059.14 9846.5,17095.07 9882.47,17095.07 9882.47,17130.96 9954.42,17130.96 9954.42,17166.89 10026.37,17166.89 10026.37,17202.83 10098.32,17202.83 10098.32,17238.76 10206.24,17238.76 10206.24,17274.69 10350.09,17274.69 10350.09,17310.62 18731.49,17310.62 18731.49,17274.69 18947.33,17274.69 18947.33,17238.76 19019.28,17238.76 19019.28,17202.83 19127.2,17202.83 19127.2,17166.89 19199.15,17166.89 19199.15,17130.96 19235.12,17130.96 19235.12,17095.07 19307.03,17095.07 19307.03,17059.14 19343,17059.14 19343,17023.21 19414.95,17023.21 19414.95,16987.28 19450.92,16987.28 19450.92,16951.35 19486.9,16951.35 19486.9,16915.42 19522.87,16915.42 19522.87,16879.48 19558.85,16879.48 19558.85,16843.55 19594.82,16843.55 19594.82,16771.69 19630.79,16771.69 19630.79,16735.76 19666.77,16735.76 19666.77,16663.89 19702.74,16663.89 19702.74,16592.03 19738.72,16592.03 19738.72,16520.21 19774.69,16520.21 19774.69,16448.35 19810.66,16448.35 19810.66,16340.55 19846.64,16340.55 19846.64,15011.21 19846.64,11777.63 19055.25,11777.63 19055.25,15945.35 19055.25,16053.14 19019.28,16053.14 19019.28,16160.9 18983.3,16160.9 18983.3,16232.76 18947.33,16232.76 18947.33,16268.69 18911.36,16268.69 18911.36,16340.55 18839.41,16340.55 18839.41,16376.48 18803.43,16376.48 18803.43,16412.42 18731.49,16412.42 18731.49,16448.35 18659.54,16448.35 18659.54,16484.28 "/>
+   <polygon class="fil3" points="9306.93,11202.77 11860.92,11202.77 11860.92,11130.9 11896.89,11130.9 11896.89,11059.04 11932.87,11059.04 11932.87,10951.25 11968.84,10951.25 11968.84,10843.45 12004.81,10843.45 12004.81,10771.63 12040.79,10771.63 12040.79,10663.84 12076.76,10663.84 12076.76,10556.04 12112.74,10556.04 12112.74,10484.18 12148.71,10484.18 12148.71,10376.38 12184.68,10376.38 12184.68,10268.63 12220.61,10268.63 12220.61,10160.84 12292.56,10160.84 12292.56,10412.32 12328.54,10412.32 12328.54,10448.25 12364.51,10448.25 12364.51,10591.97 12400.48,10591.97 12400.48,10771.63 12436.46,10771.63 12436.46,10879.38 12472.43,10879.38 12472.43,11059.04 12508.41,11059.04 12508.41,11238.7 12544.38,11238.7 12544.38,11310.56 12580.35,11310.56 12580.35,11526.11 12616.33,11526.11 12616.33,11633.9 12652.3,11633.9 12652.3,11741.7 12688.28,11741.7 12688.28,11921.31 12724.25,11921.31 12724.25,11993.18 12760.23,11993.18 12760.23,12065.04 12796.2,12065.04 12796.2,12100.97 12868.1,12100.97 12868.1,12136.9 13083.95,12136.9 13083.95,12100.97 13155.9,12100.97 13155.9,12065.04 13191.87,12065.04 13191.87,12029.11 13227.84,12029.11 13227.84,11957.25 13263.82,11957.25 13263.82,11885.38 13299.79,11885.38 13299.79,11777.63 13335.77,11777.63 13335.77,11633.9 13371.74,11633.9 13371.74,11526.11 13407.71,11526.11 13407.71,11418.31 13443.69,11418.31 13443.69,11346.49 13479.62,11346.49 13479.62,11418.31 13515.59,11418.31 13515.59,11562.04 13551.57,11562.04 13551.57,11705.77 13587.54,11705.77 13587.54,11849.49 13623.52,11849.49 13623.52,12029.11 13659.49,12029.11 13659.49,12172.83 13695.46,12172.83 13695.46,12244.7 13731.44,12244.7 13731.44,12424.31 13767.41,12424.31 13767.41,12532.11 13803.39,12532.11 13803.39,12639.9 13839.36,12639.9 13839.36,12855.49 13875.33,12855.49 13875.33,12891.42 13911.31,12891.42 13911.31,13035.11 13947.28,13035.11 13947.28,13250.7 13983.26,13250.7 13983.26,13358.49 14019.23,13358.49 14019.23,13430.35 14055.2,13430.35 14055.2,13609.97 14091.18,13609.97 14091.18,13681.83 14127.11,13681.83 14127.11,13717.76 14163.08,13717.76 14163.08,13753.69 14199.06,13753.69 14199.06,13789.63 14235.03,13789.63 14235.03,13825.56 14306.98,13825.56 14306.98,13861.49 14450.88,13861.49 14450.88,13825.56 14522.82,13825.56 14522.82,13789.63 14558.8,13789.63 14558.8,13753.69 14594.77,13753.69 14594.77,13717.76 14630.75,13717.76 14630.75,13645.9 14666.72,13645.9 14666.72,13502.17 14702.69,13502.17 14702.69,13430.35 14738.67,13430.35 14738.67,13322.56 14774.6,13322.56 14774.6,13214.76 14810.57,13214.76 14810.57,13106.97 14846.55,13106.97 14846.55,12999.17 14882.52,12999.17 14882.52,12819.56 14918.5,12819.56 14918.5,12711.76 14954.47,12711.76 14954.47,12603.97 14990.44,12603.97 14990.44,12496.18 15026.42,12496.18 15026.42,12388.42 15062.39,12388.42 15062.39,12316.56 15098.37,12316.56 15098.37,12172.83 15134.34,12172.83 15134.34,12100.97 15170.31,12100.97 15170.31,11993.18 15206.29,11993.18 15206.29,11885.38 15242.26,11885.38 15242.26,11705.77 15278.24,11705.77 15278.24,11633.9 15314.21,11633.9 15314.21,11526.11 15350.18,11526.11 15350.18,11418.31 15386.16,11418.31 15386.16,11274.63 15350.18,11274.63 15350.18,11166.84 15314.21,11166.84 15314.21,11094.97 15278.24,11094.97 15278.24,10915.32 15242.26,10915.32 15242.26,10843.45 15206.29,10843.45 15206.29,10663.84 15170.31,10663.84 15170.31,10591.97 15134.34,10591.97 15134.34,10448.25 15098.37,10448.25 15098.37,10556.04 15062.39,10556.04 15062.39,10663.84 15026.42,10663.84 15026.42,10735.7 14990.44,10735.7 14990.44,10843.45 14954.47,10843.45 14954.47,10987.18 14918.5,10987.18 14918.5,11094.97 14882.52,11094.97 14882.52,11202.77 14846.55,11202.77 14846.55,11310.56 14810.57,11310.56 14810.57,11382.38 14774.6,11382.38 14774.6,11490.18 14738.67,11490.18 14738.67,11597.97 14702.69,11597.97 14702.69,11705.77 14666.72,11705.77 14666.72,11813.56 14630.75,11813.56 14630.75,11957.25 14594.77,11957.25 14594.77,12100.97 14558.8,12100.97 14558.8,12136.9 14522.82,12136.9 14522.82,12280.63 14486.85,12280.63 14486.85,12424.31 14450.88,12424.31 14450.88,12496.18 14414.9,12496.18 14414.9,12603.97 14378.93,12603.97 14378.93,12496.18 14342.95,12496.18 14342.95,12460.24 14306.98,12460.24 14306.98,12316.56 14271.01,12316.56 14271.01,12172.83 14235.03,12172.83 14235.03,11957.25 14199.06,11957.25 14199.06,11813.56 14163.08,11813.56 14163.08,11705.77 14127.11,11705.77 14127.11,11526.11 14091.18,11526.11 14091.18,11454.25 14055.2,11454.25 14055.2,11310.56 14019.23,11310.56 14019.23,11202.77 13983.26,11202.77 13983.26,11059.04 13947.28,11059.04 13947.28,10879.38 13911.31,10879.38 13911.31,10771.63 13875.33,10771.63 13875.33,10556.04 13839.36,10556.04 13839.36,10484.18 13803.39,10484.18 13803.39,10340.45 13767.41,10340.45 13767.41,10160.84 13731.44,10160.84 13731.44,10053.04 13695.46,10053.04 13695.46,9873.39 13659.49,9873.39 13659.49,9801.52 13623.52,9801.52 13623.52,9765.63 13587.54,9765.63 13587.54,9729.7 13515.59,9729.7 13515.59,9765.63 13479.62,9765.63 13479.62,9729.7 13443.69,9729.7 13443.69,9837.45 13407.71,9837.45 13407.71,9909.32 13371.74,9909.32 13371.74,10053.04 13335.77,10053.04 13335.77,10160.84 13299.79,10160.84 13299.79,10304.56 13263.82,10304.56 13263.82,10376.38 13227.84,10376.38 13227.84,10556.04 13191.87,10556.04 13191.87,10663.84 13155.9,10663.84 13155.9,10771.63 13119.92,10771.63 13119.92,10807.56 13083.95,10807.56 13083.95,10915.32 13047.97,10915.32 13047.97,11059.04 13012,11059.04 13012,11166.84 12976.03,11166.84 12976.03,11238.7 12940.05,11238.7 12940.05,11346.49 12904.08,11346.49 12904.08,11454.25 12832.13,11454.25 12832.13,11274.63 12796.2,11274.63 12796.2,10951.25 12832.13,10951.25 12832.13,10807.56 12868.1,10807.56 12868.1,10663.84 12904.08,10663.84 12904.08,10520.11 12940.05,10520.11 12940.05,10412.32 12976.03,10412.32 12976.03,10268.63 13012,10268.63 13012,10160.84 13047.97,10160.84 13047.97,10017.11 13083.95,10017.11 13083.95,9909.32 13119.92,9909.32 13119.92,9801.52 13155.9,9801.52 13155.9,9657.84 13191.87,9657.84 13191.87,9514.11 13227.84,9514.11 13227.84,9442.25 13263.82,9442.25 13263.82,9334.45 13299.79,9334.45 13299.79,9154.84 13335.77,9154.84 13335.77,9047.04 13371.74,9047.04 13371.74,8903.32 13407.71,8903.32 13407.71,8795.52 13443.69,8795.52 13443.69,8687.77 13479.62,8687.77 13479.62,8579.98 13515.59,8579.98 13515.59,8400.32 13551.57,8400.32 13551.57,8364.39 13587.54,8364.39 13587.54,8472.18 13623.52,8472.18 13623.52,8615.91 13659.49,8615.91 13659.49,8723.7 13695.46,8723.7 13695.46,8867.39 13731.44,8867.39 13731.44,8975.18 13767.41,8975.18 13767.41,9154.84 13803.39,9154.84 13803.39,9298.52 13839.36,9298.52 13839.36,9478.18 13875.33,9478.18 13875.33,9621.91 13911.31,9621.91 13911.31,9693.77 13947.28,9693.77 13947.28,9801.52 13983.26,9801.52 13983.26,10017.11 14019.23,10017.11 14019.23,10088.97 14055.2,10088.97 14055.2,10304.56 14091.18,10304.56 14091.18,10412.32 14127.11,10412.32 14127.11,10591.97 14163.08,10591.97 14163.08,10699.77 14199.06,10699.77 14199.06,10663.84 14342.95,10663.84 14342.95,10699.77 14378.93,10699.77 14378.93,10735.7 14522.82,10735.7 14522.82,10771.63 14558.8,10771.63 14558.8,10735.7 14594.77,10735.7 14594.77,10807.56 14630.75,10807.56 14630.75,10735.7 14666.72,10735.7 14666.72,10807.56 14702.69,10807.56 14702.69,10663.84 14738.67,10663.84 14738.67,10556.04 14774.6,10556.04 14774.6,10448.25 14810.57,10448.25 14810.57,10340.45 14846.55,10340.45 14846.55,10232.7 14882.52,10232.7 14882.52,10196.77 14918.5,10196.77 14918.5,10053.04 14954.47,10053.04 14954.47,9945.25 14990.44,9945.25 14990.44,9837.45 15026.42,9837.45 15026.42,9765.63 15098.37,9765.63 15098.37,9729.7 15134.34,9729.7 15134.34,9693.77 15458.06,9693.77 15458.06,9585.98 15422.09,9585.98 15422.09,9478.18 15386.16,9478.18 15386.16,9406.32 15350.18,9406.32 15350.18,9334.45 15314.21,9334.45 15314.21,9226.7 15278.24,9226.7 15278.24,9118.91 15242.26,9118.91 15242.26,9047.04 15206.29,9047.04 15206.29,9011.11 15170.31,9011.11 15170.31,8975.18 15134.34,8975.18 15134.34,8939.25 15062.39,8939.25 15062.39,8903.32 14882.52,8903.32 14882.52,8939.25 14810.57,8939.25 14810.57,8975.18 14774.6,8975.18 14774.6,9011.11 14738.67,9011.11 14738.67,9082.98 14702.69,9082.98 14702.69,9190.77 14666.72,9190.77 14666.72,9298.52 14630.75,9298.52 14630.75,9334.45 14594.77,9334.45 14594.77,9442.25 14558.8,9442.25 14558.8,9550.04 14522.82,9550.04 14522.82,9693.77 14450.88,9693.77 14450.88,9478.18 14414.9,9478.18 14414.9,9334.45 14378.93,9334.45 14378.93,9190.77 14342.95,9190.77 14342.95,9154.84 14306.98,9154.84 14306.98,9011.11 14271.01,9011.11 14271.01,8831.46 14235.03,8831.46 14235.03,8723.7 14199.06,8723.7 14199.06,8579.98 14163.08,8579.98 14163.08,8364.39 14127.11,8364.39 14127.11,8292.53 14091.18,8292.53 14091.18,8076.98 14055.2,8076.98 14055.2,8005.12 14019.23,8005.12 14019.23,7825.46 13983.26,7825.46 13983.26,7681.77 13947.28,7681.77 13947.28,7573.98 13911.31,7573.98 13911.31,7430.25 13875.33,7430.25 13875.33,7322.46 13839.36,7322.46 13839.36,7250.6 13803.39,7250.6 13803.39,7214.66 13767.41,7214.66 13767.41,7178.73 13695.46,7178.73 13695.46,7142.84 13479.62,7142.84 13479.62,7178.73 13407.71,7178.73 13407.71,7214.66 13371.74,7214.66 13371.74,7250.6 13335.77,7250.6 13335.77,7358.39 13299.79,7358.39 13299.79,7394.32 13263.82,7394.32 13263.82,7502.12 13227.84,7502.12 13227.84,7717.66 13191.87,7717.66 13191.87,7753.59 13155.9,7753.59 13155.9,7933.25 13119.92,7933.25 13119.92,8041.05 13083.95,8041.05 13083.95,8184.77 13047.97,8184.77 13047.97,8256.59 13012,8256.59 13012,8364.39 12976.03,8364.39 12976.03,8472.18 12940.05,8472.18 12940.05,8615.91 12904.08,8615.91 12904.08,8723.7 12868.1,8723.7 12868.1,8831.46 12832.13,8831.46 12832.13,8939.25 12796.2,8939.25 12796.2,9118.91 12760.23,9118.91 12760.23,9226.7 12724.25,9226.7 12724.25,9298.52 12688.28,9298.52 12688.28,9442.25 12652.3,9442.25 12652.3,9585.98 12580.35,9585.98 12580.35,9442.25 12544.38,9442.25 12544.38,9262.63 12508.41,9262.63 12508.41,9226.7 12472.43,9226.7 12472.43,9190.77 12436.46,9190.77 12436.46,9154.84 12400.48,9154.84 12400.48,9118.91 12364.51,9118.91 12364.51,9082.98 12148.71,9082.98 12148.71,9118.91 12112.74,9118.91 12112.74,9154.84 12040.79,9154.84 12040.79,9190.77 12004.81,9190.77 12004.81,9262.63 11968.84,9262.63 11968.84,9334.45 11932.87,9334.45 11932.87,9478.18 11896.89,9478.18 11896.89,9514.11 11860.92,9514.11 11860.92,9657.84 11824.94,9657.84 11824.94,9729.7 11788.97,9729.7 11788.97,9873.39 11753,9873.39 11753,9945.25 11717.02,9945.25 11717.02,10017.11 11681.05,10017.11 11681.05,10160.84 11645.07,10160.84 11645.07,10196.77 11609.1,10196.77 11609.1,10340.45 11573.13,10340.45 11573.13,10448.25 11537.19,10448.25 11537.19,10484.18 11501.22,10484.18 11501.22,10627.91 11465.25,10627.91 11465.25,10663.84 9306.93,10663.84 "/>
+   <polygon class="fil4" points="10565.94,5741.6 10565.94,5705.67 11681.05,5705.67 15062.39,5705.67 17184.73,5705.67 17184.73,5166.74 17184.73,5130.8 14522.82,5130.8 14522.82,5094.87 14342.95,5094.87 14342.95,5058.98 14271.01,5058.98 14271.01,5023.05 14199.06,5023.05 14199.06,4987.12 14163.08,4987.12 14163.08,4951.19 14127.11,4951.19 14127.11,4915.26 14091.18,4915.26 14091.18,4879.33 14055.2,4879.33 14055.2,4843.39 14019.23,4843.39 14019.23,4807.46 13983.26,4807.46 13983.26,4735.6 13947.28,4735.6 13947.28,4699.67 13911.31,4699.67 13911.31,4627.81 13875.33,4627.81 13875.33,4591.87 13839.36,4591.87 13839.36,4520.05 13803.39,4520.05 13803.39,4484.12 13767.41,4484.12 13767.41,4412.26 13731.44,4412.26 13731.44,4376.33 13695.46,4376.33 13695.46,4304.46 13659.49,4304.46 13659.49,4232.6 13623.52,4232.6 13623.52,4196.67 13587.54,4196.67 13587.54,4124.81 13551.57,4124.81 13551.57,4088.87 13515.59,4088.87 13515.59,4017.05 13479.62,4017.05 13479.62,3981.12 13443.69,3981.12 13443.69,3945.19 13407.71,3945.19 13407.71,3909.26 13371.74,3909.26 13371.74,3873.33 13335.77,3873.33 13335.77,3837.4 13299.79,3837.4 13299.79,3801.46 13227.84,3801.46 13227.84,3765.53 13191.87,3765.53 13191.87,3729.6 13047.97,3729.6 13047.97,3693.67 10062.34,3693.67 10062.34,3729.6 9918.45,3729.6 9918.45,3765.53 9846.5,3765.53 9846.5,3801.46 9774.55,3801.46 9774.55,3837.4 9738.58,3837.4 9738.58,3873.33 9666.63,3873.33 9666.63,3909.26 9630.66,3909.26 9630.66,3945.19 9594.72,3945.19 9594.72,3981.12 9558.75,3981.12 9558.75,4017.05 9522.78,4017.05 9522.78,4052.94 9486.8,4052.94 9486.8,4124.81 9450.83,4124.81 9450.83,4160.74 9414.85,4160.74 9414.85,4232.6 9378.88,4232.6 9378.88,4268.53 9378.88,4304.46 9342.91,4304.46 9342.91,4484.12 9306.93,4484.12 9306.93,10304.56 10098.32,10304.56 10098.32,6100.91 10134.29,6100.91 10134.29,6029.05 10170.27,6029.05 10170.27,5957.19 10206.24,5957.19 10206.24,5921.26 10242.21,5921.26 10242.21,5885.32 10278.15,5885.32 10278.15,5849.39 10314.12,5849.39 10314.12,5813.46 10350.09,5813.46 10350.09,5777.53 10422.04,5777.53 10422.04,5741.6 "/>
+   <polygon class="fil5" points="15350.18,10376.38 15350.18,10484.18 15386.16,10484.18 15386.16,10591.97 15422.09,10591.97 15422.09,10699.77 15458.06,10699.77 15458.06,10771.63 15494.04,10771.63 15494.04,10951.25 15530.01,10951.25 15530.01,11023.11 15565.99,11023.11 15565.99,11130.9 15601.96,11130.9 15601.96,11274.63 15637.93,11274.63 15637.93,11346.49 15673.91,11346.49 15673.91,11382.38 17364.56,11382.38 17364.56,12855.49 17400.53,12855.49 17400.53,12891.42 17436.51,12891.42 17436.51,12927.35 17472.48,12927.35 17472.48,12963.24 18623.56,12963.24 18623.56,12927.35 18659.54,12927.35 18659.54,12891.42 18695.51,12891.42 18695.51,12855.49 18731.49,12855.49 18731.49,11382.38 20206.34,11382.38 20278.28,11382.38 20278.28,11346.49 20314.26,11346.49 20314.26,11310.56 20350.23,11310.56 20350.23,11238.7 20386.21,11238.7 20386.21,10160.84 20350.23,10160.84 20350.23,10088.97 20314.26,10088.97 20314.26,10053.04 20278.28,10053.04 20278.28,10017.11 18767.46,10017.11 18767.46,9981.18 18731.49,9981.18 18731.49,8544.05 18695.51,8544.05 18695.51,8472.18 18659.54,8472.18 18659.54,8436.25 18012.05,8436.25 17472.48,8436.25 17472.48,8472.18 17400.53,8472.18 17400.53,8544.05 17364.56,8544.05 17364.56,9873.39 17364.56,10017.11 15242.26,10017.11 15242.26,10124.91 15278.24,10124.91 15278.24,10268.63 15314.21,10268.63 15314.21,10340.45 15350.18,10340.45 "/>
+   <polygon class="fil6" points="14019.23,4268.53 14019.23,4232.6 16932.91,4232.6 16932.91,4268.53 17004.86,4268.53 17004.86,4304.46 17040.84,4304.46 17040.84,4376.33 17076.81,4376.33 17076.81,4412.26 17112.78,4412.26 17112.78,4484.12 17148.76,4484.12 17148.76,4555.98 17184.73,4555.98 17184.73,5094.87 14522.82,5094.87 14522.82,5130.8 17184.73,5130.8 17184.73,6172.73 17220.71,6172.73 17220.71,6280.53 17256.68,6280.53 17256.68,6424.25 17292.65,6424.25 17292.65,6460.19 17328.63,6460.19 17328.63,6532.05 17364.56,6532.05 17364.56,6567.98 17400.53,6567.98 17400.53,6639.84 17436.51,6639.84 17436.51,6675.73 17508.46,6675.73 17508.46,6711.66 17544.43,6711.66 17544.43,6747.6 17616.38,6747.6 17616.38,6783.53 17688.33,6783.53 17688.33,6819.46 17760.27,6819.46 17760.27,6855.39 18983.3,6855.39 19343,6855.39 19343,6891.32 19450.92,6891.32 19450.92,6927.25 19522.87,6927.25 19522.87,6963.19 19594.82,6963.19 19594.82,6999.12 19666.77,6999.12 19666.77,7035.05 19702.74,7035.05 19702.74,7070.98 19738.72,7070.98 19738.72,7142.84 19774.69,7142.84 19774.69,7178.73 19810.66,7178.73 19810.66,7250.6 19846.64,7250.6 19846.64,6927.25 19810.66,6927.25 19810.66,6819.46 19774.69,6819.46 19774.69,6711.66 19738.72,6711.66 19738.72,6675.73 19702.74,6675.73 19702.74,6603.91 19666.77,6603.91 19666.77,6532.05 19630.79,6532.05 19630.79,6496.12 19594.82,6496.12 19594.82,6460.19 19558.85,6460.19 19558.85,6388.32 19522.87,6388.32 19522.87,6352.39 19486.9,6352.39 19486.9,6316.46 19450.92,6316.46 19450.92,6280.53 19414.95,6280.53 19414.95,6244.6 19378.98,6244.6 19378.98,6208.67 19343,6208.67 19343,6172.73 19307.03,6172.73 19307.03,6136.8 19271.05,6136.8 19271.05,6100.91 19235.12,6100.91 19235.12,6064.98 19199.15,6064.98 19199.15,6029.05 19163.17,6029.05 19163.17,5993.12 19127.2,5993.12 19127.2,5957.19 19091.23,5957.19 19091.23,5921.26 19055.25,5921.26 19055.25,5885.32 19019.28,5885.32 19019.28,5849.39 18983.3,5849.39 18983.3,5813.46 18947.33,5813.46 18947.33,5777.53 18911.36,5777.53 18911.36,5741.6 18875.38,5741.6 18875.38,5705.67 18839.41,5705.67 18839.41,5669.73 18803.43,5669.73 18803.43,5633.8 18767.46,5633.8 18767.46,5597.91 18731.49,5597.91 18731.49,5561.98 18695.51,5561.98 18695.51,5526.05 18659.54,5526.05 18659.54,5490.12 18623.56,5490.12 18623.56,5454.19 18587.63,5454.19 18587.63,5418.26 18551.66,5418.26 18551.66,5382.33 18515.68,5382.33 18515.68,5346.39 18479.71,5346.39 18479.71,5310.46 18443.74,5310.46 18443.74,5274.53 18407.76,5274.53 18407.76,5238.6 18371.79,5238.6 18371.79,5202.67 18335.81,5202.67 18335.81,5166.74 18299.84,5166.74 18299.84,5130.8 18263.87,5130.8 18263.87,5094.87 18227.89,5094.87 18227.89,5058.98 18191.92,5058.98 18191.92,5023.05 18155.94,5023.05 18155.94,4987.12 18119.97,4987.12 18119.97,4951.19 18084,4951.19 18084,4915.26 18048.02,4915.26 18048.02,4879.33 18012.05,4879.33 18012.05,4843.39 17976.07,4843.39 17976.07,4807.46 17940.14,4807.46 17940.14,4771.53 17904.17,4771.53 17904.17,4735.6 17868.2,4735.6 17868.2,4699.67 17832.22,4699.67 17832.22,4663.74 17796.25,4663.74 17796.25,4627.81 17760.27,4627.81 17760.27,4591.87 17724.3,4591.87 17724.3,4555.98 17688.33,4555.98 17688.33,4520.05 17652.35,4520.05 17652.35,4484.12 17616.38,4484.12 17616.38,4448.19 17544.43,4448.19 17544.43,4412.26 17508.46,4412.26 17508.46,4376.33 17436.51,4376.33 17436.51,4340.4 17400.53,4340.4 17400.53,4304.46 17292.65,4304.46 17292.65,4268.53 17220.71,4268.53 17220.71,4232.6 17076.81,4232.6 17076.81,4196.67 13983.26,4196.67 13983.26,4268.53 "/>
+   <polygon class="fil7" points="19846.64,7250.6 19810.66,7250.6 19810.66,7178.73 19774.69,7178.73 19774.69,7142.84 19738.72,7142.84 19738.72,7070.98 19702.74,7070.98 19702.74,7035.05 19666.77,7035.05 19666.77,6999.12 19594.82,6999.12 19594.82,6963.19 19522.87,6963.19 19522.87,6927.25 19450.92,6927.25 19450.92,6891.32 19343,6891.32 19343,6855.39 18983.3,6855.39 18983.3,6927.25 19019.28,6927.25 19019.28,6999.12 19055.25,6999.12 19055.25,9657.84 19846.64,9657.84 "/>
+   <polygon class="fil8" points="10853.73,14544.1 10817.76,14544.1 10817.76,14723.76 10853.73,14723.76 10853.73,14759.69 18155.94,14759.69 18155.94,14723.76 18191.92,14723.76 18191.92,14544.1 18155.94,14544.1 18155.94,14508.17 10853.73,14508.17 "/>
+   <polygon class="fil9" points="10853.73,15406.42 10817.76,15406.42 10817.76,15586.03 10853.73,15586.03 10853.73,15621.96 18155.94,15621.96 18155.94,15586.03 18191.92,15586.03 18191.92,15406.42 18155.94,15406.42 18155.94,15370.49 10853.73,15370.49 "/>
+   <polygon class="fil3" points="17184.73,4843.39 17184.73,4555.98 17148.76,4555.98 17148.76,4484.12 17112.78,4484.12 17112.78,4412.26 17076.81,4412.26 17076.81,4376.33 17040.84,4376.33 17040.84,4304.46 17004.86,4304.46 17004.86,4268.53 16932.91,4268.53 16932.91,4232.6 14019.23,4232.6 14019.23,4304.46 14055.2,4304.46 14055.2,4340.4 14091.18,4340.4 14091.18,4412.26 14127.11,4412.26 14127.11,4448.19 14163.08,4448.19 14163.08,4520.05 14199.06,4520.05 14199.06,4555.98 14235.03,4555.98 14235.03,4591.87 14271.01,4591.87 14271.01,4663.74 14306.98,4663.74 14306.98,4699.67 14342.95,4699.67 14342.95,4735.6 14378.93,4735.6 14378.93,4807.46 14414.9,4807.46 14414.9,4843.39 "/>
+   <polygon class="fil10" points="19055.25,7214.66 19055.25,6999.12 19019.28,6999.12 19019.28,6927.25 18983.3,6927.25 18983.3,6855.39 17760.27,6855.39 17760.27,6819.46 17688.33,6819.46 17688.33,6783.53 17616.38,6783.53 17616.38,6747.6 17544.43,6747.6 17544.43,6711.66 17508.46,6711.66 17508.46,6675.73 17436.51,6675.73 17436.51,6639.84 17400.53,6639.84 17400.53,6567.98 17364.56,6567.98 17364.56,6532.05 17328.63,6532.05 17328.63,6460.19 17292.65,6460.19 17292.65,6424.25 17256.68,6424.25 17256.68,6280.53 17220.71,6280.53 17220.71,6172.73 17184.73,6172.73 17184.73,5705.67 10565.94,5705.67 10565.94,5741.6 16860.97,5741.6 16860.97,6424.25 16896.94,6424.25 16896.94,6567.98 16932.91,6567.98 16932.91,6639.84 16968.89,6639.84 16968.89,6711.66 17004.86,6711.66 17004.86,6783.53 17040.84,6783.53 17040.84,6855.39 17076.81,6855.39 17076.81,6891.32 17112.78,6891.32 17112.78,6927.25 17148.76,6927.25 17148.76,6963.19 17184.73,6963.19 17184.73,6999.12 17220.71,6999.12 17220.71,7035.05 17292.65,7035.05 17292.65,7070.98 17328.63,7070.98 17328.63,7106.91 17400.53,7106.91 17400.53,7142.84 17508.46,7142.84 17508.46,7178.73 17652.35,7178.73 17652.35,7214.66 "/>
+   <polygon class="fil11" points="10853.73,6532.05 10817.76,6532.05 10817.76,6711.66 10853.73,6711.66 10853.73,6747.6 15925.73,6747.6 15925.73,6711.66 15961.7,6711.66 15961.7,6532.05 15925.73,6532.05 15925.73,6496.12 10853.73,6496.12 "/>
+   <polygon class="fil9" points="14306.98,7573.98 14342.95,7573.98 14342.95,7609.91 18155.94,7609.91 18155.94,7573.98 18191.92,7573.98 18191.92,7394.32 18155.94,7394.32 18155.94,7358.39 14306.98,7358.39 "/>
+   <polygon class="fil12" points="15134.34,13717.76 15062.39,13717.76 15062.39,13933.35 18119.97,13933.35 18119.97,13897.42 18155.94,13897.42 18155.94,13861.49 18191.92,13861.49 18191.92,13717.76 18119.97,13717.76 18119.97,13681.83 15134.34,13681.83 "/>
+   <polygon class="fil13" points="10853.73,13717.76 10817.76,13717.76 10817.76,13861.49 10853.73,13861.49 10853.73,13897.42 10889.7,13897.42 10889.7,13933.35 13695.46,13933.35 13695.46,13897.42 13731.44,13897.42 13731.44,13753.69 13695.46,13753.69 13695.46,13717.76 13659.49,13717.76 13659.49,13681.83 10853.73,13681.83 "/>
+   <polygon class="fil8" points="10853.73,12855.49 10817.76,12855.49 10817.76,13035.11 10853.73,13035.11 10853.73,13071.04 13371.74,13071.04 13371.74,13035.11 13407.71,13035.11 13407.71,12855.49 13371.74,12855.49 13371.74,12819.56 10853.73,12819.56 "/>
+   <polygon class="fil9" points="14522.82,8292.53 14558.8,8292.53 14558.8,8436.25 16932.91,8436.25 16932.91,8400.32 16968.89,8400.32 16968.89,8256.59 16932.91,8256.59 16932.91,8220.66 16896.94,8220.66 16896.94,8184.77 14522.82,8184.77 "/>
+   <polygon class="fil12" points="10853.73,7394.32 10817.76,7394.32 10817.76,7573.98 10853.73,7573.98 10853.73,7609.91 12796.2,7609.91 12796.2,7573.98 12832.13,7573.98 12832.13,7502.12 12868.1,7502.12 12868.1,7358.39 10853.73,7358.39 "/>
+   <polygon class="fil11" points="10853.73,8220.66 10817.76,8220.66 10817.76,8400.32 10853.73,8400.32 10853.73,8436.25 12544.38,8436.25 12544.38,8400.32 12580.35,8400.32 12580.35,8292.53 12616.33,8292.53 12616.33,8184.77 10853.73,8184.77 "/>
+   <polygon class="fil8" points="15314.21,13035.11 15350.18,13035.11 15350.18,13071.04 16896.94,13071.04 16896.94,13035.11 16932.91,13035.11 16932.91,12855.49 15314.21,12855.49 "/>
+   <polygon class="fil7" points="14378.93,11526.11 14414.9,11526.11 14414.9,11562.04 14450.88,11562.04 14450.88,11454.25 14486.85,11454.25 14486.85,11346.49 14522.82,11346.49 14522.82,11238.7 14558.8,11238.7 14558.8,11130.9 14594.77,11130.9 14594.77,11023.11 14630.75,11023.11 14630.75,10915.32 14666.72,10915.32 14666.72,10735.7 14630.75,10735.7 14630.75,10807.56 14594.77,10807.56 14594.77,10735.7 14558.8,10735.7 14558.8,10771.63 14522.82,10771.63 14522.82,10735.7 14378.93,10735.7 14378.93,10699.77 14342.95,10699.77 14342.95,10663.84 14199.06,10663.84 14199.06,10843.45 14235.03,10843.45 14235.03,11023.11 14271.01,11023.11 14271.01,11166.84 14306.98,11166.84 14306.98,11310.56 14342.95,11310.56 14342.95,11382.38 14378.93,11382.38 "/>
+   <polygon class="fil14" points="15242.26,10017.11 17364.56,10017.11 17364.56,8615.91 17328.63,8615.91 17328.63,9981.18 15242.26,9981.18 "/>
+   <polygon class="fil14" points="20206.34,11382.38 18731.49,11382.38 18731.49,12783.63 18767.46,12783.63 18767.46,11418.31 20206.34,11418.31 "/>
+   <polygon class="fil15" points="13443.69,9729.7 13479.62,9729.7 13479.62,9765.63 13515.59,9765.63 13515.59,9729.7 13587.54,9729.7 13587.54,9765.63 13623.52,9765.63 13623.52,9801.52 13659.49,9801.52 13659.49,9693.77 13623.52,9693.77 13623.52,9585.98 13587.54,9585.98 13587.54,9514.11 13515.59,9514.11 13515.59,9550.04 13479.62,9550.04 13479.62,9657.84 13443.69,9657.84 "/>
+   <polygon class="fil16" points="13587.54,9514.11 13587.54,9406.32 13515.59,9406.32 13515.59,9514.11 "/>
+   <polygon class="fil17" points="12292.56,10268.63 12292.56,10160.84 12220.61,10160.84 12220.61,10196.77 12256.59,10196.77 12256.59,10268.63 "/>
+   <polygon class="fil18" points="12832.13,11418.31 12832.13,11454.25 12904.08,11454.25 12904.08,11382.38 12868.1,11382.38 12868.1,11418.31 "/>
+   <polygon class="fil19" points="14450.88,11562.04 14414.9,11562.04 14414.9,11526.11 14378.93,11526.11 14378.93,11597.97 14450.88,11597.97 "/>
+   <polygon class="fil14" points="14522.82,9657.84 14486.85,9657.84 14486.85,9621.91 14450.88,9621.91 14450.88,9693.77 14522.82,9693.77 "/>
+   <polygon class="fil14" points="12652.3,9550.04 12616.33,9550.04 12616.33,9514.11 12580.35,9514.11 12580.35,9585.98 12652.3,9585.98 "/>
+  </g>
+ </g>
+</svg>
+      <span>RekamMedis<small>rekammedis.web.id</small></span>
+    </a>
+    <nav class="nav-links" id="navlinks" aria-label="Navigasi utama">
+      <a href="#alur">Alur Kerja</a>
+      <a href="#modul">Modul</a>
+      <a href="#keamanan">Keamanan</a>
+      <a href="#status">Status &amp; Roadmap</a>
+      <a href="#faq">FAQ</a>
+      <a href="/app/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2"/></svg>Login</a>
+      <a class="btn btn-sky btn-app" href="/app/" target="_blank" rel="noopener">Buka Aplikasi
+        <span class="chip" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
+      </a>
+    </nav>
+    <button class="menu-btn" id="menubtn" aria-label="Buka menu" aria-expanded="false">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="atas">
+<!-- ================= HERO ================= -->
+<div class="hero" id="hero">
+  <div class="hero-glow"></div>
+  <div class="blob b1" aria-hidden="true"></div>
+  <div class="blob b2" aria-hidden="true"></div>
+  <div class="spot" aria-hidden="true"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Dari pendaftaran sampai kasir, <span class="hl">satu alur</span> — tanpa kertas, tanpa pindah aplikasi.</h1>
+      <p class="lead">RekamMedis.web.id adalah sistem rekam medis elektronik untuk klinik: pasien terdaftar sekali, lalu datanya mengalir ke antrian poli, pemeriksaan SOAP, resep, farmasi, laboratorium, radiologi, dan pembayaran. Setiap langkah tercatat siapa yang mengerjakan dan kapan.</p>
+      <div class="hero-cta">
+        <a class="btn btn-sky" href="/app/" target="_blank" rel="noopener">Lihat Demo Langsung
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn btn-ghost" href="#alur">Lihat Alur Kerja</a>
+      </div>
+      <div class="hero-facts">
+        <div><b>11 modul</b><span>saling terhubung</span></div>
+        <div><b>5 poli</b><span>umum s.d. gigi &amp; mulut</span></div>
+        <div><b>SOAP + ICD</b><span>format pencatatan klinis</span></div>
+      </div>
+    </div>
+
+    <div class="appwin" role="img" aria-label="Ilustrasi antarmuka aplikasi RekamMedis.web.id: daftar antrian pasien dan grafik tanda vital">
+      <div class="appwin-bar"><i></i><i></i><i></i><span class="url">rekammedis.web.id — Dashboard</span></div>
+      <div class="apptost" id="apptost" aria-hidden="true">
+        <span class="ticon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M10.3 21a2 2 0 0 0 3.4 0"/></svg></span>
+        <span><b id="tost-t">Resep Baru Masuk dari Poli</b><small id="tost-d">Resep untuk RM-00412 dari Poli Umum</small></span>
+      </div>
+      <div class="appwin-body">
+        <aside class="appwin-side" aria-hidden="true">
+          <div class="mi on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.2 3-5 6-5s5.4 1.8 6 5M16 4.5a3.5 3.5 0 0 1 0 7M21 20c-.3-2.3-1.4-3.9-3-4.6"/></svg>Data Pasien</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Pemeriksaan</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20.5a5 5 0 0 1-7-7l7-7a5 5 0 1 1 7 7l-7 7Z"/><path d="m7 10 7 7"/></svg>Resep Digital</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M5 7v13h14V7M9.5 20v-5h5v5"/></svg>Farmasi &amp; Stok</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3h4M10 3v6L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9V3"/></svg>Laboratorium</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 12h4l2.5-4 4 8L16 12h5"/></svg>Radiologi</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Jadwal Dokter</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6.5 9.5h.01M17.5 15.5h.01"/></svg>Kasir</div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2" transform="translate(-1 0)"/></svg>Laporan</div>
+        </aside>
+        <div class="appwin-main">
+          <h4>Antrian Hari Ini</h4>
+          <p class="sub">Poli Umum · Poli Penyakit Dalam · Poli Gigi &amp; Mulut</p>
+          <div class="qrow" data-qrow>
+            <span class="qn">A-014</span>
+            <div class="qp"><b>Sari Wulandari</b><span>RM-00412 · Poli Umum · BPJS</span></div>
+            <span class="pill wait" data-pill>Menunggu</span>
+          </div>
+          <div class="qrow" data-qrow>
+            <span class="qn">B-007</span>
+            <div class="qp"><b>Bambang Sutrisno</b><span>RM-00198 · Penyakit Dalam · Umum</span></div>
+            <span class="pill wait" data-pill>Menunggu</span>
+          </div>
+          <div class="qrow" data-qrow>
+            <span class="qn">C-003</span>
+            <div class="qp"><b>Dewi Anggraini</b><span>RM-00355 · Gigi &amp; Mulut · BPJS</span></div>
+            <span class="pill wait" data-pill>Menunggu</span>
+          </div>
+          <div class="vital" id="vitalbox">
+            <div class="vh"><span>Tanda vital pasien terakhir</span><b>120/80 · 72 bpm · 36,6°C</b></div>
+            <svg viewBox="0 0 300 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 26 L34 26 L44 12 L54 34 L62 26 L110 26 L120 8 L130 38 L138 26 L190 26 L200 14 L210 32 L218 26 L300 26"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ecg" aria-hidden="true">
+    <svg viewBox="0 0 1440 74" preserveAspectRatio="none">
+      <path class="base" d="M0 40 H180 L200 18 L220 58 L232 40 H470 L490 10 L512 66 L524 40 H760 L780 22 L800 54 L812 40 H1050 L1070 14 L1092 62 L1104 40 H1440"/>
+      <path class="trace" d="M0 40 H180 L200 18 L220 58 L232 40 H470 L490 10 L512 66 L524 40 H760 L780 22 L800 54 L812 40 H1050 L1070 14 L1092 62 L1104 40 H1440"/>
+      <circle r="9" fill="#84e488" opacity=".28"><animateMotion dur="5.2s" repeatCount="indefinite" path="M0 40 H180 L200 18 L220 58 L232 40 H470 L490 10 L512 66 L524 40 H760 L780 22 L800 54 L812 40 H1050 L1070 14 L1092 62 L1104 40 H1440"/></circle>
+      <circle r="3.6" fill="#84e488"><animateMotion dur="5.2s" repeatCount="indefinite" path="M0 40 H180 L200 18 L220 58 L232 40 H470 L490 10 L512 66 L524 40 H760 L780 22 L800 54 L812 40 H1050 L1070 14 L1092 62 L1104 40 H1440"/></circle>
+    </svg>
+  </div>
+  <p class="hero-note">ilustrasi antarmuka — nama pasien pada contoh di atas adalah data fiktif</p>
+</div>
+
+<!-- ================= MARQUEE ================= -->
+<div class="marquee" aria-hidden="true">
+  <div class="mq-track" id="mqtrack"></div>
+</div>
+
+<!-- ================= ALUR KERJA ================= -->
+<section id="alur">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Satu kunjungan, lima tahap, nol pencatatan ulang.</h2>
+      <p>Di klinik yang masih memakai kertas, data pasien yang sama ditulis ulang di loket, di ruang periksa, di apotek, dan di kasir. Di sini data ditulis sekali di tahap pertama, lalu dibaca oleh semua tahap berikutnya. Klik tiap tahap untuk melihat apa yang terjadi di dalamnya.</p>
+    </div>
+    <div class="flow rv d1" role="tablist" aria-label="Tahap alur kunjungan">
+      <button role="tab" aria-selected="true" class="on" data-step="0">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.2 3-5 6-5s5.4 1.8 6 5M19 8v6M16 11h6"/></svg></span>
+        <b>Registrasi</b><span>Identitas &amp; penjamin pasien</span>
+      </button>
+      <button role="tab" aria-selected="false" data-step="1">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M4 12h10M4 19h13"/></svg></span>
+        <b>Antrian Poli</b><span>Nomor &amp; pemanggilan</span>
+      </button>
+      <button role="tab" aria-selected="false" data-step="2">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+        <b>Pemeriksaan</b><span>SOAP &amp; diagnosis</span>
+      </button>
+      <button role="tab" aria-selected="false" data-step="3">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.5 20.5a5 5 0 0 1-7-7l7-7a5 5 0 1 1 7 7l-7 7ZM7 10l7 7M4 7v13"/></svg></span>
+        <b>Penunjang</b><span>Resep, lab, radiologi</span>
+      </button>
+      <button role="tab" aria-selected="false" data-step="4">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/></svg></span>
+        <b>Kasir</b><span>Invoice &amp; pelunasan</span>
+      </button>
+    </div>
+    <div class="flow-panel rv d2" id="flowpanel" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ================= MODUL ================= -->
+<section id="modul" style="background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Sebelas modul, masing-masing mengerjakan satu pekerjaan dengan tuntas.</h2>
+      <p>Bukan daftar fitur untuk brosur — setiap modul di bawah ini adalah modul yang benar-benar berjalan di aplikasi saat ini, dengan fungsi persis seperti yang tertulis. Pilih modul untuk melihat cara kerjanya.</p>
+    </div>
+    <div class="explorer rv d1">
+      <div class="modlist" id="modlist" role="tablist" aria-label="Daftar modul"></div>
+      <div class="moddetail" id="moddetail" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= KEAMANAN ================= -->
+<section id="keamanan" class="dark">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Setiap perubahan pada data pasien meninggalkan jejak.</h2>
+      <p>Rekam medis adalah dokumen hukum. Karena itu pertanyaan "siapa mengubah apa, dan kapan" harus bisa dijawab dari sistem — bukan dari ingatan petugas.</p>
+    </div>
+    <div class="sec-grid">
+      <div class="auditlog rv d1" id="auditlog" aria-label="Contoh catatan jejak audit">
+        <div class="al-head"><b>Jejak Audit Aktivitas</b><span>● TEREKAM</span></div>
+        <div class="al-row"><time>08.12</time><span class="mod">Antrian</span><p>Memanggil antrian A-014 — Sari Wulandari ke Poli Umum</p></div>
+        <div class="al-row"><time>08.19</time><span class="mod">Rekam Medis</span><p>Simpan final pemeriksaan SOAP RM-00412 oleh dokter pemeriksa</p></div>
+        <div class="al-row"><time>08.21</time><span class="mod">Resep</span><p>Pembuatan resep untuk RM-00412 dengan 3 item obat</p></div>
+        <div class="al-row"><time>08.34</time><span class="mod">Farmasi</span><p>Penyesuaian stok obat — stok keluar 1 strip untuk resep RM-00412</p></div>
+        <div class="al-row"><time>08.41</time><span class="mod">Kasir</span><p>Pembayaran tagihan INV-2026-0117 sebesar Rp185.000</p></div>
+        <div class="al-row"><time>08.41</time><span class="mod">Kasir</span><p>Status invoice INV-2026-0117 diubah menjadi Lunas</p></div>
+      </div>
+      <div class="sec-points">
+        <div class="rv">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6Z"/><path d="m9 12 2 2 4-4"/></svg>Hak akses mengikuti peran</h3>
+          <p>Petugas pendaftaran, dokter, apoteker, petugas lab, dan kasir masuk dengan peran berbeda dan melihat menu sesuai tugasnya. Peran dicatat pada setiap aktivitas, sehingga jejak audit selalu menyebut pelakunya.</p>
+        </div>
+        <div class="rv d1">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Draft tidak mengunci dokter</h3>
+          <p>Pemeriksaan bisa disimpan sebagai draft lalu difinalkan setelah hasil penunjang keluar. Status draft dan final dibedakan tegas — yang dibaca kasir dan farmasi hanya data yang sudah final.</p>
+        </div>
+        <div class="rv d2">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Backup yang bisa diunduh kapan saja</h3>
+          <p>Seluruh basis data dapat diunduh sebagai file backup dari menu Pengaturan. Klinik tidak dikunci ke dalam sistem — data pasien adalah milik faskes, dan bisa dibawa keluar.</p>
+        </div>
+        <div class="rv d3">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>Peringatan alergi sebelum obat diserahkan</h3>
+          <p>Saat dokter meresepkan obat yang pernah tercatat sebagai alergi pasien, sistem menampilkan peringatan sebelum resep diteruskan ke farmasi. Satu peringatan ini mencegah kejadian yang tidak bisa ditarik kembali.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STATUS & ROADMAP ================= -->
+<section id="status">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Apa yang sudah berjalan, dan apa yang belum. Tertulis apa adanya.</h2>
+      <p>Sistem rekam medis menyangkut keselamatan pasien dan kewajiban hukum faskes, jadi halaman ini tidak menjual integrasi yang belum ada. Daftar kanan adalah pekerjaan yang sedang disiapkan — dan akan dipindah ke daftar kiri hanya setelah benar-benar terhubung dan teruji.</p>
+    </div>
+    <div class="status-grid">
+      <div class="status-card rv">
+        <h3><span class="sdot"></span>Sudah berjalan di aplikasi</h3>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>11 modul klinis &amp; operasional dalam satu aplikasi</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Pencatatan SOAP dengan diagnosis berkode ICD</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Jejak audit &amp; notifikasi antar-peran</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Surat keterangan sakit, sehat, dan rujukan siap cetak</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Backup basis data dalam format JSON</li>
+        </ul>
+      </div>
+      <div class="status-card planned rv d1">
+        <h3><span class="sdot"></span>Sedang disiapkan</h3>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Integrasi SATUSEHAT Kemenkes (pertukaran data FHIR)</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Penyimpanan server terenkripsi &amp; backup otomatis</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Tanda tangan elektronik untuk finalisasi rekam medis</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Klaim &amp; penagihan BPJS terstruktur</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Pengingat jadwal kontrol via WhatsApp</li>
+        </ul>
+      </div>
+    </div>
+    <p class="status-note rv">Kerangka pencatatannya sendiri disusun mengikuti struktur rekam medis dalam <b>Permenkes No. 24 Tahun 2022</b> — identitas, anamnesis, pemeriksaan fisik dan penunjang, diagnosis, rencana penatalaksanaan, dan terapi tercatat sebagai data terstruktur, bukan teks bebas. Perlindungan data pasien mengikuti prinsip <b>UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi</b>, di mana data kesehatan termasuk data pribadi bersifat spesifik.</p>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section id="faq" style="padding-top:20px">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Pertanyaan yang biasanya diajukan klinik.</h2>
+    </div>
+    <div class="faq rv d1">
+      <details>
+        <summary>Apakah format pencatatannya mengikuti Permenkes No. 24 Tahun 2022?</summary>
+        <p>Struktur datanya mengikuti unsur wajib rekam medis rawat jalan dalam peraturan tersebut: identitas pasien, tanggal dan waktu, anamnesis, pemeriksaan fisik dan penunjang, diagnosis, rencana penatalaksanaan, dan pengobatan — dicatat dalam format SOAP terstruktur dengan kode ICD. Kewajiban interoperabilitas dengan SATUSEHAT masih dalam tahap penyiapan; status jujurnya tertulis di bagian Status &amp; Roadmap di atas, bukan disembunyikan.</p>
+      </details>
+      <details>
+        <summary>Poli apa saja yang didukung?</summary>
+        <p>Lima poli yang berjalan saat ini: Poli Umum, Poli Penyakit Dalam, Poli Bedah, Poli Gigi &amp; Mulut, serta Poli Gizi &amp; Spesialis. Setiap poli punya antriannya sendiri dan bisa dilayani dokter berbeda pada jadwal yang berbeda.</p>
+      </details>
+      <details>
+        <summary>Bagaimana alur pasien BPJS ditangani?</summary>
+        <p>Jenis penjamin dipilih saat registrasi — umum atau BPJS — dan tercatat mengikuti pasien sampai invoice, sehingga laporan dapat memisahkan kunjungan dan pendapatan menurut penjamin. Penagihan kolektif terstruktur ke BPJS masih dalam roadmap; saat ini invoice BPJS diterbitkan per kunjungan seperti invoice lainnya.</p>
+      </details>
+      <details>
+        <summary>Apakah dokter bisa menyelesaikan catatan setelah pasien pulang?</summary>
+        <p>Bisa. Pemeriksaan disimpan sebagai draft selama belum difinalkan, dan riwayat kunjungan, diagnosa, serta obat pasien tetap dapat dibuka dari profil pasien. Setelah difinalkan, catatan terkunci sebagai dokumen kunjungan dan setiap aktivitas atasnya masuk jejak audit.</p>
+      </details>
+      <details>
+        <summary>Surat apa saja yang bisa diterbitkan?</summary>
+        <p>Tiga dokumen resmi yang berjalan saat ini: Surat Keterangan Sakit (dengan jumlah hari istirahat), Surat Keterangan Berbadan Sehat, dan Surat Rujukan — semuanya terisi otomatis dari data kunjungan pasien dan siap dicetak dari aplikasi.</p>
+      </details>
+      <details>
+        <summary>Kalau klinik ingin berhenti memakai sistem ini, bagaimana data pasiennya?</summary>
+        <p>Data dapat diunduh sebagai file backup JSON dari menu Pengaturan kapan saja, tanpa perlu menghubungi siapa pun. Data pasien adalah milik faskes — sistem tidak menahannya.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="cta rv">
+      <div class="blob b3" aria-hidden="true"></div>
+      <div class="blob b4" aria-hidden="true"></div>
+      <h2>Coba alurnya sendiri. Sepuluh menit cukup untuk menilai.</h2>
+      <p>Demo aplikasi berjalan penuh: daftarkan pasien contoh, panggil antriannya, isi pemeriksaan, dan lihat invoice-nya terbentuk di kasir. Tidak perlu kartu kredit, tidak perlu presentasi penjualan.</p>
+      <div class="hero-cta">
+        <a class="btn btn-sky" href="/app/" target="_blank" rel="noopener">Buka Demo Aplikasi
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn btn-ghost" href="#modul">Pelajari Modulnya</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <a class="brand" href="#atas">
+        <!-- Creator: CorelDRAW 2026 -->
+<svg class="brand-logo foot" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="1169" height="1411" version="1.0" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="8940 3440 11690 14110"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .fil5 {fill:#136C8C}
+    .fil3 {fill:#1B8B93}
+    .fil7 {fill:#23938D}
+    .fil15 {fill:#36978B}
+    .fil18 {fill:#73C5B4}
+    .fil17 {fill:#7ABEC3}
+    .fil16 {fill:#87C4BC}
+    .fil14 {fill:#98D2D1}
+    .fil19 {fill:#A2BACA}
+    .fil13 {fill:#BCCBDB}
+    .fil12 {fill:#BDCDDA}
+    .fil8 {fill:#BECEDC}
+    .fil9 {fill:#C1CEDD}
+    .fil11 {fill:#C1D1DE}
+    .fil10 {fill:#CAD4DD}
+    .fil0 {fill:#E4EDF5}
+    .fil1 {fill:white}
+    .fil2 {fill:url(#id0)}
+    .fil4 {fill:url(#id1)}
+    .fil6 {fill:url(#id2)}
+   ]]>
+  </style>
+  <linearGradient id="id0" gradientUnits="userSpaceOnUse" x1="9306.93" y1="14454.32" x2="19846.64" y2="14454.32">
+   <stop offset="0" style="stop-opacity:1; stop-color:#102D64"/>
+   <stop offset="1" style="stop-opacity:1; stop-color:#226881"/>
+  </linearGradient>
+  <linearGradient id="id1" gradientUnits="userSpaceOnUse" x1="9306.93" y1="6999.12" x2="17184.73" y2="6999.12">
+   <stop offset="0" style="stop-opacity:1; stop-color:#153C71"/>
+   <stop offset="1" style="stop-opacity:1; stop-color:#187B98"/>
+  </linearGradient>
+  <linearGradient id="id2" gradientUnits="userSpaceOnUse" x1="17390.55" y1="6864.52" x2="17838.17" y2="5629.94">
+   <stop offset="0" style="stop-opacity:1; stop-color:#267A64"/>
+   <stop offset="1" style="stop-opacity:1; stop-color:#3AB892"/>
+  </linearGradient>
+ </defs>
+ <g id="Layer_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_1573199620816">
+   <path class="fil0" d="M10817.76 15406.42l35.97 0 0 -35.93 7302.21 0 0 35.93 35.98 0 0 179.61 -35.98 0 0 35.93 -7302.21 0 0 -35.93 -35.97 0 0 -179.61zm0 -862.32l35.97 0 0 -35.93 7302.21 0 0 35.93 35.98 0 0 179.66 -35.98 0 0 35.93 -7302.21 0 0 -35.93 -35.97 0 0 -179.66zm7338.18 -646.68l-35.97 0 0 35.93 -3057.58 0 0 -215.59 71.95 0 0 -35.93 2985.63 0 0 35.93 71.95 0 0 143.73 -35.98 0 0 35.93zm-7338.18 -179.66l35.97 0 0 -35.93 2805.76 0 0 35.93 35.97 0 0 35.93 35.98 0 0 143.73 -35.98 0 0 35.93 -2805.76 0 0 -35.93 -35.97 0 0 -35.93 -35.97 0 0 -143.73zm4496.45 -862.27l1618.7 0 0 179.62 -35.97 0 0 35.93 -1546.76 0 0 -35.93 -35.97 0 0 -179.62zm-4496.45 0l35.97 0 0 -35.93 2518.01 0 0 35.93 35.97 0 0 179.62 -35.97 0 0 35.93 -2518.01 0 0 -35.93 -35.97 0 0 -179.62zm-1510.83 -1652.72l0 35.93 35.98 0 0 251.48 -71.95 0 0 71.86 -35.98 0 0 35.93 -35.97 0 0 35.93 35.97 0 0 574.87 35.98 0 0 3952.13 35.97 0 0 -4562.93 791.39 0 0 4491.06 35.97 0 0 71.87 35.98 0 0 71.86 35.97 0 0 35.93 35.97 0 0 35.93 35.94 0 0 35.93 35.97 0 0 35.93 35.97 0 0 35.94 71.95 0 0 35.93 107.92 0 0 35.93 8129.58 0 0 -35.93 71.95 0 0 -35.93 71.94 0 0 -35.94 35.98 0 0 -35.93 71.95 0 0 -71.86 35.97 0 0 -35.93 35.97 0 0 -71.86 35.98 0 0 -107.76 35.97 0 0 -4275.51 791.39 0 0 4419.2 35.97 0 0 -4455.13 -863.33 0 0 2658.72 -71.95 0 0 -71.86 -35.97 0 0 -35.93 35.97 0 0 -251.53 -35.97 0 0 -35.93 35.97 0 0 -179.61 -35.97 0 0 -35.93 -71.95 0 0 35.93 -35.98 0 0 -35.93 -107.92 0 0 -71.87 -71.95 0 0 -35.93 -35.93 0 0 -215.59 35.93 0 0 -35.89 -35.93 0 0 -143.72 -71.95 0 0 -35.93 -35.97 0 0 -107.8 -35.97 0 0 -35.93 -215.85 0 0 -35.93 -35.97 0 0 -35.93 359.74 0 0 -71.87 -1079.18 0 0 -35.89 -35.97 0 0 -35.93 -35.98 0 0 -35.93 -35.97 0 0 -1473.11 -1690.65 0 0 -35.89 -35.98 0 0 -71.86 -35.97 0 0 -143.73 -35.97 0 0 -107.79 -35.98 0 0 -71.86 -35.97 0 0 -179.62 -35.98 0 0 -71.86 -35.97 0 0 -107.8 -35.93 0 0 -107.79 -35.98 0 0 179.66 -143.89 0 0 179.61 35.97 0 0 71.87 35.98 0 0 179.65 35.97 0 0 71.87 35.97 0 0 107.79 35.98 0 0 143.68 -35.98 0 0 107.8 -35.97 0 0 107.79 -35.97 0 0 71.87 -35.98 0 0 179.61 -35.97 0 0 107.8 -35.98 0 0 107.79 -35.97 0 0 71.86 -35.97 0 0 143.73 -35.98 0 0 71.86 -35.97 0 0 107.76 -35.98 0 0 107.79 -35.97 0 0 107.79 -35.97 0 0 107.8 -35.98 0 0 179.61 -35.97 0 0 107.8 -35.98 0 0 107.79 -35.97 0 0 107.8 -35.93 0 0 107.79 -35.98 0 0 71.82 -35.97 0 0 143.73 -35.97 0 0 71.86 -35.98 0 0 35.93 -35.97 0 0 35.94 -35.98 0 0 35.93 -71.94 0 0 35.93 -143.9 0 0 -35.93 -71.95 0 0 -35.93 -35.97 0 0 -35.94 -35.98 0 0 -35.93 -35.97 0 0 -35.93 -35.93 0 0 -71.86 -35.98 0 0 -179.62 -35.97 0 0 -71.86 -35.97 0 0 -107.79 -35.98 0 0 -215.59 -35.97 0 0 -143.69 -35.98 0 0 -35.93 -35.97 0 0 -215.59 -35.97 0 0 -107.79 -35.98 0 0 -107.8 -35.97 0 0 -179.61 -35.98 0 0 -71.87 -35.97 0 0 -143.72 -35.97 0 0 -179.62 -35.98 0 0 -143.72 -35.97 0 0 -143.73 -35.98 0 0 -143.73 -35.97 0 0 -71.82 -35.93 0 0 71.82 -35.98 0 0 107.8 -35.97 0 0 107.79 -35.97 0 0 143.73 -35.98 0 0 107.75 -35.97 0 0 71.87 -35.98 0 0 71.86 -35.97 0 0 35.93 -35.97 0 0 35.93 -71.95 0 0 35.93 -215.85 0 0 -35.93 -71.9 0 0 -35.93 -35.97 0 0 -71.86 -35.98 0 0 -71.87 -35.97 0 0 -179.61 -35.98 0 0 -107.8 -35.97 0 0 -107.79 -35.98 0 0 -215.55 -35.97 0 0 -71.86 -35.97 0 0 -179.66 -35.98 0 0 -179.66 -35.97 0 0 -107.75 -35.98 0 0 -179.66 -35.97 0 0 -143.72 -35.97 0 0 -35.93 -35.98 0 0 -143.69 -35.97 0 0 -71.86 -35.98 0 0 71.86 -35.93 0 0 107.75 -35.97 0 0 107.8 -35.97 0 0 71.86 -35.98 0 0 107.8 -35.97 0 0 107.79 -35.98 0 0 71.82 -35.97 0 0 107.8 -35.97 0 0 107.79 -35.98 0 0 71.86 -35.97 0 0 71.87 -2553.99 0z"/>
+   <rect class="fil1" x="9486.78" y="5263.81" width="9933.71" height="11400.11" rx="1958.01" ry="1958.01"/>
+   <polygon class="fil2" points="10601.91,16484.28 10529.96,16484.28 10529.96,16448.35 10422.04,16448.35 10422.04,16412.42 10350.09,16412.42 10350.09,16376.48 10314.12,16376.48 10314.12,16340.55 10278.15,16340.55 10278.15,16304.62 10242.21,16304.62 10242.21,16268.69 10206.24,16268.69 10206.24,16232.76 10170.27,16232.76 10170.27,16160.9 10134.29,16160.9 10134.29,16089.03 10098.32,16089.03 10098.32,11597.97 9306.93,11597.97 9306.93,16304.62 9342.91,16304.62 9342.91,16412.42 9378.88,16412.42 9378.88,16520.21 9414.85,16520.21 9414.85,16627.96 9450.83,16627.96 9450.83,16663.89 9486.8,16663.89 9486.8,16735.76 9522.78,16735.76 9522.78,16807.62 9558.75,16807.62 9558.75,16843.55 9594.72,16843.55 9594.72,16879.48 9630.66,16879.48 9630.66,16915.42 9666.63,16915.42 9666.63,16951.35 9702.6,16951.35 9702.6,16987.28 9738.58,16987.28 9738.58,17023.21 9774.55,17023.21 9774.55,17059.14 9846.5,17059.14 9846.5,17095.07 9882.47,17095.07 9882.47,17130.96 9954.42,17130.96 9954.42,17166.89 10026.37,17166.89 10026.37,17202.83 10098.32,17202.83 10098.32,17238.76 10206.24,17238.76 10206.24,17274.69 10350.09,17274.69 10350.09,17310.62 18731.49,17310.62 18731.49,17274.69 18947.33,17274.69 18947.33,17238.76 19019.28,17238.76 19019.28,17202.83 19127.2,17202.83 19127.2,17166.89 19199.15,17166.89 19199.15,17130.96 19235.12,17130.96 19235.12,17095.07 19307.03,17095.07 19307.03,17059.14 19343,17059.14 19343,17023.21 19414.95,17023.21 19414.95,16987.28 19450.92,16987.28 19450.92,16951.35 19486.9,16951.35 19486.9,16915.42 19522.87,16915.42 19522.87,16879.48 19558.85,16879.48 19558.85,16843.55 19594.82,16843.55 19594.82,16771.69 19630.79,16771.69 19630.79,16735.76 19666.77,16735.76 19666.77,16663.89 19702.74,16663.89 19702.74,16592.03 19738.72,16592.03 19738.72,16520.21 19774.69,16520.21 19774.69,16448.35 19810.66,16448.35 19810.66,16340.55 19846.64,16340.55 19846.64,15011.21 19846.64,11777.63 19055.25,11777.63 19055.25,15945.35 19055.25,16053.14 19019.28,16053.14 19019.28,16160.9 18983.3,16160.9 18983.3,16232.76 18947.33,16232.76 18947.33,16268.69 18911.36,16268.69 18911.36,16340.55 18839.41,16340.55 18839.41,16376.48 18803.43,16376.48 18803.43,16412.42 18731.49,16412.42 18731.49,16448.35 18659.54,16448.35 18659.54,16484.28 "/>
+   <polygon class="fil3" points="9306.93,11202.77 11860.92,11202.77 11860.92,11130.9 11896.89,11130.9 11896.89,11059.04 11932.87,11059.04 11932.87,10951.25 11968.84,10951.25 11968.84,10843.45 12004.81,10843.45 12004.81,10771.63 12040.79,10771.63 12040.79,10663.84 12076.76,10663.84 12076.76,10556.04 12112.74,10556.04 12112.74,10484.18 12148.71,10484.18 12148.71,10376.38 12184.68,10376.38 12184.68,10268.63 12220.61,10268.63 12220.61,10160.84 12292.56,10160.84 12292.56,10412.32 12328.54,10412.32 12328.54,10448.25 12364.51,10448.25 12364.51,10591.97 12400.48,10591.97 12400.48,10771.63 12436.46,10771.63 12436.46,10879.38 12472.43,10879.38 12472.43,11059.04 12508.41,11059.04 12508.41,11238.7 12544.38,11238.7 12544.38,11310.56 12580.35,11310.56 12580.35,11526.11 12616.33,11526.11 12616.33,11633.9 12652.3,11633.9 12652.3,11741.7 12688.28,11741.7 12688.28,11921.31 12724.25,11921.31 12724.25,11993.18 12760.23,11993.18 12760.23,12065.04 12796.2,12065.04 12796.2,12100.97 12868.1,12100.97 12868.1,12136.9 13083.95,12136.9 13083.95,12100.97 13155.9,12100.97 13155.9,12065.04 13191.87,12065.04 13191.87,12029.11 13227.84,12029.11 13227.84,11957.25 13263.82,11957.25 13263.82,11885.38 13299.79,11885.38 13299.79,11777.63 13335.77,11777.63 13335.77,11633.9 13371.74,11633.9 13371.74,11526.11 13407.71,11526.11 13407.71,11418.31 13443.69,11418.31 13443.69,11346.49 13479.62,11346.49 13479.62,11418.31 13515.59,11418.31 13515.59,11562.04 13551.57,11562.04 13551.57,11705.77 13587.54,11705.77 13587.54,11849.49 13623.52,11849.49 13623.52,12029.11 13659.49,12029.11 13659.49,12172.83 13695.46,12172.83 13695.46,12244.7 13731.44,12244.7 13731.44,12424.31 13767.41,12424.31 13767.41,12532.11 13803.39,12532.11 13803.39,12639.9 13839.36,12639.9 13839.36,12855.49 13875.33,12855.49 13875.33,12891.42 13911.31,12891.42 13911.31,13035.11 13947.28,13035.11 13947.28,13250.7 13983.26,13250.7 13983.26,13358.49 14019.23,13358.49 14019.23,13430.35 14055.2,13430.35 14055.2,13609.97 14091.18,13609.97 14091.18,13681.83 14127.11,13681.83 14127.11,13717.76 14163.08,13717.76 14163.08,13753.69 14199.06,13753.69 14199.06,13789.63 14235.03,13789.63 14235.03,13825.56 14306.98,13825.56 14306.98,13861.49 14450.88,13861.49 14450.88,13825.56 14522.82,13825.56 14522.82,13789.63 14558.8,13789.63 14558.8,13753.69 14594.77,13753.69 14594.77,13717.76 14630.75,13717.76 14630.75,13645.9 14666.72,13645.9 14666.72,13502.17 14702.69,13502.17 14702.69,13430.35 14738.67,13430.35 14738.67,13322.56 14774.6,13322.56 14774.6,13214.76 14810.57,13214.76 14810.57,13106.97 14846.55,13106.97 14846.55,12999.17 14882.52,12999.17 14882.52,12819.56 14918.5,12819.56 14918.5,12711.76 14954.47,12711.76 14954.47,12603.97 14990.44,12603.97 14990.44,12496.18 15026.42,12496.18 15026.42,12388.42 15062.39,12388.42 15062.39,12316.56 15098.37,12316.56 15098.37,12172.83 15134.34,12172.83 15134.34,12100.97 15170.31,12100.97 15170.31,11993.18 15206.29,11993.18 15206.29,11885.38 15242.26,11885.38 15242.26,11705.77 15278.24,11705.77 15278.24,11633.9 15314.21,11633.9 15314.21,11526.11 15350.18,11526.11 15350.18,11418.31 15386.16,11418.31 15386.16,11274.63 15350.18,11274.63 15350.18,11166.84 15314.21,11166.84 15314.21,11094.97 15278.24,11094.97 15278.24,10915.32 15242.26,10915.32 15242.26,10843.45 15206.29,10843.45 15206.29,10663.84 15170.31,10663.84 15170.31,10591.97 15134.34,10591.97 15134.34,10448.25 15098.37,10448.25 15098.37,10556.04 15062.39,10556.04 15062.39,10663.84 15026.42,10663.84 15026.42,10735.7 14990.44,10735.7 14990.44,10843.45 14954.47,10843.45 14954.47,10987.18 14918.5,10987.18 14918.5,11094.97 14882.52,11094.97 14882.52,11202.77 14846.55,11202.77 14846.55,11310.56 14810.57,11310.56 14810.57,11382.38 14774.6,11382.38 14774.6,11490.18 14738.67,11490.18 14738.67,11597.97 14702.69,11597.97 14702.69,11705.77 14666.72,11705.77 14666.72,11813.56 14630.75,11813.56 14630.75,11957.25 14594.77,11957.25 14594.77,12100.97 14558.8,12100.97 14558.8,12136.9 14522.82,12136.9 14522.82,12280.63 14486.85,12280.63 14486.85,12424.31 14450.88,12424.31 14450.88,12496.18 14414.9,12496.18 14414.9,12603.97 14378.93,12603.97 14378.93,12496.18 14342.95,12496.18 14342.95,12460.24 14306.98,12460.24 14306.98,12316.56 14271.01,12316.56 14271.01,12172.83 14235.03,12172.83 14235.03,11957.25 14199.06,11957.25 14199.06,11813.56 14163.08,11813.56 14163.08,11705.77 14127.11,11705.77 14127.11,11526.11 14091.18,11526.11 14091.18,11454.25 14055.2,11454.25 14055.2,11310.56 14019.23,11310.56 14019.23,11202.77 13983.26,11202.77 13983.26,11059.04 13947.28,11059.04 13947.28,10879.38 13911.31,10879.38 13911.31,10771.63 13875.33,10771.63 13875.33,10556.04 13839.36,10556.04 13839.36,10484.18 13803.39,10484.18 13803.39,10340.45 13767.41,10340.45 13767.41,10160.84 13731.44,10160.84 13731.44,10053.04 13695.46,10053.04 13695.46,9873.39 13659.49,9873.39 13659.49,9801.52 13623.52,9801.52 13623.52,9765.63 13587.54,9765.63 13587.54,9729.7 13515.59,9729.7 13515.59,9765.63 13479.62,9765.63 13479.62,9729.7 13443.69,9729.7 13443.69,9837.45 13407.71,9837.45 13407.71,9909.32 13371.74,9909.32 13371.74,10053.04 13335.77,10053.04 13335.77,10160.84 13299.79,10160.84 13299.79,10304.56 13263.82,10304.56 13263.82,10376.38 13227.84,10376.38 13227.84,10556.04 13191.87,10556.04 13191.87,10663.84 13155.9,10663.84 13155.9,10771.63 13119.92,10771.63 13119.92,10807.56 13083.95,10807.56 13083.95,10915.32 13047.97,10915.32 13047.97,11059.04 13012,11059.04 13012,11166.84 12976.03,11166.84 12976.03,11238.7 12940.05,11238.7 12940.05,11346.49 12904.08,11346.49 12904.08,11454.25 12832.13,11454.25 12832.13,11274.63 12796.2,11274.63 12796.2,10951.25 12832.13,10951.25 12832.13,10807.56 12868.1,10807.56 12868.1,10663.84 12904.08,10663.84 12904.08,10520.11 12940.05,10520.11 12940.05,10412.32 12976.03,10412.32 12976.03,10268.63 13012,10268.63 13012,10160.84 13047.97,10160.84 13047.97,10017.11 13083.95,10017.11 13083.95,9909.32 13119.92,9909.32 13119.92,9801.52 13155.9,9801.52 13155.9,9657.84 13191.87,9657.84 13191.87,9514.11 13227.84,9514.11 13227.84,9442.25 13263.82,9442.25 13263.82,9334.45 13299.79,9334.45 13299.79,9154.84 13335.77,9154.84 13335.77,9047.04 13371.74,9047.04 13371.74,8903.32 13407.71,8903.32 13407.71,8795.52 13443.69,8795.52 13443.69,8687.77 13479.62,8687.77 13479.62,8579.98 13515.59,8579.98 13515.59,8400.32 13551.57,8400.32 13551.57,8364.39 13587.54,8364.39 13587.54,8472.18 13623.52,8472.18 13623.52,8615.91 13659.49,8615.91 13659.49,8723.7 13695.46,8723.7 13695.46,8867.39 13731.44,8867.39 13731.44,8975.18 13767.41,8975.18 13767.41,9154.84 13803.39,9154.84 13803.39,9298.52 13839.36,9298.52 13839.36,9478.18 13875.33,9478.18 13875.33,9621.91 13911.31,9621.91 13911.31,9693.77 13947.28,9693.77 13947.28,9801.52 13983.26,9801.52 13983.26,10017.11 14019.23,10017.11 14019.23,10088.97 14055.2,10088.97 14055.2,10304.56 14091.18,10304.56 14091.18,10412.32 14127.11,10412.32 14127.11,10591.97 14163.08,10591.97 14163.08,10699.77 14199.06,10699.77 14199.06,10663.84 14342.95,10663.84 14342.95,10699.77 14378.93,10699.77 14378.93,10735.7 14522.82,10735.7 14522.82,10771.63 14558.8,10771.63 14558.8,10735.7 14594.77,10735.7 14594.77,10807.56 14630.75,10807.56 14630.75,10735.7 14666.72,10735.7 14666.72,10807.56 14702.69,10807.56 14702.69,10663.84 14738.67,10663.84 14738.67,10556.04 14774.6,10556.04 14774.6,10448.25 14810.57,10448.25 14810.57,10340.45 14846.55,10340.45 14846.55,10232.7 14882.52,10232.7 14882.52,10196.77 14918.5,10196.77 14918.5,10053.04 14954.47,10053.04 14954.47,9945.25 14990.44,9945.25 14990.44,9837.45 15026.42,9837.45 15026.42,9765.63 15098.37,9765.63 15098.37,9729.7 15134.34,9729.7 15134.34,9693.77 15458.06,9693.77 15458.06,9585.98 15422.09,9585.98 15422.09,9478.18 15386.16,9478.18 15386.16,9406.32 15350.18,9406.32 15350.18,9334.45 15314.21,9334.45 15314.21,9226.7 15278.24,9226.7 15278.24,9118.91 15242.26,9118.91 15242.26,9047.04 15206.29,9047.04 15206.29,9011.11 15170.31,9011.11 15170.31,8975.18 15134.34,8975.18 15134.34,8939.25 15062.39,8939.25 15062.39,8903.32 14882.52,8903.32 14882.52,8939.25 14810.57,8939.25 14810.57,8975.18 14774.6,8975.18 14774.6,9011.11 14738.67,9011.11 14738.67,9082.98 14702.69,9082.98 14702.69,9190.77 14666.72,9190.77 14666.72,9298.52 14630.75,9298.52 14630.75,9334.45 14594.77,9334.45 14594.77,9442.25 14558.8,9442.25 14558.8,9550.04 14522.82,9550.04 14522.82,9693.77 14450.88,9693.77 14450.88,9478.18 14414.9,9478.18 14414.9,9334.45 14378.93,9334.45 14378.93,9190.77 14342.95,9190.77 14342.95,9154.84 14306.98,9154.84 14306.98,9011.11 14271.01,9011.11 14271.01,8831.46 14235.03,8831.46 14235.03,8723.7 14199.06,8723.7 14199.06,8579.98 14163.08,8579.98 14163.08,8364.39 14127.11,8364.39 14127.11,8292.53 14091.18,8292.53 14091.18,8076.98 14055.2,8076.98 14055.2,8005.12 14019.23,8005.12 14019.23,7825.46 13983.26,7825.46 13983.26,7681.77 13947.28,7681.77 13947.28,7573.98 13911.31,7573.98 13911.31,7430.25 13875.33,7430.25 13875.33,7322.46 13839.36,7322.46 13839.36,7250.6 13803.39,7250.6 13803.39,7214.66 13767.41,7214.66 13767.41,7178.73 13695.46,7178.73 13695.46,7142.84 13479.62,7142.84 13479.62,7178.73 13407.71,7178.73 13407.71,7214.66 13371.74,7214.66 13371.74,7250.6 13335.77,7250.6 13335.77,7358.39 13299.79,7358.39 13299.79,7394.32 13263.82,7394.32 13263.82,7502.12 13227.84,7502.12 13227.84,7717.66 13191.87,7717.66 13191.87,7753.59 13155.9,7753.59 13155.9,7933.25 13119.92,7933.25 13119.92,8041.05 13083.95,8041.05 13083.95,8184.77 13047.97,8184.77 13047.97,8256.59 13012,8256.59 13012,8364.39 12976.03,8364.39 12976.03,8472.18 12940.05,8472.18 12940.05,8615.91 12904.08,8615.91 12904.08,8723.7 12868.1,8723.7 12868.1,8831.46 12832.13,8831.46 12832.13,8939.25 12796.2,8939.25 12796.2,9118.91 12760.23,9118.91 12760.23,9226.7 12724.25,9226.7 12724.25,9298.52 12688.28,9298.52 12688.28,9442.25 12652.3,9442.25 12652.3,9585.98 12580.35,9585.98 12580.35,9442.25 12544.38,9442.25 12544.38,9262.63 12508.41,9262.63 12508.41,9226.7 12472.43,9226.7 12472.43,9190.77 12436.46,9190.77 12436.46,9154.84 12400.48,9154.84 12400.48,9118.91 12364.51,9118.91 12364.51,9082.98 12148.71,9082.98 12148.71,9118.91 12112.74,9118.91 12112.74,9154.84 12040.79,9154.84 12040.79,9190.77 12004.81,9190.77 12004.81,9262.63 11968.84,9262.63 11968.84,9334.45 11932.87,9334.45 11932.87,9478.18 11896.89,9478.18 11896.89,9514.11 11860.92,9514.11 11860.92,9657.84 11824.94,9657.84 11824.94,9729.7 11788.97,9729.7 11788.97,9873.39 11753,9873.39 11753,9945.25 11717.02,9945.25 11717.02,10017.11 11681.05,10017.11 11681.05,10160.84 11645.07,10160.84 11645.07,10196.77 11609.1,10196.77 11609.1,10340.45 11573.13,10340.45 11573.13,10448.25 11537.19,10448.25 11537.19,10484.18 11501.22,10484.18 11501.22,10627.91 11465.25,10627.91 11465.25,10663.84 9306.93,10663.84 "/>
+   <polygon class="fil4" points="10565.94,5741.6 10565.94,5705.67 11681.05,5705.67 15062.39,5705.67 17184.73,5705.67 17184.73,5166.74 17184.73,5130.8 14522.82,5130.8 14522.82,5094.87 14342.95,5094.87 14342.95,5058.98 14271.01,5058.98 14271.01,5023.05 14199.06,5023.05 14199.06,4987.12 14163.08,4987.12 14163.08,4951.19 14127.11,4951.19 14127.11,4915.26 14091.18,4915.26 14091.18,4879.33 14055.2,4879.33 14055.2,4843.39 14019.23,4843.39 14019.23,4807.46 13983.26,4807.46 13983.26,4735.6 13947.28,4735.6 13947.28,4699.67 13911.31,4699.67 13911.31,4627.81 13875.33,4627.81 13875.33,4591.87 13839.36,4591.87 13839.36,4520.05 13803.39,4520.05 13803.39,4484.12 13767.41,4484.12 13767.41,4412.26 13731.44,4412.26 13731.44,4376.33 13695.46,4376.33 13695.46,4304.46 13659.49,4304.46 13659.49,4232.6 13623.52,4232.6 13623.52,4196.67 13587.54,4196.67 13587.54,4124.81 13551.57,4124.81 13551.57,4088.87 13515.59,4088.87 13515.59,4017.05 13479.62,4017.05 13479.62,3981.12 13443.69,3981.12 13443.69,3945.19 13407.71,3945.19 13407.71,3909.26 13371.74,3909.26 13371.74,3873.33 13335.77,3873.33 13335.77,3837.4 13299.79,3837.4 13299.79,3801.46 13227.84,3801.46 13227.84,3765.53 13191.87,3765.53 13191.87,3729.6 13047.97,3729.6 13047.97,3693.67 10062.34,3693.67 10062.34,3729.6 9918.45,3729.6 9918.45,3765.53 9846.5,3765.53 9846.5,3801.46 9774.55,3801.46 9774.55,3837.4 9738.58,3837.4 9738.58,3873.33 9666.63,3873.33 9666.63,3909.26 9630.66,3909.26 9630.66,3945.19 9594.72,3945.19 9594.72,3981.12 9558.75,3981.12 9558.75,4017.05 9522.78,4017.05 9522.78,4052.94 9486.8,4052.94 9486.8,4124.81 9450.83,4124.81 9450.83,4160.74 9414.85,4160.74 9414.85,4232.6 9378.88,4232.6 9378.88,4268.53 9378.88,4304.46 9342.91,4304.46 9342.91,4484.12 9306.93,4484.12 9306.93,10304.56 10098.32,10304.56 10098.32,6100.91 10134.29,6100.91 10134.29,6029.05 10170.27,6029.05 10170.27,5957.19 10206.24,5957.19 10206.24,5921.26 10242.21,5921.26 10242.21,5885.32 10278.15,5885.32 10278.15,5849.39 10314.12,5849.39 10314.12,5813.46 10350.09,5813.46 10350.09,5777.53 10422.04,5777.53 10422.04,5741.6 "/>
+   <polygon class="fil5" points="15350.18,10376.38 15350.18,10484.18 15386.16,10484.18 15386.16,10591.97 15422.09,10591.97 15422.09,10699.77 15458.06,10699.77 15458.06,10771.63 15494.04,10771.63 15494.04,10951.25 15530.01,10951.25 15530.01,11023.11 15565.99,11023.11 15565.99,11130.9 15601.96,11130.9 15601.96,11274.63 15637.93,11274.63 15637.93,11346.49 15673.91,11346.49 15673.91,11382.38 17364.56,11382.38 17364.56,12855.49 17400.53,12855.49 17400.53,12891.42 17436.51,12891.42 17436.51,12927.35 17472.48,12927.35 17472.48,12963.24 18623.56,12963.24 18623.56,12927.35 18659.54,12927.35 18659.54,12891.42 18695.51,12891.42 18695.51,12855.49 18731.49,12855.49 18731.49,11382.38 20206.34,11382.38 20278.28,11382.38 20278.28,11346.49 20314.26,11346.49 20314.26,11310.56 20350.23,11310.56 20350.23,11238.7 20386.21,11238.7 20386.21,10160.84 20350.23,10160.84 20350.23,10088.97 20314.26,10088.97 20314.26,10053.04 20278.28,10053.04 20278.28,10017.11 18767.46,10017.11 18767.46,9981.18 18731.49,9981.18 18731.49,8544.05 18695.51,8544.05 18695.51,8472.18 18659.54,8472.18 18659.54,8436.25 18012.05,8436.25 17472.48,8436.25 17472.48,8472.18 17400.53,8472.18 17400.53,8544.05 17364.56,8544.05 17364.56,9873.39 17364.56,10017.11 15242.26,10017.11 15242.26,10124.91 15278.24,10124.91 15278.24,10268.63 15314.21,10268.63 15314.21,10340.45 15350.18,10340.45 "/>
+   <polygon class="fil6" points="14019.23,4268.53 14019.23,4232.6 16932.91,4232.6 16932.91,4268.53 17004.86,4268.53 17004.86,4304.46 17040.84,4304.46 17040.84,4376.33 17076.81,4376.33 17076.81,4412.26 17112.78,4412.26 17112.78,4484.12 17148.76,4484.12 17148.76,4555.98 17184.73,4555.98 17184.73,5094.87 14522.82,5094.87 14522.82,5130.8 17184.73,5130.8 17184.73,6172.73 17220.71,6172.73 17220.71,6280.53 17256.68,6280.53 17256.68,6424.25 17292.65,6424.25 17292.65,6460.19 17328.63,6460.19 17328.63,6532.05 17364.56,6532.05 17364.56,6567.98 17400.53,6567.98 17400.53,6639.84 17436.51,6639.84 17436.51,6675.73 17508.46,6675.73 17508.46,6711.66 17544.43,6711.66 17544.43,6747.6 17616.38,6747.6 17616.38,6783.53 17688.33,6783.53 17688.33,6819.46 17760.27,6819.46 17760.27,6855.39 18983.3,6855.39 19343,6855.39 19343,6891.32 19450.92,6891.32 19450.92,6927.25 19522.87,6927.25 19522.87,6963.19 19594.82,6963.19 19594.82,6999.12 19666.77,6999.12 19666.77,7035.05 19702.74,7035.05 19702.74,7070.98 19738.72,7070.98 19738.72,7142.84 19774.69,7142.84 19774.69,7178.73 19810.66,7178.73 19810.66,7250.6 19846.64,7250.6 19846.64,6927.25 19810.66,6927.25 19810.66,6819.46 19774.69,6819.46 19774.69,6711.66 19738.72,6711.66 19738.72,6675.73 19702.74,6675.73 19702.74,6603.91 19666.77,6603.91 19666.77,6532.05 19630.79,6532.05 19630.79,6496.12 19594.82,6496.12 19594.82,6460.19 19558.85,6460.19 19558.85,6388.32 19522.87,6388.32 19522.87,6352.39 19486.9,6352.39 19486.9,6316.46 19450.92,6316.46 19450.92,6280.53 19414.95,6280.53 19414.95,6244.6 19378.98,6244.6 19378.98,6208.67 19343,6208.67 19343,6172.73 19307.03,6172.73 19307.03,6136.8 19271.05,6136.8 19271.05,6100.91 19235.12,6100.91 19235.12,6064.98 19199.15,6064.98 19199.15,6029.05 19163.17,6029.05 19163.17,5993.12 19127.2,5993.12 19127.2,5957.19 19091.23,5957.19 19091.23,5921.26 19055.25,5921.26 19055.25,5885.32 19019.28,5885.32 19019.28,5849.39 18983.3,5849.39 18983.3,5813.46 18947.33,5813.46 18947.33,5777.53 18911.36,5777.53 18911.36,5741.6 18875.38,5741.6 18875.38,5705.67 18839.41,5705.67 18839.41,5669.73 18803.43,5669.73 18803.43,5633.8 18767.46,5633.8 18767.46,5597.91 18731.49,5597.91 18731.49,5561.98 18695.51,5561.98 18695.51,5526.05 18659.54,5526.05 18659.54,5490.12 18623.56,5490.12 18623.56,5454.19 18587.63,5454.19 18587.63,5418.26 18551.66,5418.26 18551.66,5382.33 18515.68,5382.33 18515.68,5346.39 18479.71,5346.39 18479.71,5310.46 18443.74,5310.46 18443.74,5274.53 18407.76,5274.53 18407.76,5238.6 18371.79,5238.6 18371.79,5202.67 18335.81,5202.67 18335.81,5166.74 18299.84,5166.74 18299.84,5130.8 18263.87,5130.8 18263.87,5094.87 18227.89,5094.87 18227.89,5058.98 18191.92,5058.98 18191.92,5023.05 18155.94,5023.05 18155.94,4987.12 18119.97,4987.12 18119.97,4951.19 18084,4951.19 18084,4915.26 18048.02,4915.26 18048.02,4879.33 18012.05,4879.33 18012.05,4843.39 17976.07,4843.39 17976.07,4807.46 17940.14,4807.46 17940.14,4771.53 17904.17,4771.53 17904.17,4735.6 17868.2,4735.6 17868.2,4699.67 17832.22,4699.67 17832.22,4663.74 17796.25,4663.74 17796.25,4627.81 17760.27,4627.81 17760.27,4591.87 17724.3,4591.87 17724.3,4555.98 17688.33,4555.98 17688.33,4520.05 17652.35,4520.05 17652.35,4484.12 17616.38,4484.12 17616.38,4448.19 17544.43,4448.19 17544.43,4412.26 17508.46,4412.26 17508.46,4376.33 17436.51,4376.33 17436.51,4340.4 17400.53,4340.4 17400.53,4304.46 17292.65,4304.46 17292.65,4268.53 17220.71,4268.53 17220.71,4232.6 17076.81,4232.6 17076.81,4196.67 13983.26,4196.67 13983.26,4268.53 "/>
+   <polygon class="fil7" points="19846.64,7250.6 19810.66,7250.6 19810.66,7178.73 19774.69,7178.73 19774.69,7142.84 19738.72,7142.84 19738.72,7070.98 19702.74,7070.98 19702.74,7035.05 19666.77,7035.05 19666.77,6999.12 19594.82,6999.12 19594.82,6963.19 19522.87,6963.19 19522.87,6927.25 19450.92,6927.25 19450.92,6891.32 19343,6891.32 19343,6855.39 18983.3,6855.39 18983.3,6927.25 19019.28,6927.25 19019.28,6999.12 19055.25,6999.12 19055.25,9657.84 19846.64,9657.84 "/>
+   <polygon class="fil8" points="10853.73,14544.1 10817.76,14544.1 10817.76,14723.76 10853.73,14723.76 10853.73,14759.69 18155.94,14759.69 18155.94,14723.76 18191.92,14723.76 18191.92,14544.1 18155.94,14544.1 18155.94,14508.17 10853.73,14508.17 "/>
+   <polygon class="fil9" points="10853.73,15406.42 10817.76,15406.42 10817.76,15586.03 10853.73,15586.03 10853.73,15621.96 18155.94,15621.96 18155.94,15586.03 18191.92,15586.03 18191.92,15406.42 18155.94,15406.42 18155.94,15370.49 10853.73,15370.49 "/>
+   <polygon class="fil3" points="17184.73,4843.39 17184.73,4555.98 17148.76,4555.98 17148.76,4484.12 17112.78,4484.12 17112.78,4412.26 17076.81,4412.26 17076.81,4376.33 17040.84,4376.33 17040.84,4304.46 17004.86,4304.46 17004.86,4268.53 16932.91,4268.53 16932.91,4232.6 14019.23,4232.6 14019.23,4304.46 14055.2,4304.46 14055.2,4340.4 14091.18,4340.4 14091.18,4412.26 14127.11,4412.26 14127.11,4448.19 14163.08,4448.19 14163.08,4520.05 14199.06,4520.05 14199.06,4555.98 14235.03,4555.98 14235.03,4591.87 14271.01,4591.87 14271.01,4663.74 14306.98,4663.74 14306.98,4699.67 14342.95,4699.67 14342.95,4735.6 14378.93,4735.6 14378.93,4807.46 14414.9,4807.46 14414.9,4843.39 "/>
+   <polygon class="fil10" points="19055.25,7214.66 19055.25,6999.12 19019.28,6999.12 19019.28,6927.25 18983.3,6927.25 18983.3,6855.39 17760.27,6855.39 17760.27,6819.46 17688.33,6819.46 17688.33,6783.53 17616.38,6783.53 17616.38,6747.6 17544.43,6747.6 17544.43,6711.66 17508.46,6711.66 17508.46,6675.73 17436.51,6675.73 17436.51,6639.84 17400.53,6639.84 17400.53,6567.98 17364.56,6567.98 17364.56,6532.05 17328.63,6532.05 17328.63,6460.19 17292.65,6460.19 17292.65,6424.25 17256.68,6424.25 17256.68,6280.53 17220.71,6280.53 17220.71,6172.73 17184.73,6172.73 17184.73,5705.67 10565.94,5705.67 10565.94,5741.6 16860.97,5741.6 16860.97,6424.25 16896.94,6424.25 16896.94,6567.98 16932.91,6567.98 16932.91,6639.84 16968.89,6639.84 16968.89,6711.66 17004.86,6711.66 17004.86,6783.53 17040.84,6783.53 17040.84,6855.39 17076.81,6855.39 17076.81,6891.32 17112.78,6891.32 17112.78,6927.25 17148.76,6927.25 17148.76,6963.19 17184.73,6963.19 17184.73,6999.12 17220.71,6999.12 17220.71,7035.05 17292.65,7035.05 17292.65,7070.98 17328.63,7070.98 17328.63,7106.91 17400.53,7106.91 17400.53,7142.84 17508.46,7142.84 17508.46,7178.73 17652.35,7178.73 17652.35,7214.66 "/>
+   <polygon class="fil11" points="10853.73,6532.05 10817.76,6532.05 10817.76,6711.66 10853.73,6711.66 10853.73,6747.6 15925.73,6747.6 15925.73,6711.66 15961.7,6711.66 15961.7,6532.05 15925.73,6532.05 15925.73,6496.12 10853.73,6496.12 "/>
+   <polygon class="fil9" points="14306.98,7573.98 14342.95,7573.98 14342.95,7609.91 18155.94,7609.91 18155.94,7573.98 18191.92,7573.98 18191.92,7394.32 18155.94,7394.32 18155.94,7358.39 14306.98,7358.39 "/>
+   <polygon class="fil12" points="15134.34,13717.76 15062.39,13717.76 15062.39,13933.35 18119.97,13933.35 18119.97,13897.42 18155.94,13897.42 18155.94,13861.49 18191.92,13861.49 18191.92,13717.76 18119.97,13717.76 18119.97,13681.83 15134.34,13681.83 "/>
+   <polygon class="fil13" points="10853.73,13717.76 10817.76,13717.76 10817.76,13861.49 10853.73,13861.49 10853.73,13897.42 10889.7,13897.42 10889.7,13933.35 13695.46,13933.35 13695.46,13897.42 13731.44,13897.42 13731.44,13753.69 13695.46,13753.69 13695.46,13717.76 13659.49,13717.76 13659.49,13681.83 10853.73,13681.83 "/>
+   <polygon class="fil8" points="10853.73,12855.49 10817.76,12855.49 10817.76,13035.11 10853.73,13035.11 10853.73,13071.04 13371.74,13071.04 13371.74,13035.11 13407.71,13035.11 13407.71,12855.49 13371.74,12855.49 13371.74,12819.56 10853.73,12819.56 "/>
+   <polygon class="fil9" points="14522.82,8292.53 14558.8,8292.53 14558.8,8436.25 16932.91,8436.25 16932.91,8400.32 16968.89,8400.32 16968.89,8256.59 16932.91,8256.59 16932.91,8220.66 16896.94,8220.66 16896.94,8184.77 14522.82,8184.77 "/>
+   <polygon class="fil12" points="10853.73,7394.32 10817.76,7394.32 10817.76,7573.98 10853.73,7573.98 10853.73,7609.91 12796.2,7609.91 12796.2,7573.98 12832.13,7573.98 12832.13,7502.12 12868.1,7502.12 12868.1,7358.39 10853.73,7358.39 "/>
+   <polygon class="fil11" points="10853.73,8220.66 10817.76,8220.66 10817.76,8400.32 10853.73,8400.32 10853.73,8436.25 12544.38,8436.25 12544.38,8400.32 12580.35,8400.32 12580.35,8292.53 12616.33,8292.53 12616.33,8184.77 10853.73,8184.77 "/>
+   <polygon class="fil8" points="15314.21,13035.11 15350.18,13035.11 15350.18,13071.04 16896.94,13071.04 16896.94,13035.11 16932.91,13035.11 16932.91,12855.49 15314.21,12855.49 "/>
+   <polygon class="fil7" points="14378.93,11526.11 14414.9,11526.11 14414.9,11562.04 14450.88,11562.04 14450.88,11454.25 14486.85,11454.25 14486.85,11346.49 14522.82,11346.49 14522.82,11238.7 14558.8,11238.7 14558.8,11130.9 14594.77,11130.9 14594.77,11023.11 14630.75,11023.11 14630.75,10915.32 14666.72,10915.32 14666.72,10735.7 14630.75,10735.7 14630.75,10807.56 14594.77,10807.56 14594.77,10735.7 14558.8,10735.7 14558.8,10771.63 14522.82,10771.63 14522.82,10735.7 14378.93,10735.7 14378.93,10699.77 14342.95,10699.77 14342.95,10663.84 14199.06,10663.84 14199.06,10843.45 14235.03,10843.45 14235.03,11023.11 14271.01,11023.11 14271.01,11166.84 14306.98,11166.84 14306.98,11310.56 14342.95,11310.56 14342.95,11382.38 14378.93,11382.38 "/>
+   <polygon class="fil14" points="15242.26,10017.11 17364.56,10017.11 17364.56,8615.91 17328.63,8615.91 17328.63,9981.18 15242.26,9981.18 "/>
+   <polygon class="fil14" points="20206.34,11382.38 18731.49,11382.38 18731.49,12783.63 18767.46,12783.63 18767.46,11418.31 20206.34,11418.31 "/>
+   <polygon class="fil15" points="13443.69,9729.7 13479.62,9729.7 13479.62,9765.63 13515.59,9765.63 13515.59,9729.7 13587.54,9729.7 13587.54,9765.63 13623.52,9765.63 13623.52,9801.52 13659.49,9801.52 13659.49,9693.77 13623.52,9693.77 13623.52,9585.98 13587.54,9585.98 13587.54,9514.11 13515.59,9514.11 13515.59,9550.04 13479.62,9550.04 13479.62,9657.84 13443.69,9657.84 "/>
+   <polygon class="fil16" points="13587.54,9514.11 13587.54,9406.32 13515.59,9406.32 13515.59,9514.11 "/>
+   <polygon class="fil17" points="12292.56,10268.63 12292.56,10160.84 12220.61,10160.84 12220.61,10196.77 12256.59,10196.77 12256.59,10268.63 "/>
+   <polygon class="fil18" points="12832.13,11418.31 12832.13,11454.25 12904.08,11454.25 12904.08,11382.38 12868.1,11382.38 12868.1,11418.31 "/>
+   <polygon class="fil19" points="14450.88,11562.04 14414.9,11562.04 14414.9,11526.11 14378.93,11526.11 14378.93,11597.97 14450.88,11597.97 "/>
+   <polygon class="fil14" points="14522.82,9657.84 14486.85,9657.84 14486.85,9621.91 14450.88,9621.91 14450.88,9693.77 14522.82,9693.77 "/>
+   <polygon class="fil14" points="12652.3,9550.04 12616.33,9550.04 12616.33,9514.11 12580.35,9514.11 12580.35,9585.98 12652.3,9585.98 "/>
+  </g>
+ </g>
+</svg>RekamMedis<small style="display:inline;margin-left:8px;text-transform:none;letter-spacing:0">rekammedis.web.id</small>
+      </a>
+      <p style="margin-top:14px;max-width:34em">Sistem rekam medis elektronik untuk klinik di Indonesia. Halaman ini adalah halaman pengantar — aplikasi berjalan di alamat yang sama. Nama pasien dalam seluruh ilustrasi adalah fiktif.</p>
+    </div>
+    <nav aria-label="Navigasi bawah">
+      <a href="#alur">Alur Kerja</a>
+      <a href="#modul">Modul</a>
+      <a href="#keamanan">Keamanan</a>
+      <a href="#status">Status &amp; Roadmap</a>
+      <a href="/app/" target="_blank" rel="noopener">Aplikasi</a>
+      <a href="/app/" target="_blank" rel="noopener">Login</a>
+    </nav>
+  </div>
+  <div class="wrap" style="margin-top:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <span>© 2026 RekamMedis.web.id</span>
+    <span class="mono" style="font-size:12px">Format pencatatan: Permenkes No. 24 Tahun 2022 · Perlindungan data: UU PDP No. 27 Tahun 2022</span>
+  </div>
+</footer>
+
+<button id="toTop" aria-label="Kembali ke atas"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+<script>
+(function(){
+"use strict";
+var $=function(s,c){return (c||document).querySelector(s)};
+var $$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
+var reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* header + progress */
+var hdr=$("#hdr"), prog=$("#progress");
+function onScroll(){
+  var y=window.scrollY||0;
+  hdr.classList.toggle("scrolled", y>24);
+  var h=document.documentElement.scrollHeight-window.innerHeight;
+  prog.style.width=(h>0? (y/h*100):0)+"%";
+}
+window.addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+/* mobile menu */
+var mb=$("#menubtn"), nl=$("#navlinks");
+mb.addEventListener("click", function(){
+  var open=nl.classList.toggle("open");
+  mb.setAttribute("aria-expanded", open?"true":"false");
+});
+$$("a", nl).forEach(function(a){ a.addEventListener("click", function(){ nl.classList.remove("open"); mb.setAttribute("aria-expanded","false"); }); });
+
+/* reveal on scroll */
+var io=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
+},{threshold:.12, rootMargin:"0px 0px -6% 0px"});
+$$(".rv").forEach(function(el){ io.observe(el); });
+
+/* vital chart draw */
+var vb=$("#vitalbox");
+if(vb){ var io2=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ vb.classList.add("go"); io2.disconnect(); } }); },{threshold:.4}); io2.observe(vb); }
+
+/* queue simulation: call patients in rotation */
+var rows=$$("[data-qrow]");
+if(rows.length && !reduced){
+  var idx=0;
+  setInterval(function(){
+    rows.forEach(function(r,i){
+      var pill=$("[data-pill]", r);
+      if(i===idx){ r.classList.add("called"); pill.className="pill call"; pill.textContent="Dipanggil"; }
+      else if(i<idx){ r.classList.remove("called"); pill.className="pill done"; pill.textContent="Di Poli"; }
+      else { r.classList.remove("called"); pill.className="pill wait"; pill.textContent="Menunggu"; }
+    });
+    idx=(idx+1)%(rows.length+1);
+    if(idx===rows.length){ setTimeout(function(){ idx=0; }, 600); }
+  }, 3400);
+}
+
+/* ---------- workflow ---------- */
+var CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>';
+var steps=[
+ {t:"Registrasi — data ditulis sekali, dipakai semua tahap",
+  p:"Petugas loket mencatat identitas pasien dari KTP, memilih poli tujuan dan dokter praktik, lalu menentukan jenis penjamin: umum atau BPJS. Nomor rekam medis terbentuk otomatis dan riwayat pasien lama langsung tertaut bila pasien pernah berkunjung.",
+  li:["Validasi NIK/KTP saat pendaftaran pasien baru","Pemilihan poli & dokter praktik per jadwal","Penjamin umum atau BPJS tercatat sejak awal","Nomor rekam medis (RM) unik per pasien"]},
+ {t:"Antrian Poli — nomor jelas, panggilan tercatat",
+  p:"Setiap registrasi menghasilkan nomor antrian per poli. Status bergerak Menunggu, Dipanggil, Sedang Diperiksa, sampai Selesai — dan setiap perubahan status ditulis ke jejak audit beserta petugas yang melakukannya.",
+  li:["Nomor antrian terpisah per poli","Aksi panggil pasien dari papan antrian","Status real-time terlihat di dashboard","Antrian dapat dibatalkan dengan catatan aktivitas"]},
+ {t:"Pemeriksaan — SOAP terstruktur, diagnosis berkode",
+  p:"Dokter mengisi Subjective dari keluhan pasien, Objective dari tanda vital dan pemeriksaan fisik per sistem organ, Assessment dengan diagnosis berkode ICD, dan Plan berisi rencana terapi. Catatan dapat disimpan sebagai draft sebelum difinalkan.",
+  li:["Tanda vital: tekanan darah, nadi, suhu, pernapasan","Template pemeriksaan fisik per sistem organ","Diagnosis berkode ICD, bukan teks bebas","Draft dan final dibedakan tegas"]},
+ {t:"Penunjang — resep, lab, dan radiologi bergerak sendiri",
+  p:"Begitu pemeriksaan difinalkan, resep langsung masuk ke antrean farmasi, order laboratorium dan permintaan radiologi diteruskan ke unit masing-masing. Farmasi menerima peringatan bila obat yang diresepkan tercatat sebagai alergi pasien.",
+  li:["Resep digital diteruskan otomatis ke farmasi","Order lab dengan validasi hasil oleh petugas","Radiologi dengan pembacaan hasil (ekspertise)","Peringatan alergi obat sebelum penyerahan"]},
+ {t:"Kasir — invoice terbentuk dari kunjungan, bukan diketik ulang",
+  p:"Seluruh layanan dalam kunjungan terkumpul menjadi satu invoice bernomor. Kasir menerima pembayaran, invoice berubah status menjadi lunas, dan kunjungan yang sama dapat menerbitkan surat keterangan sakit, sehat, atau rujukan tanpa mengisi data lagi.",
+  li:["Invoice bernomor dengan total otomatis","Status pembayaran: belum lunas / lunas","Surat sakit, sehat, dan rujukan dari data kunjungan","Pendapatan tercatat untuk laporan fasilitas"]}
+];
+var panel=$("#flowpanel");
+function renderStep(i){
+  var s=steps[i];
+  panel.innerHTML='<div class="swap"><h3>'+s.t+'</h3><p>'+s.p+'</p></div><ul class="swap">'+
+    s.li.map(function(x){return '<li>'+CHECK+'<span>'+x+'</span></li>'}).join("")+'</ul>';
+}
+var stepBtns=$$("[data-step]");
+stepBtns.forEach(function(b){
+  b.addEventListener("click", function(){
+    stepBtns.forEach(function(x){ x.classList.remove("on"); x.setAttribute("aria-selected","false"); });
+    b.classList.add("on"); b.setAttribute("aria-selected","true");
+    renderStep(parseInt(b.getAttribute("data-step"),10));
+  });
+});
+renderStep(0);
+
+/* ---------- module explorer ---------- */
+var ICONS={
+ dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+ pasien:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.2 3-5 6-5s5.4 1.8 6 5M16 4.5a3.5 3.5 0 0 1 0 7M21 20c-.3-2.3-1.4-3.9-3-4.6"/></svg>',
+ soap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+ resep:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20.5a5 5 0 0 1-7-7l7-7a5 5 0 1 1 7 7l-7 7Z"/><path d="m7 10 7 7"/></svg>',
+ farmasi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M5 7v13h14V7M9.5 20v-5h5v5"/></svg>',
+ lab:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3h4M10 3v6L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9V3"/></svg>',
+ radio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 12h4l2.5-4 4 8L16 12h5"/></svg>',
+ jadwal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+ kasir:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6.5 9.5h.01M17.5 15.5h.01"/></svg>',
+ laporan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20v-8M11 20V5M17 20v-11M3 20h18"/></svg>',
+ atur:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.14-1.4l2-1.55-2-3.46-2.35.95A7 7 0 0 0 14.1 5.1L13.75 2.6h-3.5L9.9 5.1a7 7 0 0 0-2.41 1.44l-2.35-.95-2 3.46 2 1.55a7 7 0 0 0 0 2.8l-2 1.55 2 3.46 2.35-.95a7 7 0 0 0 2.41 1.44l.35 2.5h3.5l.35-2.5a7 7 0 0 0 2.41-1.44l2.35.95 2-3.46-2-1.55c.1-.45.14-.92.14-1.4Z"/></svg>'
+};
+var modules=[
+ {i:"dash", n:"Dashboard", d:"Layar pertama yang dibuka setiap peran: total pasien hari ini, pasien baru, jumlah yang menunggu di poli, dan pemeriksaan yang tuntas — dihitung dari data kunjungan yang sama yang sedang berjalan, bukan laporan terpisah yang dibuat belakangan.", tags:["Ringkasan harian","Antrian menunggu","Pemeriksaan tuntas"], s:[["4","indikator harian"],["Langsung","dari data kunjungan aktif"]]},
+ {i:"pasien", n:"Data Pasien", d:"Basis data pasien dengan nomor rekam medis unik. Dari profil satu pasien, petugas dapat membuka ringkasan, rekam medis SOAP, riwayat kunjungan, riwayat diagnosa, dan riwayat obatnya — tanpa mencari berkas di lemari arsip.", tags:["Nomor RM unik","Riwayat kunjungan","Riwayat diagnosa & obat","Data alergi pasien"], s:[["1 profil","untuk semua riwayat"],["NIK","tervalidasi saat daftar"]]},
+ {i:"soap", n:"Pemeriksaan & SOAP", d:"Formulir pemeriksaan terstruktur: keluhan (Subjective), tanda vital dan pemeriksaan fisik per sistem organ (Objective), diagnosis berkode ICD (Assessment), serta rencana terapi dan resep (Plan). Tersedia template temuan pemeriksaan normal agar dokter tidak mengetik ulang temuan standar.", tags:["SOAP terstruktur","Diagnosis ICD","Tanda vital","Draft / final"], s:[["4 bagian","format SOAP"],["ICD","kode diagnosis"]]},
+ {i:"resep", n:"Resep Digital", d:"Resep yang dibuat dokter di ruang periksa langsung muncul di antrean farmasi dengan status yang jelas, lengkap dengan jumlah item obatnya. Perubahan status resep — dari masuk, disiapkan, sampai selesai — tercatat dan terlihat oleh kedua pihak.", tags:["Teruskan otomatis ke farmasi","Status resep terpantau","Peringatan alergi"], s:[["Tanpa kertas","dari poli ke farmasi"],["Real-time","status per resep"]]},
+ {i:"farmasi", n:"Farmasi & Stok", d:"Master obat berkode dengan pengelolaan stok masuk, stok keluar, dan penyesuaian. Penyerahan obat untuk resep mengurangi stok secara tercatat, sehingga selisih stok dapat ditelusuri ke aktivitasnya — bukan sekadar angka yang berubah.", tags:["Master obat berkode","Stok masuk / keluar","Penyesuaian stok tercatat"], s:[["Per aktivitas","jejak perubahan stok"],["Kode obat","standar per item"]]},
+ {i:"lab", n:"Laboratorium", d:"Order pemeriksaan dari poli diterima unit laboratorium sebagai antrean kerja, hasil diisi per parameter — antara lain hematologi dan kimia darah seperti Hb, leukosit, dan trombosit — lalu divalidasi sebelum terbaca sebagai hasil resmi di rekam medis pasien.", tags:["Order dari poli","Parameter terstruktur","Validasi hasil"], s:[["2 tahap","isi hasil → validasi"],["Parameter","per jenis pemeriksaan"]]},
+ {i:"radio", n:"Radiologi", d:"Permintaan pemeriksaan radiologi dari dokter diteruskan ke unit radiologi, dikerjakan, dan hasilnya dibaca dalam bentuk ekspertise oleh dokter pembaca. Hasilnya kembali menempel pada kunjungan pasien yang sama, bukan sebagai berkas terpisah.", tags:["Permintaan terstruktur","Ekspertise hasil","Menempel ke kunjungan"], s:[["1 alur","order → ekspertise"],["Tercatat","dokter pembaca"]]},
+ {i:"jadwal", n:"Jadwal Dokter", d:"Jadwal praktik dokter per poli yang menjadi rujukan saat registrasi: pasien hanya dapat didaftarkan ke dokter yang memang praktik pada jadwal tersebut, sehingga antrian tidak terbentuk untuk dokter yang tidak ada.", tags:["Jadwal per poli","Rujukan saat registrasi"], s:[["Per poli","jadwal terpisah"],["Sinkron","dengan pilihan registrasi"]]},
+ {i:"kasir", n:"Pembayaran & Kasir", d:"Invoice terbentuk dari layanan dalam satu kunjungan dengan nomor dan total otomatis. Kasir mencatat pembayaran, status berubah menjadi lunas, dan dari kunjungan yang sama dapat diterbitkan surat keterangan sakit, surat berbadan sehat, atau surat rujukan siap cetak.", tags:["Invoice bernomor","Status lunas terpantau","Surat resmi siap cetak"], s:[["Otomatis","total dari layanan"],["3 surat","dari satu kunjungan"]]},
+ {i:"laporan", n:"Laporan Fasilitas", d:"Laporan operasional faskes: kunjungan per periode dan per poli, serta pendapatan yang memisahkan sumber penjaminan — termasuk porsi kunjungan BPJS — agar manajemen membaca kinerja klinik dari data transaksi yang sebenarnya terjadi.", tags:["Kunjungan per poli","Pendapatan per penjamin","Periode fleksibel"], s:[["Per penjamin","pemisahan BPJS"],["Per poli","rincian kunjungan"]]},
+ {i:"atur", n:"Pengaturan Klinik", d:"Identitas faskes diatur di sini: nama klinik, alamat, nomor telepon, dan Kode Faskes Nasional Kemenkes/BPJS. Di menu ini pula snapshot basis data dapat diunduh sebagai file backup JSON, dan jejak audit aktivitas seluruh pengguna dapat ditinjau.", tags:["Profil & kode faskes","Backup JSON","Jejak audit aktivitas"], s:[["JSON","format backup"],["Penuh","audit semua modul"]]}
+];
+var list=$("#modlist"), detail=$("#moddetail");
+modules.forEach(function(m,idx){
+  var b=document.createElement("button");
+  b.setAttribute("role","tab"); b.setAttribute("aria-selected", idx===0?"true":"false");
+  if(idx===0) b.classList.add("on");
+  b.innerHTML=ICONS[m.i]+"<span>"+m.n+"</span>";
+  b.addEventListener("click", function(){
+    $$("button", list).forEach(function(x){ x.classList.remove("on"); x.setAttribute("aria-selected","false"); });
+    b.classList.add("on"); b.setAttribute("aria-selected","true");
+    renderModule(idx);
+  });
+  list.appendChild(b);
+});
+function renderModule(i){
+  var m=modules[i];
+  detail.innerHTML='<div class="swap"><h3>'+m.n+'</h3><p>'+m.d+'</p><div class="tags">'+
+    m.tags.map(function(t){return "<span>"+t+"</span>"}).join("")+'</div><div class="mstat">'+
+    m.s.map(function(x){return "<div><b>"+x[0]+"</b><span>"+x[1]+"</span></div>"}).join("")+'</div></div>';
+}
+renderModule(0);
+})();
+</script>
+<script>
+(function(){
+"use strict";
+var $=function(s,c){return (c||document).querySelector(s)};
+var $$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
+var reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var finePointer=window.matchMedia("(pointer: fine)").matches;
+
+/* ---- marquee content (built once, duplicated for seamless loop) ---- */
+var mqItems=["Rekam Medis Elektronik","Antrian Poli","Pemeriksaan SOAP","Diagnosis ICD-10","Resep Digital","Farmasi & Stok Obat","Laboratorium","Radiologi","Kasir & Invoice","Jejak Audit Aktivitas","Backup Data","Jadwal Dokter"];
+var track=$("#mqtrack");
+if(track){
+  var half=mqItems.map(function(t){return '<span>'+t+'<i class="dsep"></i></span>'}).join("");
+  track.innerHTML=half+half;
+  if(reduced){ track.style.animation="none"; }
+}
+
+/* ---- hero headline word reveal ---- */
+var h1=$(".hero h1");
+if(h1 && !reduced){
+  var idx=0;
+  function wrapWords(node){
+    Array.prototype.slice.call(node.childNodes).forEach(function(ch){
+      if(ch.nodeType===3){
+        var frag=document.createDocumentFragment();
+        ch.textContent.split(/(\s+)/).forEach(function(part){
+          if(!part) return;
+          if(/^\s+$/.test(part)){ frag.appendChild(document.createTextNode(" ")); return; }
+          var w=document.createElement("span"); w.className="h1w";
+          var inner=document.createElement("span"); inner.style.setProperty("--i", idx++); inner.textContent=part;
+          w.appendChild(inner); frag.appendChild(w);
+        });
+        node.replaceChild(frag, ch);
+      } else if(ch.nodeType===1){ wrapWords(ch); }
+    });
+  }
+  wrapWords(h1);
+}
+
+/* ---- hero fact counters ---- */
+$$(".hero-facts b").forEach(function(el){
+  var m=el.textContent.match(/^(\d+)/);
+  if(!m || reduced) return;
+  var target=parseInt(m[1],10), rest=el.textContent.slice(m[1].length), t0=null, done=false;
+  function tick(ts){
+    if(done) return;
+    if(!t0) t0=ts;
+    var p=Math.min((ts-t0)/950,1), e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(target*e)+rest;
+    if(p<1) requestAnimationFrame(tick); else done=true;
+  }
+  setTimeout(function(){ requestAnimationFrame(tick); }, 780);
+  setTimeout(function(){ done=true; el.textContent=target+rest; }, 2300);
+});
+
+/* ---- spotlight + tilt (desktop pointer only) ---- */
+var hero=$("#hero"), win=$(".appwin");
+if(hero && finePointer && !reduced){
+  hero.addEventListener("mousemove", function(ev){
+    var r=hero.getBoundingClientRect();
+    hero.style.setProperty("--mx", ((ev.clientX-r.left)/r.width*100)+"%");
+    hero.style.setProperty("--my", ((ev.clientY-r.top)/r.height*100)+"%");
+  });
+}
+if(win && finePointer && !reduced){
+  var rafT=null;
+  win.addEventListener("mousemove", function(ev){
+    if(rafT) return;
+    rafT=requestAnimationFrame(function(){
+      var r=win.getBoundingClientRect();
+      var dx=(ev.clientX-r.left)/r.width-.5, dy=(ev.clientY-r.top)/r.height-.5;
+      win.style.transform="perspective(1400px) rotateY("+(-dx*5)+"deg) rotateX("+(dy*4)+"deg)";
+      rafT=null;
+    });
+  });
+  win.addEventListener("mouseleave", function(){ win.style.transform=""; });
+}
+
+/* ---- app toast notifications ---- */
+var toast=$("#apptost"), toastOn=false;
+if(toast){
+  var msgs=[
+    ["Resep Baru Masuk dari Poli","Resep untuk RM-00412 dari Poli Umum"],
+    ["Hasil Laboratorium Terverifikasi","Kimia darah RM-00198 selesai divalidasi"],
+    ["Pembayaran Diterima","Invoice INV-2026-0117 · Rp185.000 · Lunas"],
+    ["Antrian Dipanggil","A-014 · Sari Wulandari menuju Poli Umum"]
+  ], mi=0;
+  new IntersectionObserver(function(es){ es.forEach(function(e){ toastOn=e.isIntersecting; }); },{threshold:.25}).observe($(".appwin"));
+  if(!reduced){
+    setInterval(function(){
+      var m=msgs[mi%msgs.length]; mi++;
+      $("#tost-t").textContent=m[0]; $("#tost-d").textContent=m[1];
+      toast.classList.add("show");
+      setTimeout(function(){ toast.classList.remove("show"); }, 3600);
+    }, 5200);
+  }
+}
+
+/* ---- sidebar highlight cycle in mock app ---- */
+var sideItems=$$(".appwin-side .mi");
+if(sideItems.length && !reduced){
+  var si=0;
+  setInterval(function(){
+    sideItems.forEach(function(x){ x.classList.remove("on"); });
+    si=(si+1)%sideItems.length;
+    sideItems[si].classList.add("on");
+  }, 3400);
+}
+
+/* ---- workflow: progress fill + auto-advance ---- */
+var flow=$(".flow"), stepBtns=$$("[data-step]"), lastManual=0, flowVisible=false, curStep=0;
+function setFill(i){ if(flow) flow.style.setProperty("--fill", (i/(stepBtns.length-1)*82)+"%"); }
+stepBtns.forEach(function(b){
+  b.addEventListener("click", function(){
+    lastManual=Date.now();
+    curStep=parseInt(b.getAttribute("data-step"),10);
+    setFill(curStep);
+  });
+});
+setFill(0);
+if(flow){
+  new IntersectionObserver(function(es){ es.forEach(function(e){ flowVisible=e.isIntersecting; }); },{threshold:.3}).observe(flow);
+  if(!reduced){
+    setInterval(function(){
+      if(!flowVisible || Date.now()-lastManual<12000) return;
+      curStep=(curStep+1)%stepBtns.length;
+      stepBtns[curStep].click(); lastManual=0; setFill(curStep);
+    }, 4600);
+  }
+}
+
+/* ---- audit log ticker ---- */
+var alog=$("#auditlog"), alogVisible=false;
+if(alog){
+  new IntersectionObserver(function(es){ es.forEach(function(e){ alogVisible=e.isIntersecting; }); },{threshold:.2}).observe(alog);
+  var entries=[
+    ["Antrian","Registrasi antrian baru B-008 untuk RM-00371 di Poli Gigi & Mulut"],
+    ["Rekam Medis","Simpan draft pemeriksaan SOAP RM-00254 oleh dokter pemeriksa"],
+    ["Farmasi","Stok masuk tercatat: Amoxicillin 500 mg sebanyak 100 tablet"],
+    ["Laboratorium","Order laboratorium baru LAB-2026-0042 untuk RM-00371"],
+    ["Kasir","Invoice INV-2026-0118 diterbitkan sebesar Rp230.000"],
+    ["Resep","Status resep RM-00254 diubah ke Menunggu Farmasi"],
+    ["Radiologi","Ekspertise hasil thorax RM-00198 selesai dibaca"],
+    ["Pasien","Pendaftaran pasien baru RM-00420 oleh petugas registrasi"]
+  ], ei=0, mins=41;
+  if(!reduced){
+    setInterval(function(){
+      var rows=$$(".al-row", alog);
+      if(!rows.length) return;
+      mins+=Math.floor(Math.random()*4)+2;
+      var hh=8+Math.floor(mins/60), mm=mins%60;
+      var time=String(hh).padStart(2,"0")+"."+String(mm).padStart(2,"0");
+      var en=entries[ei%entries.length]; ei++;
+      var row=document.createElement("div");
+      row.className="al-row new";
+      row.innerHTML="<time>"+time+'</time><span class="mod">'+en[0]+"</span><p>"+en[1]+"</p>";
+      rows[0].parentNode.insertBefore(row, rows[0]);
+      rows=$$(".al-row", alog);
+      if(rows.length>6) rows[rows.length-1].remove();
+    }, 5600);
+  }
+}
+
+/* ---- smart header + back-to-top ---- */
+var hdr=$("#hdr"), toTop=$("#toTop"), lastY=window.scrollY||0, ticking=false;
+function onScroll2(){
+  var y=window.scrollY||0;
+  if(y>420 && y>lastY+4) hdr.classList.add("hide");
+  else if(y<lastY-4 || y<200) hdr.classList.remove("hide");
+  if(toTop) toTop.classList.toggle("show", y>700);
+  lastY=y; ticking=false;
+}
+window.addEventListener("scroll", function(){ if(!ticking){ ticking=true; requestAnimationFrame(onScroll2); } }, {passive:true});
+if(toTop) toTop.addEventListener("click", function(){ window.scrollTo({top:0, behavior: reduced?"auto":"smooth"}); });
+
+/* ---- active nav link ---- */
+var navMap={};
+$$(".nav-links a").forEach(function(a){
+  var href=a.getAttribute("href");
+  if(href && href.charAt(0)==="#") navMap[href.slice(1)]=a;
+});
+var secIO=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    if(e.isIntersecting && navMap[e.target.id]){
+      Object.keys(navMap).forEach(function(k){ navMap[k].classList.remove("act"); });
+      navMap[e.target.id].classList.add("act");
+    }
+  });
+},{rootMargin:"-38% 0px -52% 0px"});
+["alur","modul","keamanan","status","faq"].forEach(function(id){
+  var s=document.getElementById(id); if(s) secIO.observe(s);
+});
+})();
+</script>
+</body>
 </html>
