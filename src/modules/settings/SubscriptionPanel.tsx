@@ -10,7 +10,7 @@ import { syncActiveFor } from '../../lib/sync';
 
 interface BillingData {
   subscription: { plan: string; status: string; expired: boolean; trialEndsAt?: string | null; currentPeriodEnd?: string | null };
-  plans: Record<string, { name: string; monthly: number; normalMonthly?: number; features: string[] }>;
+  plans: Record<string, { name: string; monthly: number; normalMonthly?: number; discountPercent?: number; features: string[] }>;
   gatewayConfigured: boolean;
   payments: { id: string; plan: string; months: number; amount: number; status: string; gateway?: string; created_at: string }[];
 }
@@ -88,7 +88,7 @@ export const SubscriptionPanel: React.FC = () => {
           <div key={key} className="border border-slate-200 rounded-xl p-4">
             <p className="text-sm font-extrabold text-slate-800">{plan.name}</p>
             {plan.normalMonthly && plan.normalMonthly > plan.monthly && (
-              <p className="text-[11px] font-bold text-emerald-700 mt-1">HARGA PERKENALAN <span className="text-slate-400 line-through font-semibold">{rp(plan.normalMonthly * months)}</span></p>
+              <p className="text-[11px] font-bold text-emerald-700 mt-1">DISKON {plan.discountPercent || 50}% <span className="text-slate-400 line-through font-semibold">{rp(plan.normalMonthly * months)}</span></p>
             )}
             <p className="text-xl font-black text-clinical-700 mt-1">{rp(plan.monthly * months)}<span className="text-[11px] text-slate-400 font-semibold"> / {months} bulan</span></p>
             <ul className="text-[11px] text-slate-500 mt-2 space-y-1">

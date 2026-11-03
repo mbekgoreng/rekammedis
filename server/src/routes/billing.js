@@ -8,12 +8,13 @@ import { newId } from '../crypto.js';
 import { nowIso } from '../db.js';
 import { subscriptionState } from './data.js';
 
-// Harga perkenalan atas keputusan owner (2026-11-03): mulai Rp70 ribuan/bulan
-// untuk penetrasi pasar awal. Harga normal dicantumkan sebagai jangkar agar
-// kenaikan harga pendaftar baru kelak tidak mengkhianati pelanggan awal.
+// Skema harga atas keputusan owner (2026-11-03): DISKON 50% dari harga
+// normal; harga setelah diskon Basic = Rp79rb/bulan (Pro Rp149rb/bulan).
+// monthly = harga yang benar-benar dibayar; normalMonthly = harga normal
+// sebelum diskon (ditampilkan tercoret di panel langganan).
 export const PLANS = {
-  basic: { name: 'Basic', monthly: 79000, normalMonthly: 349000, features: ['Semua modul RME', 'SATUSEHAT', 'Multi-petugas'] },
-  pro: { name: 'Pro', monthly: 149000, normalMonthly: 749000, features: ['Semua fitur Basic', 'Bridging P-Care BPJS', 'Antrean Mobile JKN', 'Prioritas dukungan'] }
+  basic: { name: 'Basic', monthly: 79000, normalMonthly: 158000, discountPercent: 50, features: ['Semua modul RME', 'SATUSEHAT', 'Multi-petugas'] },
+  pro: { name: 'Pro', monthly: 149000, normalMonthly: 298000, discountPercent: 50, features: ['Semua fitur Basic', 'Bridging P-Care BPJS', 'Antrean Mobile JKN', 'Prioritas dukungan'] }
 };
 
 export function extendSubscription(db, clinicId, plan, months) {
