@@ -8,7 +8,8 @@ import {
   ChevronDown,
   UserCheck,
   KeyRound,
-  LogOut
+  LogOut,
+  HelpCircle
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { NotificationsDropdown } from './NotificationsDropdown';
@@ -19,12 +20,14 @@ interface HeaderProps {
   onToggleMobileSidebar: () => void;
   onNavigate: (module: string) => void;
   onSelectPatient: (patientId: string) => void;
+  onOpenTour: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onToggleMobileSidebar,
   onNavigate,
-  onSelectPatient
+  onSelectPatient,
+  onOpenTour
 }) => {
   const { currentUser, logout, notifications, queues, callQueuePatient, clinicProfile } = useStore();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -107,6 +110,16 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Panggil {waitingPatients[0].queueNumber}</span>
             </button>
           )}
+
+          {/* Tutorial / Bantuan */}
+          <button
+            onClick={onOpenTour}
+            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            aria-label="Bantuan dan tutorial"
+            title="Tutorial pengguna baru"
+          >
+            <HelpCircle className="w-5 h-5" />
+          </button>
 
           {/* Notifications Trigger */}
           <div className="relative">

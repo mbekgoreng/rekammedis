@@ -23,11 +23,27 @@ import { AuditTrailView } from './modules/audit/AuditTrailView';
 import { ClinicSettingsView } from './modules/settings/ClinicSettingsView';
 import { LoginView } from './modules/auth/LoginView';
 import { ChangePasswordView } from './modules/auth/ChangePasswordView';
+import { GuideView } from './modules/guide/GuideView';
+import { TourOverlay, tourStorageKey } from './components/onboarding/TourOverlay';
+import { DEFAULT_CLINIC_ID } from './lib/clinics';
 import { canAccess, ROLE_LABELS } from './lib/permissions';
 import { loadSession, type SessionData } from './lib/auth';
 
 const MainLayout: React.FC = () => {
-  const { isAuthenticated, logout, currentUser, clinicProfile } = useStore();
+  const { isAuthenticated, logout, currentUser, clinicProfile, clinicId } = useStore();
+  const [tourOpen, setTourOpen] = useState(false);
+
+  // Tutorial tampil otomatis SEKALI untuk admin klinik yang baru mendaftar
+  useEffect(() => {
+    if (!isAuthenticated || currentUser.role !== 'admin' || clinicId === DEFAULT_CLINIC_ID) return;
+    try {
+      if (!localStorage.getItem(tourStorageKey(clinicId, currentUser.id))) {
+        setTourOpen(true);
+      }
+    } catch {
+      // abaikan
+    }
+  }, [isAuthenticated, currentUser, clinicId]);
   const [currentModule, setCurrentModule] = useState<string>('dashboard');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -72,6 +88,7 @@ const MainLayout: React.FC = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Clinical Top Header */}
           <Header
+            onOpenTour={() => setTourOpen(true)}
             onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
             onNavigate={(mod) => {
               setSelectedPatientId(null);
@@ -176,6 +193,8 @@ const MainLayout: React.FC = () => {
             {currentModule === 'settings' && <ClinicSettingsView />}
 
             {currentModule === 'change_password' && <ChangePasswordView />}
+
+            {currentModule === 'guide' && <GuideView onStartTour={() => setTourOpen(true)} />}
               </>
             )}
           </main>
@@ -200,6 +219,16 @@ const MainLayout: React.FC = () => {
           </footer>
         </div>
       </div>
+
+      {tourOpen && (
+        <TourOverlay
+          onNavigate={(mod) => {
+            setSelectedPatientId(null);
+            handleNavigate(mod);
+          }}
+          onClose={() => setTourOpen(false)}
+        />
+      )}
     </div>
   );
 };

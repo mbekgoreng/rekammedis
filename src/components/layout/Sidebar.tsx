@@ -19,7 +19,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Activity
+  Activity,
+  BookOpen,
+  Pencil
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStore } from '../../context/StoreContext';
@@ -52,6 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Pelayanan Utama',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'guide', label: 'Panduan Penggunaan', icon: BookOpen },
         { id: 'queue', label: 'Antrian', icon: Clock, badge: waitingQueueCount > 0 ? waitingQueueCount : undefined, badgeColor: 'bg-amber-500' },
         { id: 'registration', label: 'Pendaftaran', icon: UserPlus },
         { id: 'patients', label: 'Data Pasien', icon: Users },
@@ -113,13 +116,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 bg-clinical-dark">
           <div className={clsx('flex items-center gap-3 overflow-hidden', isCollapsed && 'justify-center w-full')}>
-            {clinicProfile.logoDataUrl ? (
-              <img src={clinicProfile.logoDataUrl} alt="Logo klinik" className="w-10 h-10 rounded-lg object-contain bg-white shadow-md shrink-0" />
-            ) : (
-              <div className="w-10 h-10 rounded-lg bg-clinical-600 flex items-center justify-center text-white shadow-md shrink-0">
-                <Activity className="w-6 h-6 text-clinical-100" />
-              </div>
-            )}
+            <div className="relative shrink-0">
+              {clinicProfile.logoDataUrl ? (
+                <img src={clinicProfile.logoDataUrl} alt="Logo klinik" className="w-10 h-10 rounded-lg object-contain bg-white shadow-md" />
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-clinical-600 flex items-center justify-center text-white shadow-md">
+                  <Activity className="w-6 h-6 text-clinical-100" />
+                </div>
+              )}
+              {currentUser.role === 'admin' && (
+                <button
+                  onClick={() => { onNavigate('settings'); onCloseMobile(); }}
+                  title="Ganti logo & profil klinik (Pengaturan)"
+                  aria-label="Ganti logo klinik"
+                  className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-white text-clinical-800 shadow flex items-center justify-center hover:bg-clinical-50"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
+            </div>
             {!isCollapsed && (
               <div className="leading-tight">
                 <span className="font-extrabold text-white text-base tracking-tight block truncate max-w-[150px]" title={clinicProfile.clinicName}>

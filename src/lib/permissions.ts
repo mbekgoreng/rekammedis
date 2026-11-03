@@ -7,6 +7,7 @@ const ALL: UserRole[] = ['admin', 'doctor', 'nurse', 'pharmacist', 'cashier', 'l
 
 export const MODULE_ROLES: Record<string, UserRole[]> = {
   dashboard: ALL,
+  guide: ALL,
   queue: ALL,
   registration: ['admin', 'nurse', 'cashier'],
   patients: ['admin', 'doctor', 'nurse', 'cashier'],
