@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Activity,
   BookOpen,
-  Pencil
+  Pencil,
+  HeartPulse
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStore } from '../../context/StoreContext';
@@ -82,6 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'schedule', label: 'Jadwal Dokter', icon: CalendarDays },
         { id: 'billing', label: 'Pembayaran & Kasir', icon: CreditCard },
+        { id: 'bpjs', label: 'BPJS & Kapitasi', icon: HeartPulse },
         { id: 'reports', label: 'Laporan Fasilitas', icon: BarChart3 },
       ]
     },

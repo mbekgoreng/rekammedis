@@ -21,6 +21,7 @@ export const MODULE_ROLES: Record<string, UserRole[]> = {
   letters: ['admin', 'doctor'],
   schedule: ALL,
   billing: ['admin', 'cashier'],
+  bpjs: ['admin', 'doctor', 'nurse', 'cashier'],
   reports: ['admin'],
   users: ['admin'],
   audit: ['admin'],

@@ -51,6 +51,8 @@ export interface Patient {
   chronicDiseases: string[]; // e.g. ["Hipertensi", "Diabetes Mellitus Tipe 2"]
   insuranceType: 'BPJS Kesehatan' | 'Asuransi Swasta' | 'Umum / Mandiri';
   insuranceNumber?: string;
+  /** Kepesertaan BPJS sudah diverifikasi MANUAL oleh petugas (bukan bridging). */
+  bpjsVerified?: boolean;
   status: 'Aktif' | 'Rawat Inap' | 'Selesai' | 'Nonaktif';
   registeredAt: string;
   photoUrl?: string;

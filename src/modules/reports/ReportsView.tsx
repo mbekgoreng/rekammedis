@@ -8,6 +8,7 @@ import {
   DollarSign,
   FileWarning
 } from 'lucide-react';
+import { computeBpjsStats } from '../../lib/bpjs';
 import { useStore } from '../../context/StoreContext';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -36,7 +37,8 @@ const parseDate = (value: string): Date | null => {
 };
 
 export const ReportsView: React.FC = () => {
-  const { patients, medicalRecords, invoices, prescriptions } = useStore();
+  const { patients, medicalRecords, invoices, prescriptions, certificates } = useStore();
+  const kbk = computeBpjsStats(patients, medicalRecords, certificates);
   const [period, setPeriod] = useState<Period>('month');
 
   // Jangkar periode = tanggal data terbaru yang ada (dengan data live, ini ~hari ini),
@@ -243,6 +245,21 @@ export const ReportsView: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Indikator KBK (BPJS) — ringkasan, detail di menu BPJS & Kapitasi */}
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Indikator KBK — {kbk.periodLabel}</p>
+            <p className="text-[10px] text-slate-400">Pemantauan internal dari data nyata; detail & daftar kerja di menu BPJS & Kapitasi</p>
+          </div>
+          <div className="flex gap-8 text-xs">
+            <span>Angka Kontak<br /><strong className="text-base text-slate-900">{kbk.angkaKontak}‰</strong> <span className="text-slate-400">/ ≥150‰</span></span>
+            <span>Rasio Rujukan<br /><strong className="text-base text-slate-900">{kbk.rasioRujukan.toFixed(1)}%</strong> <span className="text-slate-400">/ ≤2%</span></span>
+            <span>Prolanis Terkendali<br /><strong className="text-base text-slate-900">{kbk.prolanisControlled}/{kbk.prolanis.length}</strong></span>
+          </div>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Morbiditas nyata */}

@@ -24,6 +24,7 @@ import { ClinicSettingsView } from './modules/settings/ClinicSettingsView';
 import { LoginView } from './modules/auth/LoginView';
 import { ChangePasswordView } from './modules/auth/ChangePasswordView';
 import { GuideView } from './modules/guide/GuideView';
+import { BpjsView } from './modules/bpjs/BpjsView';
 import { TourOverlay, tourStorageKey } from './components/onboarding/TourOverlay';
 import { DEFAULT_CLINIC_ID } from './lib/clinics';
 import { canAccess, ROLE_LABELS } from './lib/permissions';
@@ -185,6 +186,8 @@ const MainLayout: React.FC = () => {
             {currentModule === 'letters' && <MedicalLettersView />}
 
             {currentModule === 'reports' && <ReportsView />}
+
+            {currentModule === 'bpjs' && <BpjsView />}
 
             {currentModule === 'users' && <UserManagementView />}
 

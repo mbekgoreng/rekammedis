@@ -35,6 +35,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
     emergencyPhone: '',
     insuranceType: 'BPJS Kesehatan' as Patient['insuranceType'],
     insuranceNumber: '',
+    bpjsVerified: false,
     status: 'Aktif' as Patient['status']
   });
 
@@ -64,6 +65,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
         emergencyPhone: initialData.emergencyContact.phone,
         insuranceType: initialData.insuranceType,
         insuranceNumber: initialData.insuranceNumber || '',
+        bpjsVerified: initialData.bpjsVerified || false,
         status: initialData.status
       });
       setAllergies(initialData.allergies);
@@ -85,6 +87,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
         emergencyPhone: '',
         insuranceType: 'BPJS Kesehatan',
         insuranceNumber: '',
+        bpjsVerified: false,
         status: 'Aktif'
       });
       setAllergies([]);
@@ -170,6 +173,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
       chronicDiseases,
       insuranceType: formData.insuranceType,
       insuranceNumber: formData.insuranceNumber.trim() || undefined,
+      bpjsVerified: formData.insuranceType === 'BPJS Kesehatan' ? formData.bpjsVerified : undefined,
       status: formData.status
     });
 
@@ -316,6 +320,20 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
             onChange={(e) => setFormData({ ...formData, insuranceNumber: e.target.value })}
             placeholder="Nomor kartu penjamin jika ada"
           />
+          {formData.insuranceType === 'BPJS Kesehatan' && (
+            <label className="md:col-span-2 flex items-start gap-2 text-[11px] text-slate-600 bg-clinical-50 border border-clinical-100 rounded-lg px-3 py-2">
+              <input
+                type="checkbox"
+                className="w-4 h-4 mt-0.5 accent-clinical-600"
+                checked={formData.bpjsVerified}
+                onChange={(e) => setFormData({ ...formData, bpjsVerified: e.target.checked })}
+              />
+              <span>
+                <strong>Kepesertaan sudah diverifikasi manual oleh petugas</strong> (cek kartu/NIK di kanal resmi BPJS).
+                Verifikasi otomatis lewat bridging P-Care belum terhubung — jangan centang bila belum benar-benar dicek.
+              </span>
+            </label>
+          )}
         </div>
 
         {/* Section: Kontak Darurat */}
