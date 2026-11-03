@@ -12,6 +12,7 @@ import {
   DoctorSchedule,
   AuditLog,
   ClinicNotification,
+  ClinicProfile,
   User,
   UserRole
 } from '../types';
@@ -30,12 +31,31 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_USERS
 } from '../data/mockData';
+import {
+  clearSession,
+  hashPassword,
+  loadSession,
+  saveSession,
+  type SessionData
+} from '../lib/auth';
+
+export interface AuthResult {
+  ok: boolean;
+  error?: string;
+}
 
 interface StoreContextType {
   currentUser: User;
   setCurrentUser: (user: User) => void;
-  switchRole: (role: UserRole) => void;
+  isAuthenticated: boolean;
+  session: SessionData | null;
+  login: (email: string, password: string, remember: boolean) => Promise<AuthResult>;
+  logout: () => void;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<AuthResult>;
+  resetUserPassword: (userId: string, newPassword: string) => Promise<void>;
   users: User[];
+  clinicProfile: ClinicProfile;
+  updateClinicProfile: (profile: ClinicProfile) => void;
   patients: Patient[];
   medicines: Medicine[];
   queues: QueueItem[];
@@ -64,6 +84,7 @@ interface StoreContextType {
 
   // Examination / SOAP Actions
   saveMedicalRecord: (record: Omit<MedicalRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>, isDraft?: boolean) => MedicalRecord;
+  updateMedicalRecord: (id: string, record: Omit<MedicalRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>, isDraft?: boolean) => MedicalRecord;
   
   // Prescription Actions
   createPrescription: (prescription: Omit<Prescription, 'id' | 'date'>) => Prescription;
@@ -108,8 +129,54 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const [users] = useState<User[]>(() => loadLocal('users', INITIAL_USERS));
+  const [users, setUsers] = useState<User[]>(() => {
+    const stored = loadLocal<User[]>('users', INITIAL_USERS);
+    // Migrasi: akun lama yang belum punya hash kata sandi mewarisi hash bawaan
+    return stored.map((u) => {
+      if (u.passwordHash) return u;
+      const seed = INITIAL_USERS.find((s) => s.id === u.id || s.email === u.email);
+      return seed ? { ...u, passwordHash: seed.passwordHash } : u;
+    });
+  });
   const [currentUser, setCurrentUser] = useState<User>(() => loadLocal('currentUser', INITIAL_USERS[0]));
+  const [session, setSession] = useState<SessionData | null>(() => loadSession());
+
+  const isAuthenticated =
+    !!session && session.expiresAt > Date.now() && users.some((u) => u.id === session.userId);
+
+  // Sesi yang valid menentukan pengguna aktif
+  useEffect(() => {
+    if (session && session.expiresAt > Date.now()) {
+      const user = users.find((u) => u.id === session.userId);
+      if (user) setCurrentUser(user);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  useEffect(() => {
+    localStorage.setItem('tongfang_v3_users', JSON.stringify(users));
+  }, [users]);
+
+  const [clinicProfile, setClinicProfile] = useState<ClinicProfile>(() =>
+    loadLocal<ClinicProfile>('clinic_profile', {
+      clinicName: 'Klinik Tong Fang Ashiap',
+      licenseNumber: '503/021/KOP-PELKES/2023',
+      faskesCode: '31710502',
+      address: 'Jl. Jenderal Sudirman Kav. 45, Kebayoran Baru, Jakarta Selatan',
+      phone: '(021) 555-0192',
+      email: 'info@tongfangashiap.id',
+      directorName: 'dr. Yusuf Tjakep Kalee, Sp.PD'
+    })
+  );
+
+  useEffect(() => {
+    localStorage.setItem('tongfang_v3_clinic_profile', JSON.stringify(clinicProfile));
+  }, [clinicProfile]);
+
+  const updateClinicProfile = (profile: ClinicProfile) => {
+    setClinicProfile(profile);
+    logAudit('Pengaturan', 'Perbarui Profil Klinik', `Profil fasilitas diperbarui: ${profile.clinicName}`);
+  };
   const [patients, setPatients] = useState<Patient[]>(() => loadLocal('patients', INITIAL_PATIENTS));
   const [medicines, setMedicines] = useState<Medicine[]>(() => loadLocal('medicines', INITIAL_MEDICINES));
   const [queues, setQueues] = useState<QueueItem[]>(() => loadLocal('queues', INITIAL_QUEUES));
@@ -139,6 +206,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem('tongfang_v3_queues', JSON.stringify(queues));
   }, [queues]);
+
+  useEffect(() => {
+    localStorage.setItem('tongfang_v3_schedules', JSON.stringify(schedules));
+  }, [schedules]);
 
   useEffect(() => {
     localStorage.setItem('tongfang_v3_records', JSON.stringify(medicalRecords));
@@ -230,16 +301,82 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Switch role helper
-  const switchRole = (role: UserRole) => {
-    const userForRole = users.find(u => u.role === role) || {
-      id: 'u-' + role,
-      name: `Staf ${role.toUpperCase()}`,
-      email: `${role}@tongfangashiap.id`,
-      role
+  // ---- Autentikasi ----
+  const logAuditAs = (user: User, action: string, details: string) => {
+    const now = new Date();
+    const newLog: AuditLog = {
+      id: 'log-' + Date.now(),
+      timestamp: now.toISOString().replace('T', ' ').substring(0, 19),
+      userName: user.name,
+      role: user.role,
+      module: 'Pengguna',
+      action,
+      details,
+      ipAddress: '192.168.1.' + Math.floor(100 + Math.random() * 50)
     };
-    setCurrentUser(userForRole);
-    logAudit('Pengguna', 'Ganti Peran Aktif', `Beralih ke peran ${role}`);
+    setAuditLogs((prev) => [newLog, ...prev]);
+  };
+
+  const login = async (email: string, password: string, remember: boolean): Promise<AuthResult> => {
+    const normalized = email.trim().toLowerCase();
+    const user = users.find((u) => u.email.toLowerCase() === normalized);
+    if (!user || user.isActive === false) {
+      return { ok: false, error: 'Email atau kata sandi salah.' };
+    }
+    if (!user.passwordHash) {
+      return { ok: false, error: 'Akun ini belum memiliki kata sandi. Hubungi administrator.' };
+    }
+    const candidate = await hashPassword(user.id, password);
+    if (candidate !== user.passwordHash) {
+      return { ok: false, error: 'Email atau kata sandi salah.' };
+    }
+    const now = Date.now();
+    const newSession: SessionData = {
+      userId: user.id,
+      email: user.email,
+      loginAt: now,
+      expiresAt: now + (remember ? 7 * 24 * 60 * 60 * 1000 : 12 * 60 * 60 * 1000),
+      remember
+    };
+    saveSession(newSession);
+    setSession(newSession);
+    setCurrentUser(user);
+    logAuditAs(user, 'Login Berhasil', `Pengguna masuk sebagai ${user.role}`);
+    return { ok: true };
+  };
+
+  const logout = () => {
+    if (session) {
+      const user = users.find((u) => u.id === session.userId);
+      if (user) logAuditAs(user, 'Logout', 'Pengguna keluar dari sistem');
+    }
+    clearSession();
+    setSession(null);
+  };
+
+  const changePassword = async (oldPassword: string, newPassword: string): Promise<AuthResult> => {
+    const user = users.find((u) => u.id === currentUser.id);
+    if (!user) return { ok: false, error: 'Pengguna tidak ditemukan.' };
+    const oldHash = await hashPassword(user.id, oldPassword);
+    if (oldHash !== user.passwordHash) {
+      return { ok: false, error: 'Kata sandi lama salah.' };
+    }
+    if (newPassword.length < 8) {
+      return { ok: false, error: 'Kata sandi baru minimal 8 karakter.' };
+    }
+    const newHash = await hashPassword(user.id, newPassword);
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, passwordHash: newHash } : u)));
+    logAuditAs(user, 'Ganti Kata Sandi', 'Kata sandi akun berhasil diubah');
+    return { ok: true };
+  };
+
+  const resetUserPassword = async (userId: string, newPassword: string): Promise<void> => {
+    const newHash = await hashPassword(userId, newPassword);
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, passwordHash: newHash } : u)));
+    const target = users.find((u) => u.id === userId);
+    if (target) {
+      logAuditAs(currentUser, 'Reset Kata Sandi', `Kata sandi ${target.name} direset oleh administrator`);
+    }
   };
 
   // Patient Actions
@@ -273,7 +410,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addQueue = (item: Omit<QueueItem, 'id' | 'queueNumber' | 'registeredTime' | 'status'>): QueueItem => {
     const prefix = item.department.includes('Umum') ? 'B' : 'A';
     const deptQueues = queues.filter(q => q.queueNumber.startsWith(prefix));
-    const nextNum = deptQueues.length + 1;
+    const nextNum = deptQueues.reduce((m, q) => {
+      const v = parseInt(q.queueNumber.split('-')[1] || '0', 10);
+      return v > m ? v : m;
+    }, 0) + 1;
     const queueNumber = `${prefix}-${String(nextNum).padStart(3, '0')}`;
     const now = new Date();
     const registeredTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -283,10 +423,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: 'q-' + Date.now(),
       queueNumber,
       registeredTime,
+      queueDate: now.toISOString().split('T')[0],
       status: 'Menunggu'
     };
 
     setQueues(prev => [...prev, created]);
+    // Isi kuota jadwal dokter pada hari berjalan
+    const todayName = now.toLocaleDateString('id-ID', { weekday: 'long' });
+    setSchedules(prev => prev.map(s =>
+      s.doctorId === item.doctorId && s.dayOfWeek === todayName
+        ? { ...s, bookedCount: s.bookedCount + 1 }
+        : s
+    ));
     logAudit('Antrian', 'Registrasi Antrian Baru', `Nomor ${queueNumber} untuk pasien ${created.patientName} di ${created.department}`);
     return created;
   };
@@ -313,6 +461,58 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     logAudit('Antrian', 'Panggil Antrian Pasien', `Memanggil antrian ${target.queueNumber} - ${target.patientName}`);
   };
 
+
+  // Nomor dokumen berikutnya: selalu di atas nomor terbesar yang sudah ada
+  const nextDocNumber = (existing: string[], prefix: string, pad: number): string => {
+    const max = existing.reduce((m, n) => {
+      const match = n.match(/(\d+)$/);
+      const v = match ? parseInt(match[1], 10) : 0;
+      return v > m ? v : m;
+    }, 0);
+    return `${prefix}-${String(max + 1).padStart(pad, '0')}`;
+  };
+
+  // Terbitkan resep digital dari sebuah record final (sekali saja per record)
+  const emitPrescriptionForRecord = (record: MedicalRecord) => {
+    if (record.plan.prescriptions.length === 0) return;
+    if (prescriptions.some((p) => p.medicalRecordId === record.id)) return;
+    const totalCost = record.plan.prescriptions.reduce((sum, item) => sum + (item.quantity * item.pricePerUnit), 0);
+    const newRx: Prescription = {
+      id: 'rx-' + Date.now(),
+      patientId: record.patientId,
+      patientName: record.patientName,
+      mrNumber: record.mrNumber,
+      doctorId: record.doctorId,
+      doctorName: record.doctorName,
+      medicalRecordId: record.id,
+      date: record.visitDate,
+      status: 'Menunggu Farmasi',
+      items: record.plan.prescriptions,
+      totalCost,
+      notes: record.plan.doctorNotes
+    };
+    setPrescriptions(prev => [newRx, ...prev]);
+    const notif: ClinicNotification = {
+      id: 'notif-' + Date.now(),
+      title: 'Resep Baru Masuk dari Poli',
+      message: `Resep ${record.patientName} (${record.mrNumber}) dari ${record.doctorName}`,
+      time: 'Baru saja',
+      type: 'info',
+      read: false,
+      linkModule: 'pharmacy'
+    };
+    setNotifications(prev => [notif, ...prev]);
+  };
+
+  // Tutup HANYA antrean kunjungan aktif pasien ini (Dipanggil/Sedang Diperiksa)
+  const closeActiveQueueForPatient = (patientId: string) => {
+    setQueues(prev => prev.map(q =>
+      q.patientId === patientId && (q.status === 'Dipanggil' || q.status === 'Sedang Diperiksa')
+        ? { ...q, status: 'Selesai' }
+        : q
+    ));
+  };
+
   // Examination / SOAP
   const saveMedicalRecord = (recordData: Omit<MedicalRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>, isDraft = false): MedicalRecord => {
     const now = new Date();
@@ -328,40 +528,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setMedicalRecords(prev => [record, ...prev]);
 
-    // Also if there are prescriptions in plan, automatically create digital prescription
-    if (record.plan.prescriptions.length > 0 && !isDraft) {
-      const totalCost = record.plan.prescriptions.reduce((sum, item) => sum + (item.quantity * item.pricePerUnit), 0);
-      const newRx: Prescription = {
-        id: 'rx-' + Date.now(),
-        patientId: record.patientId,
-        patientName: record.patientName,
-        mrNumber: record.mrNumber,
-        doctorId: record.doctorId,
-        doctorName: record.doctorName,
-        medicalRecordId: record.id,
-        date: record.visitDate,
-        status: 'Menunggu Farmasi',
-        items: record.plan.prescriptions,
-        totalCost,
-        notes: record.plan.doctorNotes
-      };
-      setPrescriptions(prev => [newRx, ...prev]);
-
-      // Push notification to pharmacy
-      const notif: ClinicNotification = {
-        id: 'notif-' + Date.now(),
-        title: 'Resep Baru Masuk dari Poli',
-        message: `Resep ${record.patientName} (${record.mrNumber}) dari ${record.doctorName}`,
-        time: 'Baru saja',
-        type: 'info',
-        read: false,
-        linkModule: 'pharmacy'
-      };
-      setNotifications(prev => [notif, ...prev]);
+    if (!isDraft) {
+      emitPrescriptionForRecord(record);
+      closeActiveQueueForPatient(record.patientId);
     }
-
-    // Update patient status and queue item to "Selesai" if matching
-    setQueues(prev => prev.map(q => q.patientId === record.patientId ? { ...q, status: 'Selesai' } : q));
 
     logAudit(
       'Rekam Medis',
@@ -370,6 +540,33 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
 
     return record;
+  };
+
+  const updateMedicalRecord = (id: string, recordData: Omit<MedicalRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>, isDraft = false): MedicalRecord => {
+    const now = new Date();
+    const formatted = `${now.toISOString().split('T')[0]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const existing = medicalRecords.find((r) => r.id === id);
+    const updated: MedicalRecord = {
+      ...recordData,
+      id,
+      status: isDraft ? 'Draft' : 'Final',
+      createdAt: existing?.createdAt || formatted,
+      updatedAt: formatted
+    };
+    setMedicalRecords(prev => prev.map(r => (r.id === id ? updated : r)));
+
+    if (!isDraft) {
+      emitPrescriptionForRecord(updated);
+      closeActiveQueueForPatient(updated.patientId);
+    }
+
+    logAudit(
+      'Rekam Medis',
+      isDraft ? 'Perbarui Draft Rekam Medis' : 'Finalisasi Rekam Medis dari Draft',
+      `Pemeriksaan SOAP pasien ${updated.patientName} (${updated.mrNumber}) oleh ${updated.doctorName}`
+    );
+
+    return updated;
   };
 
   // Prescription Actions
@@ -386,8 +583,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updatePrescriptionStatus = (id: string, status: Prescription['status']) => {
-    setPrescriptions(prev => prev.map(rx => (rx.id === id ? { ...rx, status } : rx)));
     const target = prescriptions.find(rx => rx.id === id);
+    setPrescriptions(prev => prev.map(rx => (rx.id === id ? { ...rx, status } : rx)));
+    // Dispensing final: kurangi stok obat tepat sekali saat resep mencapai Selesai
+    if (target && status === 'Selesai' && target.status !== 'Selesai') {
+      setMedicines(prev => prev.map(med => {
+        const item = target.items.find(i => i.medicineId === med.id);
+        if (!item) return med;
+        return { ...med, stock: Math.max(0, med.stock - item.quantity) };
+      }));
+      logAudit('Farmasi', 'Penyerahan Obat (Dispensing)', `Resep ${target.patientName} diserahkan; stok ${target.items.length} item obat dikurangi`);
+    }
     if (target) {
       logAudit('Resep', 'Perubahan Status Resep', `Status resep ${target.id} (${target.patientName}) diubah ke ${status}`);
     }
@@ -420,7 +626,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Lab & Radiology Actions
   const createLabOrder = (order: Omit<LabOrder, 'id' | 'orderNumber' | 'orderDate' | 'status'>): LabOrder => {
-    const num = String(labOrders.length + 1).padStart(4, '0');
+    const num = nextDocNumber(labOrders.map(o => o.orderNumber), 'X', 4).split('-').pop() as string;
     const today = new Date().toISOString().split('T')[0];
     const created: LabOrder = {
       ...order,
@@ -460,7 +666,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const createRadiologyOrder = (order: Omit<RadiologyOrder, 'id' | 'orderNumber' | 'orderDate' | 'status'>): RadiologyOrder => {
-    const num = String(radiologyOrders.length + 1).padStart(4, '0');
+    const num = nextDocNumber(radiologyOrders.map(o => o.orderNumber), 'X', 4).split('-').pop() as string;
     const today = new Date().toISOString().split('T')[0];
     const created: RadiologyOrder = {
       ...order,
@@ -492,7 +698,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Billing Actions
   const createInvoice = (inv: Omit<Invoice, 'id' | 'invoiceNumber' | 'date' | 'dueDate' | 'status' | 'paidAmount'>): Invoice => {
-    const num = String(invoices.length + 1).padStart(4, '0');
+    const num = nextDocNumber(invoices.map(o => o.invoiceNumber), 'X', 4).split('-').pop() as string;
     const today = new Date().toISOString().split('T')[0];
     const created: Invoice = {
       ...inv,
@@ -535,7 +741,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const createCertificate = (cert: Omit<MedicalCertificate, 'id' | 'certificateNumber' | 'issueDate'>): MedicalCertificate => {
     const today = new Date().toISOString().split('T')[0];
     const prefix = cert.type.includes('Sakit') ? 'SKD' : cert.type.includes('Sehat') ? 'SKBS' : 'SRK';
-    const num = String(certificates.length + 1).padStart(3, '0');
+    const num = nextDocNumber(certificates.map(o => o.certificateNumber), 'X', 3).split('-').pop() as string;
     const certificateNumber = `${prefix}/2026/02/${num}`;
     const created: MedicalCertificate = {
       ...cert,
@@ -562,8 +768,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         currentUser,
         setCurrentUser,
-        switchRole,
+        isAuthenticated,
+        session,
+        login,
+        logout,
+        changePassword,
+        resetUserPassword,
         users,
+        clinicProfile,
+        updateClinicProfile,
         patients,
         medicines,
         queues,
@@ -584,6 +797,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateQueueStatus,
         callQueuePatient,
         saveMedicalRecord,
+        updateMedicalRecord,
         createPrescription,
         updatePrescriptionStatus,
         addMedicine,

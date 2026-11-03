@@ -19,6 +19,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-1',
     name: 'dr. Yusuf Tjakep Kalee, Sp.PD',
     email: 'yusuf.tjakep@tongfangashiap.id',
+    passwordHash: 'e47f53c295a2831ab2f2c1e16986442940725c47c38bcb19571b7b81d3293303',
     role: 'doctor',
     sipNumber: 'SIP.503/442.1/DOKTER/2023',
     department: 'Poli Penyakit Dalam'
@@ -27,6 +28,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-2',
     name: 'dr. Avivien Slebew, Sp.G',
     email: 'avivien.slebew@tongfangashiap.id',
+    passwordHash: '96d843791f9b4553eccf3b2b379f9bfb0c5e539445a7eb48fa3df2a39f1e451c',
     role: 'doctor',
     sipNumber: 'SIP.503/442.2/DOKTER/2024',
     department: 'Poli Gizi & Spesialis'
@@ -35,6 +37,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-3',
     name: 'Prabowo Jokowow, S teh dua gelas',
     email: 'prabowo.jokowow@tongfangashiap.id',
+    passwordHash: 'baa77ca42dfa54f8c51f396c36e452f387220a0095c818ba6a0179785537bfa8',
     role: 'doctor',
     sipNumber: 'SIP.503/442.3/KONSULTAN/2026',
     department: 'Poli Umum'
@@ -43,6 +46,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-4',
     name: 'Ns. Ratna Sari, S.Kep',
     email: 'ratna.sari@tongfangashiap.id',
+    passwordHash: '8891005ce6d5cccf69369a7c0b1a13f4db77ca9403cc059169cbc55f3a99a77e',
     role: 'nurse',
     department: 'Triage & Poliklinik'
   },
@@ -50,6 +54,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-5',
     name: 'apt. Rizki Fauzi, S.Farm',
     email: 'rizki.fauzi@tongfangashiap.id',
+    passwordHash: 'b39e4f573ba2cdf5bfa5922545a35de927aed2941b59f0ef441783c92cadd5b9',
     role: 'pharmacist',
     department: 'Instalasi Farmasi'
   },
@@ -57,6 +62,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-6',
     name: 'Indah Permata',
     email: 'indah.permata@tongfangashiap.id',
+    passwordHash: '4ae0dcfff84461e9ee7d24bd5f5aa8f3115d6a60a629ab91e0dff724c0f29dd1',
     role: 'cashier',
     department: 'Kasir & Pendaftaran'
   },
@@ -64,6 +70,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-7',
     name: 'Bambang Triyono, A.Md.AK',
     email: 'bambang.lab@tongfangashiap.id',
+    passwordHash: '51a8375410637dcd29b01682f8002f69308c52cd22a3b40bb96b98e66f0e943c',
     role: 'lab',
     department: 'Laboratorium & Radiologi'
   },
@@ -71,6 +78,7 @@ export const INITIAL_USERS: User[] = [
     id: 'u-8',
     name: 'Administrator Utama',
     email: 'admin@tongfangashiap.id',
+    passwordHash: 'b24cf7cae59e40bceb8d919b012589f53a10e90e16248a3fe019d5dd4c34fa1d',
     role: 'admin',
     department: 'Manajemen Sistem'
   }
@@ -560,8 +568,451 @@ export const INITIAL_MEDICAL_RECORDS: MedicalRecord[] = [
     status: 'Final',
     createdAt: '2026-02-15 09:30',
     updatedAt: '2026-02-15 09:45'
-  }
-];
+  },
+  {
+        "id": "mr-rec-2",
+        "patientId": "p-2",
+        "mrNumber": "RM-2026-0002",
+        "patientName": "Siti Rahma",
+        "doctorId": "u-3",
+        "doctorName": "Prabowo Jokowow, S teh dua gelas",
+        "department": "Poli Umum",
+        "visitDate": "2026-02-10",
+        "visitType": "Baru",
+        "subjective": {
+          "chiefComplaint": "Batuk berdahak dan pilek sejak 4 hari lalu, disertai demam ringan.",
+          "historyOfPresentIllness": "Demam naik turun, tenggorokan gatal, tidak ada sesak. Sudah minum obat warung tanpa perbaikan.",
+          "historyOfPastIllness": "Tidak ada riwayat penyakit kronis.",
+          "currentMedications": "Paracetamol (bila demam)"
+        },
+        "objective": {
+          "vitals": {
+            "systolic": 118,
+            "diastolic": 76,
+            "heartRate": 88,
+            "temperature": 37.8,
+            "respiratoryRate": 20,
+            "spO2": 98,
+            "weight": 58,
+            "height": 160,
+            "bmi": 22.7,
+            "bmiCategory": "Normal"
+          },
+          "physicalExam": {
+            "head": "Mesocephal, jejas (-)",
+            "eyes": "Konjungtiva anemis (-/-), sklera ikterik (-/-)",
+            "ears": "Normotia, sekret (-/-)",
+            "nose": "Deformitas (-), epistaksis (-/-)",
+            "throat": "Faring hiperemis (-), tonsil T1/T1 tenang",
+            "neck": "JVP normal, pembesaran KGB (-)",
+            "thorax": "Simetris saat statis dan dinamis",
+            "heart": "S1-S2 murni reguler, murmur (-), gallop (-)",
+            "lungs": "Suara nafas vesikuler (+/+), rhonki (-/-), wheezing (-/-)",
+            "abdomen": "Supel, nyeri tekan (-), bising usus normal",
+            "extremities": "Akral hangat, CRT < 2 detik, edema (-/-)",
+            "neurological": "GCS 15, reflek fisiologis (+)"
+          }
+        },
+        "assessment": {
+          "diagnoses": [
+            {
+              "id": "diag-2",
+              "icd10Code": "J06.9",
+              "nameIndonesian": "Infeksi Saluran Napas Akut (ISPA)",
+              "isPrimary": true,
+              "notes": "ISPA viral, tanpa tanda pneumonia"
+            }
+          ],
+          "clinicalImpression": "ISPA atas fase akut, kondisi umum baik."
+        },
+        "plan": {
+          "therapyPlan": "Istirahat cukup, hidrasi adekuat, obat simptomatik. Antibiotik tidak diberikan (etiologi viral).",
+          "procedures": [
+            {
+              "id": "proc-mr-rec-2",
+              "code": "00.01",
+              "name": "Pemeriksaan Klinis & Konsultasi",
+              "cost": 100000
+            }
+          ],
+          "prescriptions": [],
+          "doctorNotes": "Kembali bila demam > 3 hari atau muncul sesak napas.",
+          "nextVisitDate": "2026-02-17"
+        },
+        "status": "Final",
+        "createdAt": "2026-02-10 09:00",
+        "updatedAt": "2026-02-10 09:20"
+      },
+  {
+        "id": "mr-rec-3",
+        "patientId": "p-3",
+        "mrNumber": "RM-2026-0003",
+        "patientName": "Ahmad Fauzan",
+        "doctorId": "u-1",
+        "doctorName": "dr. Yusuf Tjakep Kalee, Sp.PD",
+        "department": "Poli Penyakit Dalam",
+        "visitDate": "2026-02-11",
+        "visitType": "Kontrol Rutin",
+        "subjective": {
+          "chiefComplaint": "Kontrol diabetes berkala, mengeluh sering kesemutan di kedua telapak kaki.",
+          "historyOfPresentIllness": "Gula darah puasa terakhir 168 mg/dL. Pola makan belum teratur, jarang olahraga.",
+          "historyOfPastIllness": "Diabetes melitus tipe 2 sejak 3 tahun lalu.",
+          "currentMedications": "Metformin 500 mg 2x1"
+        },
+        "objective": {
+          "vitals": {
+            "systolic": 132,
+            "diastolic": 84,
+            "heartRate": 80,
+            "temperature": 36.7,
+            "respiratoryRate": 18,
+            "spO2": 99,
+            "weight": 82,
+            "height": 168,
+            "bmi": 29.1,
+            "bmiCategory": "Overweight"
+          },
+          "physicalExam": {
+            "head": "Mesocephal, jejas (-)",
+            "eyes": "Konjungtiva anemis (-/-), sklera ikterik (-/-)",
+            "ears": "Normotia, sekret (-/-)",
+            "nose": "Deformitas (-), epistaksis (-/-)",
+            "throat": "Faring hiperemis (-), tonsil T1/T1 tenang",
+            "neck": "JVP normal, pembesaran KGB (-)",
+            "thorax": "Simetris saat statis dan dinamis",
+            "heart": "S1-S2 murni reguler, murmur (-), gallop (-)",
+            "lungs": "Suara nafas vesikuler (+/+), rhonki (-/-), wheezing (-/-)",
+            "abdomen": "Supel, nyeri tekan (-), bising usus normal",
+            "extremities": "Akral hangat, CRT < 2 detik, edema (-/-)",
+            "neurological": "GCS 15, reflek fisiologis (+)"
+          }
+        },
+        "assessment": {
+          "diagnoses": [
+            {
+              "id": "diag-3",
+              "icd10Code": "E11.9",
+              "nameIndonesian": "Diabetes Melitus Tipe 2",
+              "isPrimary": true,
+              "notes": "GDP belum terkontrol, gejala neuropati perifer awal"
+            }
+          ],
+          "clinicalImpression": "DM tipe 2 belum terkontrol dengan keluhan neuropati awal."
+        },
+        "plan": {
+          "therapyPlan": "Edukasi diet DM 1900 kkal, target GDP < 126 mg/dL, lanjutkan Metformin, rujuk cek HbA1c ke laboratorium.",
+          "procedures": [
+            {
+              "id": "proc-mr-rec-3",
+              "code": "00.01",
+              "name": "Pemeriksaan Klinis & Konsultasi",
+              "cost": 100000
+            }
+          ],
+          "prescriptions": [],
+          "doctorNotes": "Kontrol 1 bulan dengan hasil HbA1c dan GDP.",
+          "nextVisitDate": "2026-03-11"
+        },
+        "status": "Final",
+        "createdAt": "2026-02-11 09:00",
+        "updatedAt": "2026-02-11 09:20"
+      },
+  {
+        "id": "mr-rec-4",
+        "patientId": "p-4",
+        "mrNumber": "RM-2026-0004",
+        "patientName": "Dewi Lestari",
+        "doctorId": "u-3",
+        "doctorName": "Prabowo Jokowow, S teh dua gelas",
+        "department": "Poli Umum",
+        "visitDate": "2026-02-12",
+        "visitType": "Baru",
+        "subjective": {
+          "chiefComplaint": "Nyeri ulu hati perih dan mual sejak 1 minggu, memberat setelah makan pedas.",
+          "historyOfPresentIllness": "Nafsu makan menurun, perih berkurang setelah minum antasida. Tidak ada muntah darah atau BAB hitam.",
+          "historyOfPastIllness": "Riwayat maag sejak remaja.",
+          "currentMedications": "Antasida (bila nyeri)"
+        },
+        "objective": {
+          "vitals": {
+            "systolic": 110,
+            "diastolic": 70,
+            "heartRate": 76,
+            "temperature": 36.5,
+            "respiratoryRate": 16,
+            "spO2": 99,
+            "weight": 52,
+            "height": 158,
+            "bmi": 20.8,
+            "bmiCategory": "Normal"
+          },
+          "physicalExam": {
+            "head": "Mesocephal, jejas (-)",
+            "eyes": "Konjungtiva anemis (-/-), sklera ikterik (-/-)",
+            "ears": "Normotia, sekret (-/-)",
+            "nose": "Deformitas (-), epistaksis (-/-)",
+            "throat": "Faring hiperemis (-), tonsil T1/T1 tenang",
+            "neck": "JVP normal, pembesaran KGB (-)",
+            "thorax": "Simetris saat statis dan dinamis",
+            "heart": "S1-S2 murni reguler, murmur (-), gallop (-)",
+            "lungs": "Suara nafas vesikuler (+/+), rhonki (-/-), wheezing (-/-)",
+            "abdomen": "Supel, nyeri tekan (-), bising usus normal",
+            "extremities": "Akral hangat, CRT < 2 detik, edema (-/-)",
+            "neurological": "GCS 15, reflek fisiologis (+)"
+          }
+        },
+        "assessment": {
+          "diagnoses": [
+            {
+              "id": "diag-4",
+              "icd10Code": "K29.7",
+              "nameIndonesian": "Gastritis dan Duodenitis",
+              "isPrimary": true,
+              "notes": "Gastritis akut tanpa tanda perdarahan"
+            }
+          ],
+          "clinicalImpression": "Gastritis akut, kemungkinan dipicu pola makan dan stres."
+        },
+        "plan": {
+          "therapyPlan": "Hindari makanan pedas/asam dan kafein, makan porsi kecil sering, terapi PPI 14 hari.",
+          "procedures": [
+            {
+              "id": "proc-mr-rec-4",
+              "code": "00.01",
+              "name": "Pemeriksaan Klinis & Konsultasi",
+              "cost": 100000
+            }
+          ],
+          "prescriptions": [],
+          "doctorNotes": "Kembali bila muntah berulang, BAB hitam, atau nyeri tidak berkurang.",
+          "nextVisitDate": "2026-02-26"
+        },
+        "status": "Final",
+        "createdAt": "2026-02-12 09:00",
+        "updatedAt": "2026-02-12 09:20"
+      },
+  {
+        "id": "mr-rec-5",
+        "patientId": "p-1",
+        "mrNumber": "RM-2026-0001",
+        "patientName": "Budi Santoso",
+        "doctorId": "u-1",
+        "doctorName": "dr. Yusuf Tjakep Kalee, Sp.PD",
+        "department": "Poli Penyakit Dalam",
+        "visitDate": "2026-02-13",
+        "visitType": "Kontrol Rutin",
+        "subjective": {
+          "chiefComplaint": "Kontrol hipertensi, tidak ada keluhan pusing minggu ini.",
+          "historyOfPresentIllness": "Rutin minum Amlodipine 5 mg setiap malam selama 2 minggu terakhir. Tensi di rumah berkisar 135/85.",
+          "historyOfPastIllness": "Hipertensi sejak 2 tahun lalu.",
+          "currentMedications": "Amlodipine 5 mg 1x1"
+        },
+        "objective": {
+          "vitals": {
+            "systolic": 138,
+            "diastolic": 88,
+            "heartRate": 78,
+            "temperature": 36.6,
+            "respiratoryRate": 17,
+            "spO2": 98,
+            "weight": 76,
+            "height": 170,
+            "bmi": 26.3,
+            "bmiCategory": "Overweight"
+          },
+          "physicalExam": {
+            "head": "Mesocephal, jejas (-)",
+            "eyes": "Konjungtiva anemis (-/-), sklera ikterik (-/-)",
+            "ears": "Normotia, sekret (-/-)",
+            "nose": "Deformitas (-), epistaksis (-/-)",
+            "throat": "Faring hiperemis (-), tonsil T1/T1 tenang",
+            "neck": "JVP normal, pembesaran KGB (-)",
+            "thorax": "Simetris saat statis dan dinamis",
+            "heart": "S1-S2 murni reguler, murmur (-), gallop (-)",
+            "lungs": "Suara nafas vesikuler (+/+), rhonki (-/-), wheezing (-/-)",
+            "abdomen": "Supel, nyeri tekan (-), bising usus normal",
+            "extremities": "Akral hangat, CRT < 2 detik, edema (-/-)",
+            "neurological": "GCS 15, reflek fisiologis (+)"
+          }
+        },
+        "assessment": {
+          "diagnoses": [
+            {
+              "id": "diag-5",
+              "icd10Code": "I10",
+              "nameIndonesian": "Hipertensi Esensial (Primer)",
+              "isPrimary": true,
+              "notes": "Membaik dibanding kunjungan sebelumnya, belum target < 130/80"
+            }
+          ],
+          "clinicalImpression": "Hipertensi membaik, kepatuhan obat baik."
+        },
+        "plan": {
+          "therapyPlan": "Lanjutkan Amlodipine 5 mg, diet rendah garam, aktivitas fisik 30 menit/hari.",
+          "procedures": [
+            {
+              "id": "proc-mr-rec-5",
+              "code": "00.01",
+              "name": "Pemeriksaan Klinis & Konsultasi",
+              "cost": 100000
+            }
+          ],
+          "prescriptions": [],
+          "doctorNotes": "Kontrol 2 minggu untuk evaluasi target tensi.",
+          "nextVisitDate": "2026-02-27"
+        },
+        "status": "Final",
+        "createdAt": "2026-02-13 09:00",
+        "updatedAt": "2026-02-13 09:20"
+      },
+  {
+        "id": "mr-rec-6",
+        "patientId": "p-5",
+        "mrNumber": "RM-2026-0005",
+        "patientName": "H. Hendra Wijaya",
+        "doctorId": "u-3",
+        "doctorName": "Prabowo Jokowow, S teh dua gelas",
+        "department": "Poli Umum",
+        "visitDate": "2026-02-14",
+        "visitType": "Baru",
+        "subjective": {
+          "chiefComplaint": "Nyeri punggung bawah menjalar ke bokong kanan sejak 5 hari setelah mengangkat beban berat.",
+          "historyOfPresentIllness": "Nyeri memburuk saat membungkuk, membaik saat berbaring. Tidak ada kelemahan tungkai atau gangguan BAK/BAB.",
+          "historyOfPastIllness": "Tidak ada riwayat trauma atau operasi tulang belakang.",
+          "currentMedications": "Tidak ada"
+        },
+        "objective": {
+          "vitals": {
+            "systolic": 126,
+            "diastolic": 80,
+            "heartRate": 74,
+            "temperature": 36.4,
+            "respiratoryRate": 16,
+            "spO2": 99,
+            "weight": 88,
+            "height": 172,
+            "bmi": 29.7,
+            "bmiCategory": "Overweight"
+          },
+          "physicalExam": {
+            "head": "Mesocephal, jejas (-)",
+            "eyes": "Konjungtiva anemis (-/-), sklera ikterik (-/-)",
+            "ears": "Normotia, sekret (-/-)",
+            "nose": "Deformitas (-), epistaksis (-/-)",
+            "throat": "Faring hiperemis (-), tonsil T1/T1 tenang",
+            "neck": "JVP normal, pembesaran KGB (-)",
+            "thorax": "Simetris saat statis dan dinamis",
+            "heart": "S1-S2 murni reguler, murmur (-), gallop (-)",
+            "lungs": "Suara nafas vesikuler (+/+), rhonki (-/-), wheezing (-/-)",
+            "abdomen": "Supel, nyeri tekan (-), bising usus normal",
+            "extremities": "Akral hangat, CRT < 2 detik, edema (-/-)",
+            "neurological": "GCS 15, reflek fisiologis (+)"
+          }
+        },
+        "assessment": {
+          "diagnoses": [
+            {
+              "id": "diag-6",
+              "icd10Code": "M54.5",
+              "nameIndonesian": "Nyeri Punggung Bawah (LBP)",
+              "isPrimary": true,
+              "notes": "LBP mekanik tanpa red flag neurologis"
+            }
+          ],
+          "clinicalImpression": "Low back pain mekanik akibat strain otot."
+        },
+        "plan": {
+          "therapyPlan": "Fisioterapi, hindari angkat beban > 5 kg, analgesik sesuai kebutuhan, edukasi postur kerja.",
+          "procedures": [
+            {
+              "id": "proc-mr-rec-6",
+              "code": "00.01",
+              "name": "Pemeriksaan Klinis & Konsultasi",
+              "cost": 100000
+            }
+          ],
+          "prescriptions": [],
+          "doctorNotes": "Kembali bila nyeri menjalar ke kaki disertai kesemutan atau kelemahan.",
+          "nextVisitDate": "2026-02-28"
+        },
+        "status": "Final",
+        "createdAt": "2026-02-14 09:00",
+        "updatedAt": "2026-02-14 09:20"
+      },
+  {
+        "id": "mr-rec-7",
+        "patientId": "p-6",
+        "mrNumber": "RM-2026-0006",
+        "patientName": "Rina Wulandari",
+        "doctorId": "u-1",
+        "doctorName": "dr. Yusuf Tjakep Kalee, Sp.PD",
+        "department": "Poli Penyakit Dalam",
+        "visitDate": "2026-02-15",
+        "visitType": "Baru",
+        "subjective": {
+          "chiefComplaint": "Sesak napas berbunyi mengi terutama malam hari sejak 3 hari lalu.",
+          "historyOfPresentIllness": "Riwayat asma sejak kecil, serangan dipicu udara dingin dan debu. Inhaler salbutamol dipakai 2-3 kali sehari minggu ini.",
+          "historyOfPastIllness": "Asma bronkial sejak usia 10 tahun, rinitis alergi.",
+          "currentMedications": "Salbutamol inhaler (bila sesak)"
+        },
+        "objective": {
+          "vitals": {
+            "systolic": 120,
+            "diastolic": 78,
+            "heartRate": 96,
+            "temperature": 36.8,
+            "respiratoryRate": 22,
+            "spO2": 96,
+            "weight": 55,
+            "height": 162,
+            "bmi": 21.0,
+            "bmiCategory": "Normal"
+          },
+          "physicalExam": {
+            "head": "Mesocephal, jejas (-)",
+            "eyes": "Konjungtiva anemis (-/-), sklera ikterik (-/-)",
+            "ears": "Normotia, sekret (-/-)",
+            "nose": "Deformitas (-), epistaksis (-/-)",
+            "throat": "Faring hiperemis (-), tonsil T1/T1 tenang",
+            "neck": "JVP normal, pembesaran KGB (-)",
+            "thorax": "Simetris saat statis dan dinamis",
+            "heart": "S1-S2 murni reguler, murmur (-), gallop (-)",
+            "lungs": "Suara nafas vesikuler (+/+), rhonki (-/-), wheezing (-/-)",
+            "abdomen": "Supel, nyeri tekan (-), bising usus normal",
+            "extremities": "Akral hangat, CRT < 2 detik, edema (-/-)",
+            "neurological": "GCS 15, reflek fisiologis (+)"
+          }
+        },
+        "assessment": {
+          "diagnoses": [
+            {
+              "id": "diag-7",
+              "icd10Code": "J45.9",
+              "nameIndonesian": "Asma Bronkial",
+              "isPrimary": true,
+              "notes": "Eksaserbasi ringan, SpO2 96% udara ruangan"
+            }
+          ],
+          "clinicalImpression": "Asma eksaserbasi ringan, respons baik terhadap bronkodilator."
+        },
+        "plan": {
+          "therapyPlan": "Kontroler inhaler kortikosteroid dosis rendah harian, hindari pemicu, rencana aksi asma tertulis.",
+          "procedures": [
+            {
+              "id": "proc-mr-rec-7",
+              "code": "00.01",
+              "name": "Pemeriksaan Klinis & Konsultasi",
+              "cost": 100000
+            }
+          ],
+          "prescriptions": [],
+          "doctorNotes": "Kontrol 1 bulan atau lebih cepat bila serangan berulang.",
+          "nextVisitDate": "2026-03-15"
+        },
+        "status": "Final",
+        "createdAt": "2026-02-15 09:00",
+        "updatedAt": "2026-02-15 09:20"
+      }];
 
 export const INITIAL_PRESCRIPTIONS: Prescription[] = [
   {

@@ -8,7 +8,8 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { Card } from '../../components/common/Card';
@@ -31,6 +32,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
   const {
     patients,
     schedules,
+    queues,
     addQueue,
     addPatient,
     currentUser
@@ -47,6 +49,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
 
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [registeredQueue, setRegisteredQueue] = useState<QueueItem | null>(null);
+  const [formNotice, setFormNotice] = useState<string | null>(null);
 
   // Filter patients by query
   const filteredPatients = searchQuery.trim()
@@ -59,13 +62,13 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
       )
     : [];
 
-  // Available departments
+  // Available departments — hanya poli yang benar-benar memiliki dokter praktik.
+  // (Poli Bedah & Poli Gigi tidak ditawarkan sampai dokternya terdaftar di sistem,
+  // agar karcis antrean tidak menampilkan dokter yang salah.)
   const departments = [
     { value: 'Poli Penyakit Dalam', label: 'Poli Penyakit Dalam (dr. Yusuf Tjakep Kalee, Sp.PD)' },
     { value: 'Poli Gizi & Spesialis', label: 'Poli Gizi & Spesialis (dr. Avivien Slebew, Sp.G)' },
-    { value: 'Poli Umum', label: 'Poli Umum (Prabowo Jokowow, S teh dua gelas)' },
-    { value: 'Poli Bedah', label: 'Poli Bedah' },
-    { value: 'Poli Gigi & Mulut', label: 'Poli Gigi & Mulut' }
+    { value: 'Poli Umum', label: 'Poli Umum (Prabowo Jokowow, S teh dua gelas)' }
   ];
 
   // Select patient
@@ -77,15 +80,40 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
   };
 
   const handleCreateNewPatient = (data: Omit<Patient, 'id' | 'mrNumber' | 'registeredAt'>) => {
+    // Cegah duplikat: NIK yang sama tidak boleh menjadi dua rekam medis
+    const existing = patients.find((p) => p.nik === data.nik);
+    if (existing) {
+      handleSelectPatient(existing);
+      setIsNewPatientModalOpen(false);
+      setFormNotice(
+        `NIK ${data.nik} sudah terdaftar atas nama ${existing.name} (${existing.mrNumber}). Data lama dipakai — tidak dibuat duplikat.`
+      );
+      return;
+    }
     const newP = addPatient(data);
     handleSelectPatient(newP);
     setIsNewPatientModalOpen(false);
+    setFormNotice(null);
   };
 
   // Submit registration
   const handleSubmitRegistration = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatient) return;
+    setFormNotice(null);
+
+    // Cegah antrian ganda: pasien yang masih aktif mengantre tidak didaftarkan lagi
+    const activeQueue = queues.find(
+      (q) =>
+        q.patientId === selectedPatient.id &&
+        (q.status === 'Menunggu' || q.status === 'Dipanggil' || q.status === 'Sedang Diperiksa')
+    );
+    if (activeQueue) {
+      setFormNotice(
+        `${selectedPatient.name} masih memiliki antrian aktif ${activeQueue.queueNumber} (${activeQueue.status}) di ${activeQueue.department}. Selesaikan atau batalkan antrian tersebut sebelum mendaftar lagi.`
+      );
+      return;
+    }
 
     // Determine doctor
     let doctorName = 'Prabowo Jokowow, S teh dua gelas';
@@ -99,6 +127,16 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
       docId = 'u-2';
     }
 
+    // Validasi kuota jadwal dokter pada hari berjalan
+    const todayName = new Date().toLocaleDateString('id-ID', { weekday: 'long' });
+    const todaySchedule = schedules.find((s) => s.doctorId === docId && s.dayOfWeek === todayName);
+    if (todaySchedule && todaySchedule.bookedCount >= todaySchedule.maxPatients) {
+      setFormNotice(
+        `Kuota ${doctorName} untuk hari ${todayName} sudah penuh (${todaySchedule.bookedCount}/${todaySchedule.maxPatients} pasien). Pilih dokter atau hari lain.`
+      );
+      return;
+    }
+
     const created = addQueue({
       patientId: selectedPatient.id,
       patientName: selectedPatient.name,
@@ -107,7 +145,9 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
       doctorId: docId,
       department: selectedDepartment,
       priority,
-      insuranceType
+      insuranceType,
+      visitType,
+      chiefComplaint: complaint.trim() || undefined
     });
 
     setRegisteredQueue(created);
@@ -134,6 +174,13 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
           Daftarkan pasien ke poliklinik tujuan untuk mendapatkan nomor antrean pemeriksaan.
         </p>
       </div>
+
+      {formNotice && (
+        <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-800 text-xs font-semibold flex items-start gap-2" role="alert">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span className="leading-relaxed">{formNotice}</span>
+        </div>
+      )}
 
       {/* Success Modal / Ticket Card if registered */}
       {registeredQueue ? (

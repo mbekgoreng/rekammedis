@@ -161,9 +161,10 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
       address: formData.address.trim(),
       occupation: formData.occupation.trim(),
       emergencyContact: {
-        name: formData.emergencyName.trim() || 'Keluarga',
-        relation: formData.emergencyRelation.trim() || 'Keluarga',
-        phone: formData.emergencyPhone.trim() || formData.phone.trim()
+        // Dikosongkan apa adanya bila tidak diisi — sistem tidak mengarang kontak darurat
+        name: formData.emergencyName.trim(),
+        relation: formData.emergencyRelation.trim(),
+        phone: formData.emergencyPhone.trim()
       },
       allergies,
       chronicDiseases,

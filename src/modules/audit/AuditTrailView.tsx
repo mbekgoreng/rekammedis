@@ -30,7 +30,7 @@ export const AuditTrailView: React.FC = () => {
     return matchesSearch && matchesModule;
   });
 
-  const modules = ['ALL', 'Pasien', 'Rekam Medis', 'Resep', 'Farmasi', 'Laboratorium', 'Antrian', 'Kasir', 'Pengguna'];
+  const modules = ['ALL', 'Pasien', 'Rekam Medis', 'Resep', 'Farmasi', 'Laboratorium', 'Radiologi', 'Antrian', 'Kasir', 'Pengguna', 'Pengaturan'];
 
   return (
     <div className="space-y-6">
@@ -46,9 +46,9 @@ export const AuditTrailView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 text-xs font-semibold">
-            <Lock className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Immutable Tamper-Evident Logging</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg border border-slate-200 text-xs font-semibold" title="Log tersimpan lokal di perangkat ini. Integritas anti-tamper (hash-chain sisi server) memerlukan backend.">
+            <Lock className="w-3.5 h-3.5 text-slate-500" />
+            <span>Pencatatan Aktivitas Lokal</span>
           </div>
         </div>
       </div>

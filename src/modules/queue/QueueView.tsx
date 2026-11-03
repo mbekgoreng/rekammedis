@@ -16,6 +16,7 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { QueueItem } from '../../types';
+import { sortByPriority } from '../../lib/queue';
 
 interface QueueViewProps {
   onNavigate: (module: string) => void;
@@ -44,8 +45,8 @@ export const QueueView: React.FC<QueueViewProps> = ({
     filteredQueues.find((q) => q.status === 'Dipanggil') ||
     null;
 
-  // Next waiting patients
-  const waitingList = filteredQueues.filter((q) => q.status === 'Menunggu');
+  // Next waiting patients — diurutkan prioritas (Cito → Lansia → waktu daftar)
+  const waitingList = sortByPriority(filteredQueues.filter((q) => q.status === 'Menunggu'));
   const calledList = filteredQueues.filter((q) => q.status === 'Dipanggil');
   const finishedList = filteredQueues.filter((q) => q.status === 'Selesai');
 
@@ -302,6 +303,11 @@ export const QueueView: React.FC<QueueViewProps> = ({
                         <span className="text-[11px] text-slate-400 font-mono">
                           {q.mrNumber} &bull; {q.insuranceType}
                         </span>
+                        {q.chiefComplaint && (
+                          <span className="block text-[11px] text-slate-500 italic mt-0.5">
+                            “{q.chiefComplaint}”{q.visitType ? ` • ${q.visitType}` : ''}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 font-medium text-slate-800">
                         {q.department}

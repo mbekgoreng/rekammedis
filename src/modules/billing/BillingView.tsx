@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CreditCard,
   Plus,
@@ -18,9 +18,84 @@ import { Input } from '../../components/common/Input';
 import { Invoice } from '../../types';
 
 export const BillingView: React.FC = () => {
-  const { invoices, payInvoice, currentUser } = useStore();
+  const { invoices, payInvoice, currentUser, medicalRecords, prescriptions, createInvoice } = useStore();
   const [search, setSearch] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(invoices[0] || null);
+
+  // Panel detail mengikuti data store terbaru (status tidak basi setelah dibayar)
+  useEffect(() => {
+    if (selectedInvoice) {
+      const fresh = invoices.find((i) => i.id === selectedInvoice.id);
+      if (fresh && fresh !== selectedInvoice) setSelectedInvoice(fresh);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoices]);
+
+  // Buat invoice dari kunjungan final
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedRecordId, setSelectedRecordId] = useState('');
+  const billableRecords = medicalRecords.filter((r) => r.status === 'Final');
+  const selectedRecord = billableRecords.find((r) => r.id === selectedRecordId);
+  const alreadyInvoiced = selectedRecord
+    ? invoices.some((i) => i.medicalRecordId === selectedRecord.id)
+    : false;
+
+  const buildInvoiceItems = () => {
+    if (!selectedRecord) return [];
+    const items: { id: string; description: string; category: 'Konsultasi' | 'Tindakan' | 'Farmasi' | 'Laboratorium' | 'Radiologi' | 'Administrasi'; quantity: number; unitPrice: number; subtotal: number }[] = [];
+    selectedRecord.plan.procedures.forEach((proc, idx) => {
+      items.push({
+        id: `bi-${idx}`,
+        description: proc.name,
+        category: proc.name.toLowerCase().includes('konsultasi') ? 'Konsultasi' : 'Tindakan',
+        quantity: 1,
+        unitPrice: proc.cost,
+        subtotal: proc.cost
+      });
+    });
+    const linkedRx = prescriptions.find((p) => p.medicalRecordId === selectedRecord.id);
+    if (linkedRx) {
+      items.push({
+        id: 'bi-rx',
+        description: `Obat resep ${selectedRecord.patientName} (${linkedRx.items.length} item)`,
+        category: 'Farmasi',
+        quantity: 1,
+        unitPrice: linkedRx.totalCost,
+        subtotal: linkedRx.totalCost
+      });
+    }
+    items.push({
+      id: 'bi-adm',
+      description: 'Biaya Administrasi & Rekam Medis',
+      category: 'Administrasi',
+      quantity: 1,
+      unitPrice: 25000,
+      subtotal: 25000
+    });
+    return items;
+  };
+
+  const handleCreateInvoice = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRecord || alreadyInvoiced) return;
+    const items = buildInvoiceItems();
+    const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
+    const created = createInvoice({
+      medicalRecordId: selectedRecord.id,
+      patientId: selectedRecord.patientId,
+      patientName: selectedRecord.patientName,
+      mrNumber: selectedRecord.mrNumber,
+      items,
+      subtotal,
+      discount: 0,
+      tax: 0,
+      total: subtotal,
+      cashierName: currentUser.name
+    });
+    setIsCreateModalOpen(false);
+    setSelectedRecordId('');
+    setSelectedInvoice(created);
+  };
 
   // Pay modal
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -77,6 +152,13 @@ export const BillingView: React.FC = () => {
               Rp {totalPaidRevenue.toLocaleString('id-ID')}
             </span>
           </div>
+          <Button
+            variant="primary"
+            onClick={() => setIsCreateModalOpen(true)}
+            leftIcon={<Plus className="w-4 h-4 text-white" />}
+          >
+            Buat Invoice
+          </Button>
         </div>
       </div>
 
@@ -349,6 +431,75 @@ export const BillingView: React.FC = () => {
                 <option value="Klaim BPJS">Klaim BPJS Kesehatan</option>
               </select>
             </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Create Invoice Modal */}
+      {isCreateModalOpen && (
+        <Modal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          title="Buat Invoice dari Kunjungan"
+          subtitle="Tagihan disusun otomatis dari tindakan SOAP final dan resep terkait"
+        >
+          <form onSubmit={handleCreateInvoice} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Pilih Kunjungan (Rekam Medis Final)
+              </label>
+              <select
+                value={selectedRecordId}
+                onChange={(e) => setSelectedRecordId(e.target.value)}
+                className="w-full text-sm bg-white border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-clinical-500"
+                required
+              >
+                <option value="">— Pilih kunjungan —</option>
+                {billableRecords.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.visitDate} • {r.patientName} ({r.mrNumber}) • {r.department}
+                    {invoices.some((i) => i.medicalRecordId === r.id) ? ' — sudah ditagih' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedRecord && (
+              <div className="border border-slate-200 rounded-lg divide-y divide-slate-100">
+                {buildInvoiceItems().map((item) => (
+                  <div key={item.id} className="flex justify-between px-3 py-2">
+                    <span className="text-slate-700">
+                      {item.description}
+                      <span className="block text-[10px] text-slate-400">{item.category}</span>
+                    </span>
+                    <span className="font-mono font-semibold text-slate-900">
+                      Rp {item.subtotal.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                ))}
+                <div className="flex justify-between px-3 py-2 bg-slate-50 font-bold">
+                  <span>Total Tagihan</span>
+                  <span className="font-mono">
+                    Rp {buildInvoiceItems().reduce((s, i) => s + i.subtotal, 0).toLocaleString('id-ID')}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {alreadyInvoiced && (
+              <p className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                Kunjungan ini sudah memiliki invoice — penagihan ganda dicegah.
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full font-bold"
+              disabled={!selectedRecord || alreadyInvoiced}
+            >
+              Terbitkan Invoice
+            </Button>
           </form>
         </Modal>
       )}

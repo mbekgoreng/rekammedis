@@ -22,9 +22,11 @@ import { UserManagementView } from './modules/users/UserManagementView';
 import { AuditTrailView } from './modules/audit/AuditTrailView';
 import { ClinicSettingsView } from './modules/settings/ClinicSettingsView';
 import { LoginView } from './modules/auth/LoginView';
+import { ChangePasswordView } from './modules/auth/ChangePasswordView';
+import { canAccess, ROLE_LABELS } from './lib/permissions';
 
 const MainLayout: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const { isAuthenticated, logout, currentUser } = useStore();
   const [currentModule, setCurrentModule] = useState<string>('dashboard');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -41,7 +43,7 @@ const MainLayout: React.FC = () => {
   };
 
   if (!isAuthenticated) {
-    return <LoginView onLoginSuccess={() => setIsAuthenticated(true)} />;
+    return <LoginView />;
   }
 
   return (
@@ -74,6 +76,25 @@ const MainLayout: React.FC = () => {
 
           {/* Module Canvas */}
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            {!canAccess(currentUser.role, currentModule) ? (
+              <div className="max-w-lg mx-auto mt-16 text-center space-y-4 bg-white border border-slate-200 rounded-2xl p-8 shadow-xs">
+                <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto text-2xl font-black">
+                  !
+                </div>
+                <h2 className="text-lg font-bold text-slate-800">Akses Dibatasi untuk Peran Anda</h2>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Akun {currentUser.name} masuk sebagai {ROLE_LABELS[currentUser.role]} dan tidak memiliki
+                  hak akses ke modul ini. Hak akses ditetapkan oleh administrator sesuai matriks RBAC.
+                </p>
+                <button
+                  onClick={() => handleNavigate('dashboard')}
+                  className="px-4 py-2 rounded-lg bg-clinical-700 text-white text-xs font-bold hover:bg-clinical-800"
+                >
+                  Kembali ke Dashboard
+                </button>
+              </div>
+            ) : (
+              <>
             {currentModule === 'dashboard' && (
               <DashboardView
                 onNavigate={handleNavigate}
@@ -147,6 +168,10 @@ const MainLayout: React.FC = () => {
             {currentModule === 'audit' && <AuditTrailView />}
 
             {currentModule === 'settings' && <ClinicSettingsView />}
+
+            {currentModule === 'change_password' && <ChangePasswordView />}
+              </>
+            )}
           </main>
 
           {/* Clinical Minimalist Footer */}
@@ -160,7 +185,7 @@ const MainLayout: React.FC = () => {
               <span>Interoperabilitas SatuSehat / Kemenkes RI</span>
               <span>&bull;</span>
               <button
-                onClick={() => setIsAuthenticated(false)}
+                onClick={logout}
                 className="text-slate-500 hover:text-red-600 font-semibold"
               >
                 Kunci Layar (Logout)

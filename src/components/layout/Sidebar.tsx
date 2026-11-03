@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStore } from '../../context/StoreContext';
+import { canAccess } from '../../lib/permissions';
 
 interface SidebarProps {
   currentModule: string;
@@ -41,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onCloseMobile
 }) => {
-  const { queues, medicines, currentUser } = useStore();
+  const { queues, medicines, currentUser, clinicProfile } = useStore();
 
   const waitingQueueCount = queues.filter((q) => q.status === 'Menunggu').length;
   const lowStockCount = medicines.filter((m) => m.stock <= m.minimumStock).length;
@@ -117,8 +118,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {!isCollapsed && (
               <div className="leading-tight">
-                <span className="font-extrabold text-white text-base tracking-tight block">
-                  Tong Fang <span className="text-cyan-400">Ashiap</span>
+                <span className="font-extrabold text-white text-base tracking-tight block truncate max-w-[150px]" title={clinicProfile.clinicName}>
+                  {clinicProfile.clinicName}
                 </span>
                 <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 block">
                   Klinik EMR Enterprise
@@ -152,7 +153,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Menus */}
         <div className="flex-1 overflow-y-auto py-3 px-2 space-y-5 custom-scrollbar">
-          {menuSections.map((section, sIdx) => (
+          {menuSections
+            .map((section) => ({
+              ...section,
+              items: section.items.filter((item) => canAccess(currentUser.role, item.id))
+            }))
+            .filter((section) => section.items.length > 0)
+            .map((section, sIdx) => (
             <div key={sIdx}>
               {!isCollapsed && (
                 <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">

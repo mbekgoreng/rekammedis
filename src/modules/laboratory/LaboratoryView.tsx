@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlaskConical,
   Plus,
@@ -28,6 +28,15 @@ export const LaboratoryView: React.FC = () => {
   } = useStore();
 
   const [selectedOrder, setSelectedOrder] = useState<LabOrder | null>(labOrders[0] || null);
+
+  // Panel detail selalu mengikuti data store terbaru (bukan snapshot lama)
+  useEffect(() => {
+    if (selectedOrder) {
+      const fresh = labOrders.find((o) => o.id === selectedOrder.id);
+      if (fresh && fresh !== selectedOrder) setSelectedOrder(fresh);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [labOrders]);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(patients[0]?.id || '');
   const [testCategory, setTestCategory] = useState('Kimia Klinik');
@@ -35,13 +44,36 @@ export const LaboratoryView: React.FC = () => {
   // Input result state for selected test
   const [editingResultValues, setEditingResultValues] = useState<Record<number, string>>({});
 
+  // Kelainan dinilai dari rentang rujukan MASING-MASING parameter, bukan ambang tunggal.
+  const parseBound = (raw: string): number => {
+    const t = raw.trim().replace(',', '.');
+    // "4.000" (titik = pemisah ribuan) vs "13.0" (titik = desimal)
+    if (/^\d{1,3}\.\d{3}$/.test(t)) return parseFloat(t.replace('.', ''));
+    return parseFloat(t);
+  };
+
+  const computeAbnormal = (value: string, referenceRange: string): boolean => {
+    const v = value.trim();
+    if (!v) return false;
+    const parts = referenceRange.split('-').map((p) => p.trim());
+    if (parts.length === 2) {
+      const lo = parseBound(parts[0]);
+      const hi = parseBound(parts[1]);
+      const num = parseBound(v);
+      if (!Number.isNaN(lo) && !Number.isNaN(hi) && !Number.isNaN(num)) {
+        return num < lo || num > hi;
+      }
+    }
+    // Rentang non-numerik (mis. "Negatif"): hasil berbeda dari rujukan = abnormal
+    return v.toLowerCase() !== referenceRange.trim().toLowerCase();
+  };
+
   const handleSaveResultValues = (orderId: string) => {
+    const order = labOrders.find((o) => o.id === orderId);
     Object.entries(editingResultValues).forEach(([idxStr, val]) => {
       const idx = parseInt(idxStr);
-      // simple threshold check if contains number
-      const numVal = parseFloat(val);
-      const isAbnormal = !isNaN(numVal) && (numVal > 140 || numVal < 60);
-      updateLabResult(orderId, idx, val, isAbnormal);
+      const range = order?.items[idx]?.referenceRange || '';
+      updateLabResult(orderId, idx, val, computeAbnormal(val, range));
     });
     setEditingResultValues({});
   };
@@ -273,15 +305,23 @@ export const LaboratoryView: React.FC = () => {
                   )}
 
                   {selectedOrder.status !== 'Validated' && (
-                    <Button
-                      variant="success"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => handleValidate(selectedOrder.id)}
-                      leftIcon={<FileCheck className="w-4 h-4 text-white" />}
-                    >
-                      Validasi Hasil Resmi (Analis Medis)
-                    </Button>
+                    <>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        className="w-full"
+                        disabled={!selectedOrder.items.every((i) => (i.resultValue || '').trim() !== '' || (editingResultValues[selectedOrder.items.indexOf(i)] || '').trim() !== '')}
+                        onClick={() => handleValidate(selectedOrder.id)}
+                        leftIcon={<FileCheck className="w-4 h-4 text-white" />}
+                      >
+                        Validasi Hasil Resmi (Analis Medis)
+                      </Button>
+                      {!selectedOrder.items.every((i) => (i.resultValue || '').trim() !== '') && (
+                        <p className="text-[10px] text-amber-600 text-center">
+                          Validasi aktif setelah semua parameter terisi hasil — lembar kosong tidak dapat disahkan.
+                        </p>
+                      )}
+                    </>
                   )}
 
                   {selectedOrder.validatedBy && (

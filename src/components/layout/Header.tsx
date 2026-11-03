@@ -6,12 +6,14 @@ import {
   Volume2,
   Building2,
   ChevronDown,
-  UserCheck
+  UserCheck,
+  KeyRound,
+  LogOut
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { GlobalSearchModal } from './GlobalSearchModal';
-import { UserRole } from '../../types';
+import { sortByPriority } from '../../lib/queue';
 
 interface HeaderProps {
   onToggleMobileSidebar: () => void;
@@ -24,13 +26,13 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
   onSelectPatient
 }) => {
-  const { currentUser, switchRole, notifications, queues, callQueuePatient } = useStore();
+  const { currentUser, logout, notifications, queues, callQueuePatient, clinicProfile } = useStore();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
   const unreadNotifCount = notifications.filter((n) => !n.read).length;
-  const waitingPatients = queues.filter((q) => q.status === 'Menunggu');
+  const waitingPatients = sortByPriority(queues.filter((q) => q.status === 'Menunggu'));
 
   // Listen for Ctrl+K shortcut
   useEffect(() => {
@@ -50,14 +52,6 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const roles: { role: UserRole; label: string; desc: string }[] = [
-    { role: 'doctor', label: 'Dokter Spesialis / Umum', desc: 'Akses SOAP, rekam medis, diagnosa, resep' },
-    { role: 'nurse', label: 'Perawat / Triage', desc: 'Akses vital signs, antrean, pendaftaran awal' },
-    { role: 'pharmacist', label: 'Apoteker / Farmasi', desc: 'Akses resep masuk, stok obat, peracikan' },
-    { role: 'cashier', label: 'Kasir / Billing', desc: 'Akses invoice, tagihan, pembayaran' },
-    { role: 'lab', label: 'Petugas Laboratorium', desc: 'Akses order lab/radiologi, input hasil' },
-    { role: 'admin', label: 'Administrator Fasilitas', desc: 'Akses penuh seluruh modul sistem' }
-  ];
 
   return (
     <>
@@ -74,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
             <Building2 className="w-4 h-4 text-clinical-600 shrink-0" />
-            <span className="font-semibold text-slate-800">Klinik Tong Fang Ashiap</span>
+            <span className="font-semibold text-slate-800">{clinicProfile.clinicName}</span>
             <span className="text-slate-400">&bull;</span>
             <span className="text-emerald-700 flex items-center gap-1 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -174,29 +168,31 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 </div>
 
-                <div className="px-3 py-1 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                  Ganti Peran Pengguna (Simulasi)
+                <div className="space-y-1 pt-1">
+                  <button
+                    onClick={() => {
+                      onNavigate('change_password');
+                      setIsRoleDropdownOpen(false);
+                    }}
+                    className="w-full text-left p-2 rounded-lg text-xs transition-colors flex items-center gap-2 hover:bg-slate-50 text-slate-700"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="font-semibold">Ganti Kata Sandi</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsRoleDropdownOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left p-2 rounded-lg text-xs transition-colors flex items-center gap-2 hover:bg-red-50 text-red-600"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span className="font-semibold">Keluar (Logout)</span>
+                  </button>
                 </div>
-
-                <div className="space-y-1">
-                  {roles.map((r) => (
-                    <button
-                      key={r.role}
-                      onClick={() => {
-                        switchRole(r.role);
-                        setIsRoleDropdownOpen(false);
-                      }}
-                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors flex flex-col ${
-                        currentUser.role === r.role
-                          ? 'bg-clinical-50 text-clinical-900 font-semibold border border-clinical-200'
-                          : 'hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <span className="font-semibold">{r.label}</span>
-                      <span className="text-[10px] text-slate-500">{r.desc}</span>
-                    </button>
-                  ))}
-                </div>
+                <p className="px-3 pt-2 pb-1 text-[10px] leading-relaxed text-slate-400 border-t border-slate-100 mt-1">
+                  Peran akun ditetapkan oleh administrator dan tidak dapat diganti dari sini.
+                </p>
               </div>
             )}
           </div>

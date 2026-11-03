@@ -26,7 +26,7 @@ export const DoctorScheduleView: React.FC = () => {
 
   const filteredSchedules = selectedDay === 'ALL'
     ? schedules
-    : schedules.filter((s) => s.dayOfWeek === selectedDay || s.isActive);
+    : schedules.filter((s) => s.dayOfWeek === selectedDay);
 
   return (
     <div className="space-y-6">

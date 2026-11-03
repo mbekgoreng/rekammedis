@@ -43,6 +43,7 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     medicines,
     currentUser,
     saveMedicalRecord,
+    updateMedicalRecord,
     medicalRecords
   } = useStore();
 
@@ -86,16 +87,11 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     neurological: 'GCS E4M6V5 (15), reflek fisiologis (+)'
   });
 
-  // Assessment - Diagnoses
-  const [diagnoses, setDiagnoses] = useState<DiagnosisItem[]>([
-    {
-      id: 'd-1',
-      icd10Code: 'I10',
-      nameIndonesian: 'Hipertensi Esensial (Primer)',
-      isPrimary: true,
-      notes: ''
-    }
-  ]);
+  // Assessment - Diagnoses (mulai kosong: diagnosa tidak boleh terisi karangan)
+  const [diagnoses, setDiagnoses] = useState<DiagnosisItem[]>([]);
+  const [clinicalImpression, setClinicalImpression] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [loadedDraftId, setLoadedDraftId] = useState<string | null>(null);
   const [icdSearchQuery, setIcdSearchQuery] = useState('');
 
   // Plan
@@ -126,6 +122,58 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
       setCurrentPatientId(selectedPatientId);
     }
   }, [selectedPatientId]);
+
+  // Ganti pasien = formulir bersih. Draft tersimpan milik pasien dimuat kembali
+  // agar bisa dilanjutkan, BUKAN membuat record baru.
+  useEffect(() => {
+    setChiefComplaint('');
+    setPresentIllness('');
+    setPastIllness('');
+    setCurrentMedications('');
+    setVitals({ systolic: 120, diastolic: 80, heartRate: 78, temperature: 36.5, respiratoryRate: 18, spO2: 99, weight: 65, height: 168 });
+    setPhysicalExam({
+      head: '', eyes: '', ears: '', nose: '', throat: '', neck: '',
+      thorax: '', heart: '', lungs: '', abdomen: '', extremities: '', neurological: ''
+    });
+    setDiagnoses([]);
+    setClinicalImpression('');
+    setTherapyPlan('');
+    setDoctorNotes('');
+    setProcedures([{ id: 'p-1', code: '00.01', name: 'Pemeriksaan Klinis & Konsultasi Dokter', cost: 150000 }]);
+    setPrescriptions([]);
+    setSaveError(null);
+    setLoadedDraftId(null);
+
+    const draft = medicalRecords
+      .filter((r) => r.patientId === currentPatientId && r.status === 'Draft')
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+    if (draft) {
+      setLoadedDraftId(draft.id);
+      setChiefComplaint(draft.subjective.chiefComplaint);
+      setPresentIllness(draft.subjective.historyOfPresentIllness);
+      setPastIllness(draft.subjective.historyOfPastIllness);
+      setCurrentMedications(draft.subjective.currentMedications);
+      setVitals({
+        systolic: draft.objective.vitals.systolic,
+        diastolic: draft.objective.vitals.diastolic,
+        heartRate: draft.objective.vitals.heartRate,
+        temperature: draft.objective.vitals.temperature,
+        respiratoryRate: draft.objective.vitals.respiratoryRate,
+        spO2: draft.objective.vitals.spO2,
+        weight: draft.objective.vitals.weight,
+        height: draft.objective.vitals.height
+      });
+      setPhysicalExam(draft.objective.physicalExam);
+      setDiagnoses(draft.assessment.diagnoses);
+      setClinicalImpression(draft.assessment.clinicalImpression);
+      setTherapyPlan(draft.plan.therapyPlan);
+      setDoctorNotes(draft.plan.doctorNotes);
+      if (draft.plan.nextVisitDate) setNextVisitDate(draft.plan.nextVisitDate);
+      setProcedures(draft.plan.procedures);
+      setPrescriptions(draft.plan.prescriptions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPatientId]);
 
   // Calculate BMI
   const heightM = vitals.height / 100;
@@ -194,47 +242,65 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
   };
 
   // Save Medical Record (Draft or Final)
+  // Kolom kosong TIDAK PERNAH diganti teks karangan — yang tersimpan adalah
+  // persis yang diisi dokter. Keluhan utama wajib; final wajib punya diagnosa.
   const handleSave = (isDraft: boolean) => {
     if (!activePatient) return;
+    setSaveError(null);
 
-    saveMedicalRecord(
-      {
-        patientId: activePatient.id,
-        mrNumber: activePatient.mrNumber,
-        patientName: activePatient.name,
-        doctorId: currentUser.id,
-        doctorName: currentUser.name,
-        department: currentUser.department || 'Poli Umum',
-        visitDate: new Date().toISOString().split('T')[0],
-        visitType: 'Kontrol Rutin',
-        subjective: {
-          chiefComplaint: chiefComplaint || 'Pemeriksaan kesehatan rutin',
-          historyOfPresentIllness: presentIllness || 'Keluhan dirasakan beberapa hari terakhir',
-          historyOfPastIllness: pastIllness || 'Tidak ada riwayat penyakit berat sebelumnya',
-          currentMedications: currentMedications || 'Tidak ada obat rutin'
-        },
-        objective: {
-          vitals: {
-            ...vitals,
-            bmi,
-            bmiCategory
-          },
-          physicalExam
-        },
-        assessment: {
-          diagnoses,
-          clinicalImpression: 'Kondisi klinis pasien secara umum baik.'
-        },
-        plan: {
-          therapyPlan,
-          procedures,
-          prescriptions,
-          doctorNotes,
-          nextVisitDate
-        }
+    if (!chiefComplaint.trim()) {
+      setSaveError('Keluhan utama wajib diisi — rekam medis tidak boleh memuat keluhan karangan.');
+      return;
+    }
+    if (!isDraft && diagnoses.length === 0) {
+      setSaveError('Rekam medis final wajib memiliki minimal satu diagnosa ICD-10.');
+      return;
+    }
+
+    const payload = {
+      patientId: activePatient.id,
+      mrNumber: activePatient.mrNumber,
+      patientName: activePatient.name,
+      doctorId: currentUser.id,
+      doctorName: currentUser.name,
+      department: currentUser.department || 'Poli Umum',
+      visitDate: new Date().toISOString().split('T')[0],
+      visitType: 'Kontrol Rutin' as const,
+      subjective: {
+        chiefComplaint: chiefComplaint.trim(),
+        historyOfPresentIllness: presentIllness,
+        historyOfPastIllness: pastIllness,
+        currentMedications: currentMedications
       },
-      isDraft
-    );
+      objective: {
+        vitals: {
+          ...vitals,
+          bmi,
+          bmiCategory
+        },
+        physicalExam
+      },
+      assessment: {
+        diagnoses,
+        clinicalImpression
+      },
+      plan: {
+        therapyPlan,
+        procedures,
+        prescriptions,
+        doctorNotes,
+        nextVisitDate
+      }
+    };
+
+    if (loadedDraftId) {
+      const updated = updateMedicalRecord(loadedDraftId, payload, isDraft);
+      if (!isDraft) setLoadedDraftId(null);
+      else setLoadedDraftId(updated.id);
+    } else {
+      const created = saveMedicalRecord(payload, isDraft);
+      if (isDraft) setLoadedDraftId(created.id);
+    }
 
     setSaveSuccessMsg(true);
     setTimeout(() => setSaveSuccessMsg(false), 4000);
@@ -262,8 +328,9 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
           <select
             value={currentPatientId}
             onChange={(e) => {
+              // Hanya mengganti pasien pada formulir — TIDAK berpindah modul.
+              // (Sebelumnya pilihan ini melempar pengguna ke halaman detail pasien.)
               setCurrentPatientId(e.target.value);
-              onSelectPatient(e.target.value);
             }}
             className="text-xs bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-clinical-500"
           >
@@ -585,6 +652,20 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
               )}
             </div>
 
+            {/* Clinical Impression */}
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-slate-700 block">
+                Kesimpulan Klinis (Impresi Dokter):
+              </span>
+              <textarea
+                value={clinicalImpression}
+                onChange={(e) => setClinicalImpression(e.target.value)}
+                rows={2}
+                placeholder="Tuliskan kesimpulan klinis Anda sendiri — bagian ini tidak diisi otomatis oleh sistem."
+                className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-clinical-500"
+              />
+            </div>
+
             {/* List of Chosen Diagnoses */}
             <div className="space-y-2">
               <span className="text-xs font-bold text-slate-700 block">
@@ -854,6 +935,19 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <FileCheck className="w-4 h-4 text-clinical-600" />
           <span>Format Rekam Medis Standar Nasional Permenkes No. 24 Tahun 2022</span>
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+          {loadedDraftId && (
+            <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+              Draft tersimpan pasien ini dimuat — menyimpan akan memperbarui draft yang sama
+            </span>
+          )}
+          {saveError && (
+            <span className="text-[11px] font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5" role="alert">
+              {saveError}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

@@ -1,43 +1,70 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Activity,
   Lock,
   Mail,
   ShieldCheck,
-  Building2,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  EyeOff,
+  AlertTriangle
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { UserRole } from '../../types';
+import { loadGuard, recordFailedLogin, resetGuard } from '../../lib/auth';
 
-interface LoginViewProps {
-  onLoginSuccess: () => void;
-}
-
-export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
-  const { switchRole } = useStore();
-  const [email, setEmail] = useState('yusuf.tjakep@tongfangashiap.id');
-  const [password, setPassword] = useState('••••••••••••');
+export const LoginView: React.FC = () => {
+  const { login } = useStore();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [lockRemaining, setLockRemaining] = useState(0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Hitung mundur kunci anti brute-force
+  useEffect(() => {
+    const tick = () => {
+      const guard = loadGuard();
+      const remaining = Math.max(0, Math.ceil((guard.lockUntil - Date.now()) / 1000));
+      setLockRemaining(remaining);
+    };
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const locked = lockRemaining > 0;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLoginSuccess();
-  };
-
-  const handleQuickLoginAs = (role: UserRole) => {
-    switchRole(role);
-    onLoginSuccess();
+    if (locked || submitting) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      const result = await login(email, password, rememberMe);
+      if (!result.ok) {
+        const guard = recordFailedLogin();
+        if (guard.lockUntil > Date.now()) {
+          setError('Terlalu banyak percobaan gagal. Formulir dikunci selama 60 detik.');
+        } else {
+          setError(result.error || 'Email atau kata sandi salah.');
+        }
+      } else {
+        resetGuard();
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen w-full flex bg-slate-900 font-sans">
       {/* Left Column: Clinical Enterprise Branding */}
       <div className="hidden lg:flex flex-1 flex-col justify-between p-12 bg-linear-to-br from-[#0b1d33] via-[#071526] to-[#040e1a] text-white border-r border-slate-800 relative overflow-hidden">
-        {/* Subtle decorative circles */}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-clinical-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -60,7 +87,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <div className="max-w-md space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-cyan-300 text-xs font-semibold">
             <ShieldCheck className="w-4 h-4 text-cyan-400" />
-            Standar Akreditasi Kemenkes RI
+            Akses Terproteksi Kata Sandi &amp; Jejak Audit
           </div>
 
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-100 leading-tight">
@@ -74,19 +101,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <div className="space-y-3 pt-2 text-xs text-slate-300">
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Dokumentasi SOAP & Rekam Medis Elektronik Terstruktur</span>
+              <span>Setiap akun petugas memiliki kata sandi pribadi</span>
             </div>
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Manajemen Antrian Pasien Poliklinik & Audio Chime</span>
+              <span>Sesi masuk tercatat dan berakhir otomatis</span>
             </div>
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Peresepan Digital Otomatis ke Instalasi Farmasi</span>
+              <span>Peran akun menentukan hak akses modul (RBAC)</span>
             </div>
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Audit Trail Forensik Keamanan Pasien & RBAC</span>
+              <span>Audit Trail Forensik Keamanan Pasien &amp; RBAC</span>
             </div>
           </div>
         </div>
@@ -113,29 +140,58 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               Masuk ke Akun Faskes
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Gunakan kredensial resmi tenaga kesehatan Anda untuk mengakses data rekam medis.
+              Gunakan email dan kata sandi resmi Anda. Setiap aktivitas tercatat atas nama akun yang masuk.
             </p>
           </div>
 
-          {/* Form */}
+          {error && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-xs text-red-700" role="alert">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="font-medium leading-relaxed">{error}</span>
+            </div>
+          )}
+
+          {locked && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs text-amber-800" role="alert">
+              <Lock className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="font-medium leading-relaxed">
+                Formulir terkunci sementara. Coba lagi dalam {lockRemaining} detik.
+              </span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             <Input
-              label="Email Petugas / Username Faskes"
+              label="Email Petugas"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               leftIcon={<Mail className="w-4 h-4" />}
               requiredIndicator
+              autoComplete="username"
+              placeholder="nama@tongfangashiap.id"
             />
 
-            <Input
-              label="Kata Sandi (Password)"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              leftIcon={<Lock className="w-4 h-4" />}
-              requiredIndicator
-            />
+            <div className="relative">
+              <Input
+                label="Kata Sandi (Password)"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                leftIcon={<Lock className="w-4 h-4" />}
+                requiredIndicator
+                autoComplete="current-password"
+                placeholder="Masukkan kata sandi Anda"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-9 text-slate-400 hover:text-slate-600"
+                aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
 
             <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 text-slate-600 cursor-pointer">
@@ -145,15 +201,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="rounded text-clinical-600 focus:ring-clinical-500"
                 />
-                <span>Ingat sesi perangkat ini</span>
+                <span>Ingat sesi perangkat ini (7 hari)</span>
               </label>
 
-              <button
-                type="button"
-                className="text-clinical-700 hover:text-clinical-900 font-semibold"
-              >
-                Lupa kata sandi?
-              </button>
+              <span className="text-slate-400 text-right">
+                Lupa kata sandi? Hubungi administrator.
+              </span>
             </div>
 
             <Button
@@ -162,64 +215,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               size="lg"
               className="w-full text-sm font-bold"
               rightIcon={<ArrowRight className="w-4 h-4 text-white" />}
+              disabled={locked || submitting}
             >
-              Masuk ke Sistem EMR
+              {submitting ? 'Memeriksa Kredensial…' : 'Masuk ke Sistem EMR'}
             </Button>
           </form>
 
-          {/* Quick Role Demonstrator Buttons */}
-          <div className="pt-4 border-t border-slate-200">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider block mb-2 text-center sm:text-left">
-              Masuk Cepat Sebagai Peran:
-            </span>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickLoginAs('doctor')}
-                className="p-2 rounded-lg border border-slate-200 hover:border-clinical-500 hover:bg-clinical-50 text-slate-700 font-semibold text-center transition-colors"
-              >
-                Dokter
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLoginAs('nurse')}
-                className="p-2 rounded-lg border border-slate-200 hover:border-clinical-500 hover:bg-clinical-50 text-slate-700 font-semibold text-center transition-colors"
-              >
-                Perawat
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLoginAs('pharmacist')}
-                className="p-2 rounded-lg border border-slate-200 hover:border-clinical-500 hover:bg-clinical-50 text-slate-700 font-semibold text-center transition-colors"
-              >
-                Farmasi
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLoginAs('cashier')}
-                className="p-2 rounded-lg border border-slate-200 hover:border-clinical-500 hover:bg-clinical-50 text-slate-700 font-semibold text-center transition-colors"
-              >
-                Kasir
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLoginAs('lab')}
-                className="p-2 rounded-lg border border-slate-200 hover:border-clinical-500 hover:bg-clinical-50 text-slate-700 font-semibold text-center transition-colors"
-              >
-                Laboran
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLoginAs('admin')}
-                className="p-2 rounded-lg border border-slate-200 hover:border-clinical-500 hover:bg-clinical-50 text-slate-700 font-semibold text-center transition-colors"
-              >
-                Admin
-              </button>
-            </div>
-          </div>
+          <p className="text-[11px] leading-relaxed text-slate-400 border-t border-slate-100 pt-4">
+            Akses tanpa izin ke sistem rekam medis adalah pelanggaran kerahasiaan data pasien.
+            Percobaan masuk yang gagal berulang akan mengunci formulir sementara, dan aktivitas di dalam sistem tercatat pada jejak audit atas nama akun yang masuk.
+          </p>
         </div>
       </div>
     </div>
   );
 };
-

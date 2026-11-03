@@ -37,10 +37,13 @@ export const RadiologyView: React.FC = () => {
   const handleSaveExpertise = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrder) return;
+    const finalFindings = (findingsInput || selectedOrder.findings || '').trim();
+    const finalImpression = (impressionInput || selectedOrder.impression || '').trim();
+    if (!finalFindings || !finalImpression) return; // ekspertise kosong tidak boleh disahkan
     updateRadiologyFinding(
       selectedOrder.id,
-      findingsInput || selectedOrder.findings || 'Cor dan pulmo dalam batas normal.',
-      impressionInput || selectedOrder.impression || 'Tidak tampak kelainan radiologis aktif.',
+      finalFindings,
+      finalImpression,
       currentUser.name
     );
   };
@@ -239,9 +242,20 @@ export const RadiologyView: React.FC = () => {
                       />
                     </div>
 
-                    <Button type="submit" variant="primary" size="sm" className="w-full">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="sm"
+                      className="w-full"
+                      disabled={!((findingsInput || selectedOrder.findings || '').trim() && (impressionInput || selectedOrder.impression || '').trim())}
+                    >
                       Simpan Ekspertise Radiolog
                     </Button>
+                    {!((findingsInput || selectedOrder.findings || '').trim() && (impressionInput || selectedOrder.impression || '').trim()) && (
+                      <p className="text-[10px] text-amber-600 text-center">
+                        Temuan dan kesan wajib diisi radiolog — sistem tidak mengisi kesimpulan otomatis.
+                      </p>
+                    )}
                   </form>
                 )}
               </div>

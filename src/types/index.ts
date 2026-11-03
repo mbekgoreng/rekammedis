@@ -1,5 +1,15 @@
 export type UserRole = 'admin' | 'doctor' | 'nurse' | 'pharmacist' | 'cashier' | 'lab';
 
+export interface ClinicProfile {
+  clinicName: string;
+  licenseNumber: string;
+  faskesCode: string;
+  address: string;
+  phone: string;
+  email: string;
+  directorName: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -8,6 +18,8 @@ export interface User {
   avatar?: string;
   sipNumber?: string; // Surat Izin Praktik untuk dokter
   department?: string;
+  passwordHash?: string; // Hash SHA-256 bergaram (lihat src/lib/auth.ts)
+  isActive?: boolean;
 }
 
 export interface Patient {
@@ -157,6 +169,9 @@ export interface QueueItem {
   doctorId: string;
   department: string;
   registeredTime: string;
+  queueDate?: string; // Tanggal antrean (YYYY-MM-DD)
+  visitType?: string; // Baru / Kontrol Rutin / Rujukan / Darurat
+  chiefComplaint?: string; // Keluhan utama saat pendaftaran
   status: 'Menunggu' | 'Dipanggil' | 'Sedang Diperiksa' | 'Selesai' | 'Dibatalkan';
   priority: 'Biasa' | 'Lansia/Disabilitas' | 'Darurat / Cito';
   insuranceType: string;
@@ -234,6 +249,7 @@ export interface InvoiceItem {
 export interface Invoice {
   id: string;
   invoiceNumber: string; // e.g. "INV-2026-0312"
+  medicalRecordId?: string; // Kunjungan asal invoice (mencegah penagihan ganda)
   patientId: string;
   patientName: string;
   mrNumber: string;

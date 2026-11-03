@@ -15,7 +15,20 @@ import { Button } from '../../components/common/Button';
 import { UserRole } from '../../types';
 
 export const UserManagementView: React.FC = () => {
-  const { users, currentUser, switchRole } = useStore();
+  const { users, currentUser, resetUserPassword } = useStore();
+  const [resettingId, setResettingId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [savedFor, setSavedFor] = useState<string | null>(null);
+  const isAdmin = currentUser.role === 'admin';
+
+  const handleReset = async (userId: string) => {
+    if (newPassword.length < 8) return;
+    await resetUserPassword(userId, newPassword);
+    setResettingId(null);
+    setNewPassword('');
+    setSavedFor(userId);
+    window.setTimeout(() => setSavedFor(null), 3000);
+  };
 
   const permissionMatrix: {
     module: string;
@@ -74,12 +87,12 @@ export const UserManagementView: React.FC = () => {
                 <th className="py-3 px-4">Peran (Role)</th>
                 <th className="py-3 px-4">Unit Kerja / Poli</th>
                 <th className="py-3 px-4">No. SIP (Dokter)</th>
-                <th className="py-3 px-4 text-right">Simulasi Peran</th>
+                <th className="py-3 px-4 text-right">Kredensial</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {users.map((u) => {
-                const isCurrent = currentUser.role === u.role;
+                const isCurrent = currentUser.id === u.id;
                 return (
                   <tr key={u.id} className={isCurrent ? 'bg-clinical-50/60 font-medium' : 'hover:bg-slate-50'}>
                     <td className="py-3 px-4">
@@ -97,15 +110,52 @@ export const UserManagementView: React.FC = () => {
                     <td className="py-3 px-4 text-right">
                       {isCurrent ? (
                         <span className="text-xs font-bold text-emerald-700 flex items-center justify-end gap-1">
-                          <Check className="w-3.5 h-3.5" /> Sedang Aktif
+                          <Check className="w-3.5 h-3.5" /> Akun Anda
+                        </span>
+                      ) : savedFor === u.id ? (
+                        <span className="text-xs font-bold text-emerald-700 flex items-center justify-end gap-1">
+                          <Check className="w-3.5 h-3.5" /> Sandi Direset
+                        </span>
+                      ) : !isAdmin ? (
+                        <span className="text-[11px] text-slate-400 flex items-center justify-end gap-1">
+                          <Lock className="w-3.5 h-3.5" /> Dikelola admin
+                        </span>
+                      ) : resettingId === u.id ? (
+                        <span className="inline-flex items-center gap-1.5 justify-end">
+                          <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Sandi baru (min. 8)"
+                            className="w-36 rounded-md border border-slate-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-clinical-500"
+                            autoFocus
+                          />
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => handleReset(u.id)}
+                            disabled={newPassword.length < 8}
+                          >
+                            Simpan
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setResettingId(null);
+                              setNewPassword('');
+                            }}
+                          >
+                            Batal
+                          </Button>
                         </span>
                       ) : (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => switchRole(u.role)}
+                          onClick={() => setResettingId(u.id)}
                         >
-                          Beralih ke Peran Ini
+                          Reset Sandi
                         </Button>
                       )}
                     </td>

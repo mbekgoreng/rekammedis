@@ -21,7 +21,10 @@ import { Select } from '../../components/common/Select';
 import { Medicine } from '../../types';
 
 export const PharmacyView: React.FC = () => {
-  const { medicines, addMedicine, updateMedicineStock } = useStore();
+  const { medicines, addMedicine, updateMedicineStock, prescriptions, updatePrescriptionStatus } = useStore();
+  const activePrescriptions = prescriptions.filter(
+    (p) => p.status === 'Menunggu Farmasi' || p.status === 'Diproses' || p.status === 'Siap Diambil'
+  );
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('ALL');
 
@@ -114,6 +117,83 @@ export const PharmacyView: React.FC = () => {
           Tambah Master Obat
         </Button>
       </div>
+
+      {/* Antrean Resep Masuk — pekerjaan utama instalasi farmasi */}
+      <Card
+        title={`Antrean Resep Masuk (${activePrescriptions.length})`}
+        subtitle="Resep dari poliklinik yang menunggu diproses. Menyerahkan resep (Selesai) otomatis mengurangi stok obat."
+        noPadding
+      >
+        {activePrescriptions.length === 0 ? (
+          <p className="p-4 text-xs text-slate-400">Tidak ada resep yang menunggu diproses saat ini.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="py-2.5 px-4">Pasien</th>
+                  <th className="py-2.5 px-4">Dokter</th>
+                  <th className="py-2.5 px-4">Item Obat</th>
+                  <th className="py-2.5 px-4">Status</th>
+                  <th className="py-2.5 px-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {activePrescriptions.map((rx) => {
+                  const insufficient = rx.items.some((item) => {
+                    const med = medicines.find((m) => m.id === item.medicineId);
+                    return med ? med.stock < item.quantity : false;
+                  });
+                  return (
+                    <tr key={rx.id} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-4">
+                        <strong className="text-slate-900 block">{rx.patientName}</strong>
+                        <span className="text-[10px] text-slate-400 font-mono">{rx.mrNumber} • {rx.date}</span>
+                      </td>
+                      <td className="py-2.5 px-4 text-slate-600">{rx.doctorName}</td>
+                      <td className="py-2.5 px-4 text-slate-600">
+                        {rx.items.map((i) => `${i.medicineName} ×${i.quantity}`).join(', ')}
+                        {insufficient && (
+                          <span className="block text-[10px] font-bold text-red-600 mt-0.5">
+                            Stok tidak mencukupi untuk salah satu item
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <Badge variant={rx.status === 'Siap Diambil' ? 'success' : rx.status === 'Diproses' ? 'info' : 'warning'} size="sm" dot>
+                          {rx.status}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                        {rx.status === 'Menunggu Farmasi' && (
+                          <Button variant="outline" size="sm" onClick={() => updatePrescriptionStatus(rx.id, 'Diproses')}>
+                            Proses
+                          </Button>
+                        )}
+                        {rx.status === 'Diproses' && (
+                          <Button variant="outline" size="sm" onClick={() => updatePrescriptionStatus(rx.id, 'Siap Diambil')}>
+                            Siap Diambil
+                          </Button>
+                        )}
+                        {rx.status === 'Siap Diambil' && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={insufficient}
+                            onClick={() => updatePrescriptionStatus(rx.id, 'Selesai')}
+                          >
+                            Serahkan ke Pasien
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

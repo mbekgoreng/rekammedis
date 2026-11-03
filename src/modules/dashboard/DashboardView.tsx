@@ -33,15 +33,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     schedules,
     invoices,
     auditLogs,
+    medicalRecords,
     callQueuePatient,
     updateQueueStatus
   } = useStore();
 
-  const totalPatientsToday = queues.length;
-  const waitingPatients = queues.filter((q) => q.status === 'Menunggu').length;
-  const inProgressPatients = queues.filter((q) => q.status === 'Sedang Diperiksa' || q.status === 'Dipanggil').length;
-  const completedPatients = queues.filter((q) => q.status === 'Selesai').length;
-  const newPatientsCount = patients.filter((p) => p.registeredAt >= '2026-01-01').length;
+  // Tren kunjungan nyata: 7 tanggal kunjungan terakhir pada rekam medis,
+  // dipecah BPJS vs umum/asuransi dari data penjamin pasien.
+  const insuranceByPatient = new Map(patients.map((p) => [p.id, p.insuranceType]));
+  const visitDates = Array.from(new Set(medicalRecords.map((r) => r.visitDate.split(' ')[0]))).sort();
+  const chartDays = visitDates.slice(-7).map((date) => {
+    const dayRecords = medicalRecords.filter((r) => r.visitDate.split(' ')[0] === date);
+    const bpjs = dayRecords.filter((r) => (insuranceByPatient.get(r.patientId) || '').startsWith('BPJS')).length;
+    const label = new Date(date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+    return { day: label, count: dayRecords.length, bpjs, umum: dayRecords.length - bpjs };
+  });
+  const chartMax = Math.max(1, ...chartDays.map((d) => d.count));
+  const chartTotal = chartDays.reduce((s, d) => s + d.count, 0);
+
+  // Statistik "hari ini" hanya menghitung antrean bertanggal hari ini
+  // (antrean lama tanpa tanggal dari data awal dianggap antrean berjalan)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayQueues = queues.filter((q) => !q.queueDate || q.queueDate === todayStr);
+  const totalPatientsToday = todayQueues.filter((q) => q.status !== 'Dibatalkan').length;
+  const waitingPatients = todayQueues.filter((q) => q.status === 'Menunggu').length;
+  const inProgressPatients = todayQueues.filter((q) => q.status === 'Sedang Diperiksa' || q.status === 'Dipanggil').length;
+  const completedPatients = todayQueues.filter((q) => q.status === 'Selesai').length;
+  // "Bulan ini" diukur dari bulan pendaftaran pasien terakhir pada data
+  const latestRegMonth = patients.reduce((max, p) => (p.registeredAt > max ? p.registeredAt : max), '');
+  const newPatientsCount = patients.filter((p) => p.registeredAt.slice(0, 7) === latestRegMonth.slice(0, 7)).length;
+  const latestRegLabel = latestRegMonth
+    ? new Date(latestRegMonth).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+    : '';
   
   const todayRevenue = invoices
     .filter((inv) => inv.status === 'Paid')
@@ -58,7 +81,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     {
       title: 'Pasien Baru',
       value: newPatientsCount,
-      subtitle: 'Terdaftar bulan ini',
+      subtitle: `Terdaftar pada ${latestRegLabel}`,
       icon: UserPlus,
       color: 'bg-emerald-50 text-emerald-700 border-emerald-200'
     },
@@ -77,9 +100,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       color: 'bg-teal-50 text-teal-700 border-teal-200'
     },
     {
-      title: 'Pendapatan Hari Ini',
+      title: 'Pendapatan Lunas',
       value: `Rp ${todayRevenue.toLocaleString('id-ID')}`,
-      subtitle: 'Faktur lunas per hari ini',
+      subtitle: 'Total seluruh faktur berstatus Paid',
       icon: DollarSign,
       color: 'bg-indigo-50 text-indigo-700 border-indigo-200'
     },
@@ -162,7 +185,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="lg:col-span-2">
           <Card
             title="Antrian Pasien Hari Ini"
-            subtitle={`${queues.length} pasien terdaftar &bull; ${waitingPatients} menunggu giliran`}
+            subtitle={`${todayQueues.length} pasien terdaftar &bull; ${waitingPatients} menunggu giliran`}
             action={
               <Button
                 variant="ghost"
@@ -337,41 +360,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Grafik Kunjungan Pasien (2 Cols) */}
         <div className="lg:col-span-2">
           <Card
-            title="Tren Kunjungan 7 Hari Terakhir"
-            subtitle="Volume kunjungan pasien rawat jalan per hari"
+            title="Tren Kunjungan 7 Tanggal Terakhir"
+            subtitle="Dihitung dari tanggal kunjungan pada rekam medis"
             action={
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                <TrendingUp className="w-3.5 h-3.5" /> +12.4% vs Minggu Lalu
+                <TrendingUp className="w-3.5 h-3.5" /> {chartTotal} kunjungan tercatat
               </div>
             }
           >
             {/* Simple Clinical Bar Chart */}
             <div className="h-44 flex items-end justify-between gap-3 pt-6 px-2">
-              {[
-                { day: 'Kamis (20 Feb)', count: 28, bpjs: 18, umum: 10 },
-                { day: 'Jumat (21 Feb)', count: 35, bpjs: 22, umum: 13 },
-                { day: 'Sabtu (22 Feb)', count: 22, bpjs: 14, umum: 8 },
-                { day: 'Minggu (23 Feb)', count: 12, bpjs: 7, umum: 5 },
-                { day: 'Senin (24 Feb)', count: 42, bpjs: 29, umum: 13 },
-                { day: 'Selasa (25 Feb)', count: 38, bpjs: 25, umum: 13 },
-                { day: 'Hari Ini (Rabu)', count: 31, bpjs: 20, umum: 11 }
-              ].map((bar, idx) => (
+              {chartDays.length === 0 && (
+                <p className="text-xs text-slate-400 self-center mx-auto">Belum ada rekam medis tercatat.</p>
+              )}
+              {chartDays.map((bar, idx) => (
                 <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                   <span className="text-[10px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
                     {bar.count}
                   </span>
                   <div
                     className="w-full max-w-[36px] bg-slate-100 rounded-t-sm overflow-hidden flex flex-col justify-end transition-all group-hover:brightness-95"
-                    style={{ height: `${(bar.count / 45) * 100}%` }}
+                    style={{ height: `${(bar.count / chartMax) * 100}%` }}
                   >
                     <div
                       className="bg-clinical-700 w-full"
-                      style={{ height: `${(bar.bpjs / bar.count) * 100}%` }}
+                      style={{ height: `${bar.count ? (bar.bpjs / bar.count) * 100 : 0}%` }}
                       title={`BPJS: ${bar.bpjs}`}
                     />
                     <div
                       className="bg-teal-500 w-full"
-                      style={{ height: `${(bar.umum / bar.count) * 100}%` }}
+                      style={{ height: `${bar.count ? (bar.umum / bar.count) * 100 : 0}%` }}
                       title={`Umum/Swasta: ${bar.umum}`}
                     />
                   </div>
