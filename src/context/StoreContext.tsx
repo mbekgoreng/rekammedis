@@ -39,6 +39,8 @@ import {
   type SessionData
 } from '../lib/auth';
 import { dataKey, DEFAULT_CLINIC_ID } from '../lib/clinics';
+import { persistSlice, syncActiveFor } from '../lib/sync';
+import { apiFetch } from '../lib/api';
 import { themeById } from '../lib/themes';
 import { type ClinicSettings, DEFAULT_CLINIC_SETTINGS, mergeSettings } from '../lib/settings';
 
@@ -161,7 +163,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   }, [session]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'users'), JSON.stringify(users));
+    persistSlice(clinicId, 'users', JSON.stringify(users));
   }, [users]);
 
   const [clinicProfile, setClinicProfile] = useState<ClinicProfile>(() =>
@@ -190,7 +192,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   }, [clinicProfile.theme]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'clinic_profile'), JSON.stringify(clinicProfile));
+    persistSlice(clinicId, 'clinic_profile', JSON.stringify(clinicProfile));
   }, [clinicProfile]);
 
   const updateClinicProfile = (profile: ClinicProfile) => {
@@ -203,7 +205,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   );
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'settings'), JSON.stringify(settings));
+    persistSlice(clinicId, 'settings', JSON.stringify(settings));
   }, [settings, clinicId]);
 
   const updateSettings = (partial: Partial<ClinicSettings>) => {
@@ -225,55 +227,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'currentUser'), JSON.stringify(currentUser));
+    persistSlice(clinicId, 'currentUser', JSON.stringify(currentUser));
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'patients'), JSON.stringify(patients));
+    persistSlice(clinicId, 'patients', JSON.stringify(patients));
   }, [patients]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'medicines'), JSON.stringify(medicines));
+    persistSlice(clinicId, 'medicines', JSON.stringify(medicines));
   }, [medicines]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'queues'), JSON.stringify(queues));
+    persistSlice(clinicId, 'queues', JSON.stringify(queues));
   }, [queues]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'schedules'), JSON.stringify(schedules));
+    persistSlice(clinicId, 'schedules', JSON.stringify(schedules));
   }, [schedules]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'records'), JSON.stringify(medicalRecords));
+    persistSlice(clinicId, 'records', JSON.stringify(medicalRecords));
   }, [medicalRecords]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'prescriptions'), JSON.stringify(prescriptions));
+    persistSlice(clinicId, 'prescriptions', JSON.stringify(prescriptions));
   }, [prescriptions]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'lab_orders'), JSON.stringify(labOrders));
+    persistSlice(clinicId, 'lab_orders', JSON.stringify(labOrders));
   }, [labOrders]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'radiology_orders'), JSON.stringify(radiologyOrders));
+    persistSlice(clinicId, 'radiology_orders', JSON.stringify(radiologyOrders));
   }, [radiologyOrders]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'invoices'), JSON.stringify(invoices));
+    persistSlice(clinicId, 'invoices', JSON.stringify(invoices));
   }, [invoices]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'certificates'), JSON.stringify(certificates));
+    persistSlice(clinicId, 'certificates', JSON.stringify(certificates));
   }, [certificates]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'audit_logs'), JSON.stringify(auditLogs));
+    persistSlice(clinicId, 'audit_logs', JSON.stringify(auditLogs));
   }, [auditLogs]);
 
   useEffect(() => {
-    localStorage.setItem(dataKey(clinicId, 'notifications'), JSON.stringify(notifications));
+    persistSlice(clinicId, 'notifications', JSON.stringify(notifications));
   }, [notifications]);
 
   // Audit Logging
@@ -350,6 +352,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     setAuditLogs((prev) => [newLog, ...prev]);
   };
 
+
+  // Mode server: daftar akun login diambil dari server (sumber kebenaran akun),
+  // kolom profil lokal (departemen/SIP) dipertahankan dari irisan lokal.
+  const refreshServerUsers = async () => {
+    const { data } = await apiFetch<{ users: { id: string; email: string; name: string; role: User['role']; isActive: boolean }[] }>('/api/clinic/users');
+    if (data.users) {
+      setUsers((prev) => data.users.map((su) => {
+        const local = prev.find((u) => u.id === su.id);
+        return { id: su.id, email: su.email, name: su.name, role: su.role, isActive: su.isActive, department: local?.department, sipNumber: local?.sipNumber, avatar: local?.avatar };
+      }));
+    }
+  };
+
   const login = async (email: string, password: string, remember: boolean): Promise<AuthResult> => {
     const normalized = email.trim().toLowerCase();
     const user = users.find((u) => u.email.toLowerCase() === normalized);
@@ -390,6 +405,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   };
 
   const changePassword = async (oldPassword: string, newPassword: string): Promise<AuthResult> => {
+    if (syncActiveFor(clinicId)) {
+      if (newPassword.length < settings.passwordMinLength) {
+        return { ok: false, error: `Kata sandi baru minimal ${settings.passwordMinLength} karakter (kebijakan klinik).` };
+      }
+      const { status, data } = await apiFetch<{ error?: string; token?: string; expiresInSeconds?: number }>('/api/auth/change-password', {
+        method: 'POST', body: { oldPassword, newPassword }
+      });
+      if (status !== 200) return { ok: false, error: data.error || 'Gagal mengubah kata sandi di server.' };
+      const sess = loadSession();
+      if (sess && data.token) {
+        saveSession({ ...sess, apiToken: data.token, expiresAt: Date.now() + (data.expiresInSeconds || 12 * 3600) * 1000 });
+      }
+      logAuditAs(currentUser, 'Ganti Kata Sandi', 'Kata sandi akun berhasil diubah di server');
+      return { ok: true };
+    }
     const user = users.find((u) => u.id === currentUser.id);
     if (!user) return { ok: false, error: 'Pengguna tidak ditemukan.' };
     const oldHash = await hashPassword(user.id, oldPassword);
@@ -406,6 +436,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   };
 
   const resetUserPassword = async (userId: string, newPassword: string): Promise<void> => {
+    if (syncActiveFor(clinicId)) {
+      await apiFetch(`/api/clinic/users/${userId}/reset-password`, { method: 'POST', body: { newPassword } });
+      const target = users.find((u) => u.id === userId);
+      if (target) logAuditAs(currentUser, 'Reset Kata Sandi', `Kata sandi ${target.name} direset oleh administrator (server)`);
+      return;
+    }
     const newHash = await hashPassword(userId, newPassword);
     setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, passwordHash: newHash } : u)));
     const target = users.find((u) => u.id === userId);
@@ -416,6 +452,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
 
   const addUser = async (input: { name: string; email: string; role: User['role']; department?: string; sipNumber?: string; password: string }): Promise<AuthResult> => {
     const email = input.email.trim().toLowerCase();
+    if (syncActiveFor(clinicId)) {
+      if (input.password.length < settings.passwordMinLength) {
+        return { ok: false, error: `Kata sandi awal minimal ${settings.passwordMinLength} karakter (kebijakan klinik).` };
+      }
+      const { status, data } = await apiFetch<{ error?: string; user: { id: string } }>( '/api/clinic/users', {
+        method: 'POST',
+        body: { email, name: input.name.trim(), role: input.role, password: input.password }
+      });
+      if (status !== 201) return { ok: false, error: data.error || 'Gagal membuat akun di server.' };
+      await refreshServerUsers();
+      if (data.user && (input.department || input.sipNumber)) {
+        setUsers((prev) => prev.map((u) => (u.id === data.user.id
+          ? { ...u, department: input.department?.trim() || undefined, sipNumber: input.sipNumber?.trim() || undefined }
+          : u)));
+      }
+      logAuditAs(currentUser, 'Tambah Pengguna', `Akun server baru dibuat: ${input.name.trim()} (${email}, peran ${input.role})`);
+      return { ok: true };
+    }
     if (users.some((u) => u.email.toLowerCase() === email)) {
       return { ok: false, error: 'Email sudah dipakai akun lain di klinik ini.' };
     }

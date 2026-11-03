@@ -1,0 +1,1 @@
+{"description":"Backend RekamMedis: auth server multi-tenant, API data per klinik, brankas kredensial integrasi, billing, panel platform. Nol dependensi eksternal (Node >= 22, node:sqlite).","engines":{"node":">=22"},"name":"rekammedis-server","private":true,"scripts":{"dev":"node --watch src/index.js","start":"node src/index.js"},"type":"module","version":"0.1.0"}

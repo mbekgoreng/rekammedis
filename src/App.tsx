@@ -26,9 +26,41 @@ import { ChangePasswordView } from './modules/auth/ChangePasswordView';
 import { GuideView } from './modules/guide/GuideView';
 import { BpjsView } from './modules/bpjs/BpjsView';
 import { TourOverlay, tourStorageKey } from './components/onboarding/TourOverlay';
-import { DEFAULT_CLINIC_ID } from './lib/clinics';
+import { DEFAULT_CLINIC_ID, dataKey } from './lib/clinics';
+import { apiFetch } from './lib/api';
+import { hydrateFromServer } from './lib/sync';
+import type { User } from './types';
 import { canAccess, ROLE_LABELS } from './lib/permissions';
 import { loadSession, type SessionData } from './lib/auth';
+
+
+const SubscriptionBanner: React.FC = () => {
+  const [info, setInfo] = useState<{ expired: boolean; status: string; trialEndsAt?: string | null; currentPeriodEnd?: string | null } | null>(null);
+  useEffect(() => {
+    const s = loadSession();
+    if (!s?.apiToken) return;
+    void apiFetch<{ subscription: { expired: boolean; status: string; trialEndsAt?: string | null; currentPeriodEnd?: string | null } }>('/api/billing')
+      .then(({ data }) => setInfo(data.subscription || null))
+      .catch(() => undefined);
+  }, []);
+  if (!info) return null;
+  const trialDays = info.trialEndsAt ? Math.ceil((new Date(info.trialEndsAt).getTime() - Date.now()) / 86400000) : null;
+  if (info.expired) {
+    return (
+      <div className="bg-red-600 text-white text-center text-xs font-semibold px-4 py-2">
+        Masa langganan klinik Anda telah berakhir — data tetap aman, tetapi pencatatan baru tidak tersinkron ke server. Perpanjang di Pengaturan → Langganan.
+      </div>
+    );
+  }
+  if (info.status === 'trialing' && trialDays !== null && trialDays <= 3) {
+    return (
+      <div className="bg-amber-500 text-white text-center text-xs font-semibold px-4 py-2">
+        Masa trial berakhir dalam {Math.max(trialDays, 0)} hari — aktifkan langganan di Pengaturan → Langganan agar layanan tidak terjeda.
+      </div>
+    );
+  }
+  return null;
+};
 
 const MainLayout: React.FC = () => {
   const { isAuthenticated, logout, currentUser, clinicProfile, clinicId } = useStore();
@@ -71,6 +103,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col antialiased">
+      <SubscriptionBanner />
       <div className="flex-1 flex w-full">
         {/* Left Clinical Sidebar */}
         <Sidebar
@@ -238,9 +271,62 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   const [session, setSession] = useState<SessionData | null>(() => loadSession());
+  const [bootKey, setBootKey] = useState<string | null>(null);
+  const sessionKey = session?.apiToken ? `${session.clinicId}:${session.apiToken}` : null;
+
+  // Mode server: sebelum ruang kerja dimuat, tarik snapshot server ke cache
+  // lokal dan samakan daftar akun login dari server (sumber kebenaran akun).
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (session?.apiToken) {
+        try {
+          await hydrateFromServer(session.clinicId);
+          const usersRes = await apiFetch<{ users: { id: string; email: string; name: string; role: User['role']; isActive: boolean }[] }>('/api/clinic/users');
+          const meRes = await apiFetch<{ user: { id: string }; clinic: { id: string; name: string } }>('/api/auth/me');
+          if (usersRes.data.users) {
+            const prevRaw = localStorage.getItem(dataKey(session.clinicId, 'users'));
+            const prev: User[] = prevRaw ? (JSON.parse(prevRaw) as User[]) : [];
+            const mapped: User[] = usersRes.data.users.map((su) => {
+              const local = prev.find((u) => u.id === su.id || u.email === su.email);
+              return {
+                id: su.id, email: su.email, name: su.name, role: su.role, isActive: su.isActive,
+                department: local?.department, sipNumber: local?.sipNumber, avatar: local?.avatar
+              };
+            });
+            localStorage.setItem(dataKey(session.clinicId, 'users'), JSON.stringify(mapped));
+            const me = mapped.find((u) => u.id === meRes.data.user?.id);
+            if (me) localStorage.setItem(dataKey(session.clinicId, 'currentUser'), JSON.stringify(me));
+          }
+          if (meRes.data.clinic && !localStorage.getItem(dataKey(session.clinicId, 'clinic_profile'))) {
+            localStorage.setItem(dataKey(session.clinicId, 'clinic_profile'), JSON.stringify({
+              clinicName: meRes.data.clinic.name, licenseNumber: '', faskesCode: '',
+              address: '', phone: '', email: '', directorName: ''
+            }));
+          }
+        } catch {
+          // Server tak terjangkau: lanjut dengan cache lokal perangkat ini.
+        }
+      }
+      if (alive && sessionKey) setBootKey(sessionKey);
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey]);
 
   if (!session) {
     return <LoginView onAuthenticated={() => setSession(loadSession())} />;
+  }
+
+  if (session.apiToken && bootKey !== sessionKey) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f6f8fb]">
+        <div className="text-center">
+          <p className="text-sm font-bold text-slate-700">Menyiapkan ruang kerja klinik…</p>
+          <p className="text-[11px] text-slate-400 mt-1">Mengambil data terbaru dari server RekamMedis</p>
+        </div>
+      </div>
+    );
   }
 
   return (

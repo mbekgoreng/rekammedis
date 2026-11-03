@@ -3,6 +3,7 @@ import {
   hashPassword, saveSession, loadGuard, recordFailedLogin, resetGuard, DEFAULT_PASSWORD
 } from '../../lib/auth';
 import { findAccount, emailTaken, createClinic, readClinicSettings } from '../../lib/clinics';
+import { apiHealth, apiLogin, apiRegisterClinic, type ApiLoginResult } from '../../lib/api';
 
 // Layar masuk & pendaftaran RekamMedis — satu konsep visual dengan landing page:
 // panel navy #17155E → #213A75, aksen hijau #84E488, logo resmi, Plus Jakarta Sans.
@@ -20,6 +21,8 @@ const labelCls = 'block text-xs font-bold text-slate-600 mb-1.5';
 
 export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthenticated }) => {
   const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [apiMode, setApiMode] = useState(false);
+  useEffect(() => { void apiHealth().then(setApiMode); }, []);
 
   // ---- Login state ----
   const [email, setEmail] = useState('');
@@ -52,12 +55,36 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
     onAuthenticated();
   };
 
+  const startApiSession = (result: ApiLoginResult, rememberMe: boolean) => {
+    const now = Date.now();
+    saveSession({
+      userId: result.user.id,
+      email: result.user.email,
+      clinicId: result.user.clinicId,
+      loginAt: now,
+      expiresAt: now + result.expiresInSeconds * 1000,
+      remember: rememberMe,
+      apiToken: result.token
+    });
+    resetGuard();
+    onAuthenticated();
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockSeconds > 0 || busy) return;
     setError(null);
     setBusy(true);
     try {
+      if (apiMode) {
+        try {
+          const result = await apiLogin(email.trim(), password, remember);
+          startApiSession(result, remember);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Gagal masuk lewat server.');
+        }
+        return;
+      }
       const found = findAccount(email);
       const policy = found ? readClinicSettings(found.clinicId) : null;
       const fail = () => {
@@ -119,12 +146,28 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
       setRegError('Konfirmasi kata sandi tidak sama.');
       return;
     }
-    if (emailTaken(reg.adminEmail)) {
+    if (!apiMode && emailTaken(reg.adminEmail)) {
       setRegError('Email admin sudah terdaftar pada klinik lain di perangkat ini. Gunakan email lain.');
       return;
     }
     setRegBusy(true);
     try {
+      if (apiMode) {
+        try {
+          const result = await apiRegisterClinic({
+            clinicName: reg.clinicName.trim(),
+            email: reg.adminEmail.trim(),
+            password: reg.adminPassword,
+            adminName: reg.adminName.trim(),
+            phone: reg.phone.trim(),
+            address: reg.address.trim()
+          });
+          startApiSession(result, true);
+        } catch (err) {
+          setRegError(err instanceof Error ? err.message : 'Pendaftaran ke server gagal.');
+        }
+        return;
+      }
       const { clinicId, admin } = await createClinic({
         clinicName: reg.clinicName.trim(),
         facilityType: reg.facilityType,
@@ -253,7 +296,12 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
               </button>
               <p className="text-[11px] text-slate-500 text-center">
                 Lupa kata sandi? Hubungi administrator klinik Anda untuk reset.<br />
-                Akun demo Klinik Tong Fang Ashiap: <span className="font-semibold text-slate-700">admin@tongfangashiap.id</span> / {DEFAULT_PASSWORD}
+                {apiMode ? (
+                  <span className="font-semibold text-emerald-700">Terhubung ke server RekamMedis — data klinik tersimpan aman di server.</span>
+                ) : (
+                  <>Mode lokal (demo): data tersimpan di perangkat ini saja.<br />
+                  Akun demo Klinik Tong Fang Ashiap: <span className="font-semibold text-slate-700">admin@tongfangashiap.id</span> / {DEFAULT_PASSWORD}</>
+                )}
               </p>
             </form>
           ) : (

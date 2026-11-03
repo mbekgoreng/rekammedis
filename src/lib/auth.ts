@@ -41,6 +41,8 @@ export interface SessionData {
   loginAt: number;
   expiresAt: number;
   remember: boolean;
+  /** Token JWT server (mode API). Tidak ada pada sesi mode lokal. */
+  apiToken?: string;
 }
 
 export function loadSession(): SessionData | null {

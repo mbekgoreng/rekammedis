@@ -8,6 +8,8 @@ import { Button } from '../../components/common/Button';
 import { APP_THEMES, themeById } from '../../lib/themes';
 import { dataKey } from '../../lib/clinics';
 import type { ClinicSettings } from '../../lib/settings';
+import { ServerIntegrations } from './ServerIntegrations';
+import { SubscriptionPanel } from './SubscriptionPanel';
 
 // Pengaturan Klinik — semua konfigurasi klinik dalam satu halaman bertab.
 // Pengaturan perilaku terhubung nyata ke modulnya (tarif → invoice, poli →
@@ -19,7 +21,7 @@ const inputCls = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 t
 const labelCls = 'block text-xs font-bold text-slate-600 mb-1';
 const hintCls = 'text-[10px] text-slate-400 mt-1 leading-relaxed';
 
-type TabId = 'profil' | 'tema' | 'operasional' | 'tarif' | 'farmasi' | 'dokumen' | 'keamanan' | 'notifikasi' | 'integrasi' | 'layanan' | 'backup';
+type TabId = 'profil' | 'tema' | 'operasional' | 'tarif' | 'farmasi' | 'dokumen' | 'keamanan' | 'notifikasi' | 'integrasi' | 'layanan' | 'langganan' | 'backup';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'profil', label: 'Profil Klinik' },
@@ -32,6 +34,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'notifikasi', label: 'Notifikasi' },
   { id: 'integrasi', label: 'Integrasi' },
   { id: 'layanan', label: 'Cabang & Layanan' },
+  { id: 'langganan', label: 'Langganan' },
   { id: 'backup', label: 'Backup Data' }
 ];
 
@@ -382,7 +385,8 @@ export const ClinicSettingsView: React.FC = () => {
         </Card>
       )}
 
-      {tab === 'integrasi' && (
+      {tab === 'integrasi' && (<>
+        <ServerIntegrations />
         <Card title="Integrasi SATUSEHAT, BPJS & API" subtitle="Konfigurasi tersimpan di perangkat ini. Status koneksi: BELUM TERHUBUNG — pertukaran data sungguhan memerlukan backend agar kredensial tidak terekspos di browser">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -408,7 +412,8 @@ export const ClinicSettingsView: React.FC = () => {
             <div className="flex justify-end"><Button type="button" variant="primary" onClick={saveSettings} leftIcon={<Save className="w-4 h-4" />}>Simpan Integrasi</Button></div>
           </div>
         </Card>
-      )}
+      </>)}
+
 
       {tab === 'layanan' && (
         <Card title="Cabang, Portal Pasien & Layanan Lanjutan" subtitle="Pengaturan arah jangka panjang klinik — tersimpan per klinik; sebagian berlaku setelah modulnya aktif">
@@ -442,6 +447,12 @@ export const ClinicSettingsView: React.FC = () => {
             </div>
             <div className="flex justify-end"><Button type="button" variant="primary" onClick={saveSettings} leftIcon={<Save className="w-4 h-4" />}>Simpan Layanan</Button></div>
           </div>
+        </Card>
+      )}
+
+      {tab === 'langganan' && (
+        <Card title="Langganan RekamMedis" subtitle="Paket layanan klinik Anda pada platform RekamMedis">
+          <SubscriptionPanel />
         </Card>
       )}
 

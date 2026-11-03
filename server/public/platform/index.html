@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RekamMedis — Panel Platform</title>
+<style>
+  :root { --navy:#17155E; --teal:#409DA1; --green:#84E488; --ink:#0f172a; --mut:#64748b; }
+  * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+  body { margin:0; background:#f4f7fb; color:var(--ink); }
+  header { background:linear-gradient(120deg, var(--navy), #213A75 60%, #2F698B); color:#fff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { font-size:18px; margin:0; } header small { color:#bcd; display:block; font-weight:400; margin-top:2px; }
+  main { max-width:1080px; margin:0 auto; padding:24px 16px 60px; }
+  .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:18px; margin-bottom:18px; box-shadow:0 2px 10px rgba(23,21,94,.05); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+  .stat b { font-size:26px; display:block; } .stat span { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #eef2f7; vertical-align:top; }
+  th { color:var(--mut); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  button { background:var(--teal); color:#fff; border:0; border-radius:9px; padding:7px 13px; font-weight:700; cursor:pointer; font-size:12px; }
+  button.ghost { background:#fff; color:var(--teal); border:1px solid var(--teal); }
+  button:disabled { opacity:.5; cursor:default; }
+  input, select { padding:9px 11px; border:1px solid #cbd5e1; border-radius:9px; font-size:14px; width:100%; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+  .b-green { background:#dcfce7; color:#166534; } .b-amber { background:#fef3c7; color:#92400e; } .b-red { background:#fee2e2; color:#991b1b; } .b-slate { background:#e2e8f0; color:#334155; }
+  #loginBox { max-width:380px; margin:60px auto; }
+  .row { display:flex; gap:10px; } .row > * { flex:1; }
+  .err { color:#b91c1c; font-size:13px; min-height:18px; }
+  h2 { font-size:15px; margin:0 0 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RekamMedis — Panel Platform<small>Kelola klinik pelanggan, langganan, dan pembayaran</small></h1>
+  <button class="ghost" id="logoutBtn" style="display:none">Keluar</button>
+</header>
+<main>
+  <div class="card" id="loginBox">
+    <h2>Masuk Panel Platform</h2>
+    <p class="err" id="loginErr"></p>
+    <div style="display:grid; gap:10px">
+      <input id="email" type="email" placeholder="Email platform" autocomplete="username" />
+      <input id="password" type="password" placeholder="Kata sandi" autocomplete="current-password" />
+      <button id="loginBtn">Masuk</button>
+    </div>
+  </div>
+
+  <div id="dash" style="display:none">
+    <div class="stats" style="margin-bottom:18px">
+      <div class="card stat"><span>Klinik Terdaftar</span><b id="stClinics">–</b></div>
+      <div class="card stat"><span>Total Akun Petugas</span><b id="stUsers">–</b></div>
+      <div class="card stat"><span>Pendapatan Terkonfirmasi</span><b id="stRevenue">–</b></div>
+      <div class="card stat"><span>Menunggu Konfirmasi</span><b id="stPending">–</b></div>
+    </div>
+
+    <div class="card">
+      <h2>Pembayaran Langganan</h2>
+      <table><thead><tr><th>Waktu</th><th>Klinik</th><th>Paket</th><th>Jumlah</th><th>Jalur</th><th>Status</th><th></th></tr></thead>
+      <tbody id="paymentsBody"><tr><td colspan="7">Memuat…</td></tr></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>Klinik Pelanggan</h2>
+      <table><thead><tr><th>Klinik</th><th>Kontak</th><th>Petugas</th><th>Langganan</th><th>Aktivasi Manual</th></tr></thead>
+      <tbody id="clinicsBody"><tr><td colspan="5">Memuat…</td></tr></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>Outbox Email (terbaru)</h2>
+      <table><thead><tr><th>Waktu</th><th>Kepada</th><th>Subjek</th><th>Terkirim</th></tr></thead>
+      <tbody id="outboxBody"><tr><td colspan="4">Memuat…</td></tr></tbody></table>
+      <p style="color:var(--mut); font-size:12px">Email hanya benar-benar terkirim bila MAIL_WEBHOOK_URL dikonfigurasi di server; selain itu tercatat di sini untuk keperluan pengembangan.</p>
+    </div>
+  </div>
+</main>
+<script>
+const token = () => localStorage.getItem('rm_platform_token') || '';
+const rp = (n) => 'Rp' + Number(n || 0).toLocaleString('id-ID');
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token(), ...(opts.headers || {}) } });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || ('HTTP ' + res.status));
+  return json;
+}
+function badge(text, cls) { return `<span class="badge ${cls}">${text}</span>`; }
+function subBadge(s) {
+  if (s.expired) return badge('BERAKHIR', 'b-red');
+  if (s.status === 'active') return badge(s.plan.toUpperCase() + ' aktif s.d. ' + (s.currentPeriodEnd || '').slice(0, 10), 'b-green');
+  if (s.status === 'trialing') return badge('Trial s.d. ' + (s.trialEndsAt || '').slice(0, 10), 'b-amber');
+  return badge(s.status, 'b-slate');
+}
+async function loadAll() {
+  const [ov, cl, pay, out] = await Promise.all([
+    api('/api/platform/overview'), api('/api/platform/clinics'),
+    api('/api/platform/payments'), api('/api/platform/outbox')
+  ]);
+  stClinics.textContent = ov.clinics; stUsers.textContent = ov.users;
+  stRevenue.textContent = rp(ov.revenueTotal); stPending.textContent = ov.pendingPayments;
+  paymentsBody.innerHTML = pay.payments.length ? pay.payments.map(p => `<tr>
+    <td>${p.created_at.slice(0, 16).replace('T', ' ')}</td><td>${p.clinic_name}</td>
+    <td>${p.plan} × ${p.months} bln</td><td>${rp(p.amount)}</td><td>${p.gateway || '-'}</td>
+    <td>${p.status === 'paid' ? badge('LUNAS', 'b-green') : p.status === 'awaiting_confirmation' ? badge('MENUNGGU KONFIRMASI', 'b-amber') : badge(p.status.toUpperCase(), 'b-slate')}</td>
+    <td>${p.status === 'awaiting_confirmation' ? `<button onclick="confirmPay('${p.id}')">Konfirmasi</button>` : ''}</td></tr>`).join('')
+    : '<tr><td colspan="7">Belum ada pembayaran.</td></tr>';
+  clinicsBody.innerHTML = cl.clinics.map(c => `<tr>
+    <td><strong>${c.name}</strong><br><small>${c.faskes_code || ''} • daftar ${c.created_at.slice(0, 10)}</small></td>
+    <td>${c.email || '-'}</td><td>${c.user_count}</td><td>${subBadge(c.subscription)}</td>
+    <td><div class="row" style="align-items:center">
+      <select id="plan-${c.id}"><option value="basic">Basic</option><option value="pro">Pro</option></select>
+      <select id="mo-${c.id}"><option>1</option><option>3</option><option>6</option><option>12</option></select>
+      <button onclick="activate('${c.id}')">Aktifkan</button></div></td></tr>`).join('');
+  outboxBody.innerHTML = out.outbox.length ? out.outbox.map(m => `<tr>
+    <td>${m.created_at.slice(0, 16).replace('T', ' ')}</td><td>${m.to_email}</td><td>${m.subject}</td>
+    <td>${m.sent_at ? badge('TERKIRIM', 'b-green') : badge('DI OUTBOX', 'b-slate')}</td></tr>`).join('')
+    : '<tr><td colspan="4">Outbox kosong.</td></tr>';
+}
+async function confirmPay(id) { await api(`/api/platform/payments/${id}/confirm`, { method: 'POST', body: '{}' }); loadAll(); }
+async function activate(id) {
+  const plan = document.getElementById('plan-' + id).value;
+  const months = Number(document.getElementById('mo-' + id).value);
+  await api(`/api/platform/clinics/${id}/activate`, { method: 'POST', body: JSON.stringify({ plan, months }) });
+  loadAll();
+}
+loginBtn.onclick = async () => {
+  loginErr.textContent = '';
+  try {
+    const res = await fetch('/api/platform/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.value, password: password.value }) });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Gagal masuk');
+    localStorage.setItem('rm_platform_token', json.token);
+    showDash();
+  } catch (e) { loginErr.textContent = e.message; }
+};
+logoutBtn.onclick = () => { localStorage.removeItem('rm_platform_token'); location.reload(); };
+async function showDash() {
+  try { await loadAll(); loginBox.style.display = 'none'; dash.style.display = 'block'; logoutBtn.style.display = 'block'; }
+  catch { localStorage.removeItem('rm_platform_token'); }
+}
+if (token()) showDash();
+</script>
+</body>
+</html>
