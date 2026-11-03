@@ -8,6 +8,8 @@ export interface ClinicProfile {
   phone: string;
   email: string;
   directorName: string;
+  /** ID tema warna aplikasi (lihat src/lib/themes.ts) — hanya mengubah warna. */
+  theme?: string;
 }
 
 export interface User {

@@ -38,6 +38,8 @@ import {
   saveSession,
   type SessionData
 } from '../lib/auth';
+import { dataKey, DEFAULT_CLINIC_ID } from '../lib/clinics';
+import { themeById } from '../lib/themes';
 
 export interface AuthResult {
   ok: boolean;
@@ -53,6 +55,8 @@ interface StoreContextType {
   logout: () => void;
   changePassword: (oldPassword: string, newPassword: string) => Promise<AuthResult>;
   resetUserPassword: (userId: string, newPassword: string) => Promise<void>;
+  addUser: (input: { name: string; email: string; role: User['role']; department?: string; sipNumber?: string; password: string }) => Promise<AuthResult>;
+  clinicId: string;
   users: User[];
   clinicProfile: ClinicProfile;
   updateClinicProfile: (profile: ClinicProfile) => void;
@@ -118,11 +122,11 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
-export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: string; onLogout?: () => void }> = ({ children, clinicId, onLogout }) => {
   // Load initial from localStorage or defaults
   const loadLocal = <T,>(key: string, initial: T): T => {
     try {
-      const saved = localStorage.getItem(`tongfang_v3_${key}`);
+      const saved = localStorage.getItem(dataKey(clinicId, key));
       return saved ? JSON.parse(saved) : initial;
     } catch {
       return initial;
@@ -130,7 +134,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const [users, setUsers] = useState<User[]>(() => {
-    const stored = loadLocal<User[]>('users', INITIAL_USERS);
+    const stored = loadLocal<User[]>('users', clinicId === DEFAULT_CLINIC_ID ? INITIAL_USERS : []);
     // Migrasi: akun lama yang belum punya hash kata sandi mewarisi hash bawaan
     return stored.map((u) => {
       if (u.passwordHash) return u;
@@ -154,11 +158,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [session]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_users', JSON.stringify(users));
+    localStorage.setItem(dataKey(clinicId, 'users'), JSON.stringify(users));
   }, [users]);
 
   const [clinicProfile, setClinicProfile] = useState<ClinicProfile>(() =>
-    loadLocal<ClinicProfile>('clinic_profile', {
+    loadLocal<ClinicProfile>('clinic_profile', clinicId === DEFAULT_CLINIC_ID ? {
       clinicName: 'Klinik Tong Fang Ashiap',
       licenseNumber: '503/021/KOP-PELKES/2023',
       faskesCode: '31710502',
@@ -166,81 +170,94 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       phone: '(021) 555-0192',
       email: 'info@tongfangashiap.id',
       directorName: 'dr. Yusuf Tjakep Kalee, Sp.PD'
+    } : {
+      clinicName: 'Klinik Baru',
+      licenseNumber: '',
+      faskesCode: '',
+      address: '',
+      phone: '',
+      email: '',
+      directorName: ''
     })
   );
 
+  // Tema warna aktif mengikuti profil klinik (hanya mengganti warna)
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_clinic_profile', JSON.stringify(clinicProfile));
+    document.documentElement.setAttribute('data-theme', themeById(clinicProfile.theme).id);
+  }, [clinicProfile.theme]);
+
+  useEffect(() => {
+    localStorage.setItem(dataKey(clinicId, 'clinic_profile'), JSON.stringify(clinicProfile));
   }, [clinicProfile]);
 
   const updateClinicProfile = (profile: ClinicProfile) => {
     setClinicProfile(profile);
     logAudit('Pengaturan', 'Perbarui Profil Klinik', `Profil fasilitas diperbarui: ${profile.clinicName}`);
   };
-  const [patients, setPatients] = useState<Patient[]>(() => loadLocal('patients', INITIAL_PATIENTS));
-  const [medicines, setMedicines] = useState<Medicine[]>(() => loadLocal('medicines', INITIAL_MEDICINES));
-  const [queues, setQueues] = useState<QueueItem[]>(() => loadLocal('queues', INITIAL_QUEUES));
-  const [schedules, setSchedules] = useState<DoctorSchedule[]>(() => loadLocal('schedules', INITIAL_SCHEDULES));
-  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>(() => loadLocal('records', INITIAL_MEDICAL_RECORDS));
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(() => loadLocal('prescriptions', INITIAL_PRESCRIPTIONS));
-  const [labOrders, setLabOrders] = useState<LabOrder[]>(() => loadLocal('lab_orders', INITIAL_LAB_ORDERS));
-  const [radiologyOrders, setRadiologyOrders] = useState<RadiologyOrder[]>(() => loadLocal('radiology_orders', INITIAL_RADIOLOGY_ORDERS));
-  const [invoices, setInvoices] = useState<Invoice[]>(() => loadLocal('invoices', INITIAL_INVOICES));
-  const [certificates, setCertificates] = useState<MedicalCertificate[]>(() => loadLocal('certificates', INITIAL_CERTIFICATES));
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => loadLocal('audit_logs', INITIAL_AUDIT_LOGS));
-  const [notifications, setNotifications] = useState<ClinicNotification[]>(() => loadLocal('notifications', INITIAL_NOTIFICATIONS));
+  const [patients, setPatients] = useState<Patient[]>(() => loadLocal('patients', clinicId === DEFAULT_CLINIC_ID ? INITIAL_PATIENTS : []));
+  const [medicines, setMedicines] = useState<Medicine[]>(() => loadLocal('medicines', clinicId === DEFAULT_CLINIC_ID ? INITIAL_MEDICINES : []));
+  const [queues, setQueues] = useState<QueueItem[]>(() => loadLocal('queues', clinicId === DEFAULT_CLINIC_ID ? INITIAL_QUEUES : []));
+  const [schedules, setSchedules] = useState<DoctorSchedule[]>(() => loadLocal('schedules', clinicId === DEFAULT_CLINIC_ID ? INITIAL_SCHEDULES : []));
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>(() => loadLocal('records', clinicId === DEFAULT_CLINIC_ID ? INITIAL_MEDICAL_RECORDS : []));
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>(() => loadLocal('prescriptions', clinicId === DEFAULT_CLINIC_ID ? INITIAL_PRESCRIPTIONS : []));
+  const [labOrders, setLabOrders] = useState<LabOrder[]>(() => loadLocal('lab_orders', clinicId === DEFAULT_CLINIC_ID ? INITIAL_LAB_ORDERS : []));
+  const [radiologyOrders, setRadiologyOrders] = useState<RadiologyOrder[]>(() => loadLocal('radiology_orders', clinicId === DEFAULT_CLINIC_ID ? INITIAL_RADIOLOGY_ORDERS : []));
+  const [invoices, setInvoices] = useState<Invoice[]>(() => loadLocal('invoices', clinicId === DEFAULT_CLINIC_ID ? INITIAL_INVOICES : []));
+  const [certificates, setCertificates] = useState<MedicalCertificate[]>(() => loadLocal('certificates', clinicId === DEFAULT_CLINIC_ID ? INITIAL_CERTIFICATES : []));
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => loadLocal('audit_logs', clinicId === DEFAULT_CLINIC_ID ? INITIAL_AUDIT_LOGS : []));
+  const [notifications, setNotifications] = useState<ClinicNotification[]>(() => loadLocal('notifications', clinicId === DEFAULT_CLINIC_ID ? INITIAL_NOTIFICATIONS : []));
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_currentUser', JSON.stringify(currentUser));
+    localStorage.setItem(dataKey(clinicId, 'currentUser'), JSON.stringify(currentUser));
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_patients', JSON.stringify(patients));
+    localStorage.setItem(dataKey(clinicId, 'patients'), JSON.stringify(patients));
   }, [patients]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_medicines', JSON.stringify(medicines));
+    localStorage.setItem(dataKey(clinicId, 'medicines'), JSON.stringify(medicines));
   }, [medicines]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_queues', JSON.stringify(queues));
+    localStorage.setItem(dataKey(clinicId, 'queues'), JSON.stringify(queues));
   }, [queues]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_schedules', JSON.stringify(schedules));
+    localStorage.setItem(dataKey(clinicId, 'schedules'), JSON.stringify(schedules));
   }, [schedules]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_records', JSON.stringify(medicalRecords));
+    localStorage.setItem(dataKey(clinicId, 'records'), JSON.stringify(medicalRecords));
   }, [medicalRecords]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_prescriptions', JSON.stringify(prescriptions));
+    localStorage.setItem(dataKey(clinicId, 'prescriptions'), JSON.stringify(prescriptions));
   }, [prescriptions]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_lab_orders', JSON.stringify(labOrders));
+    localStorage.setItem(dataKey(clinicId, 'lab_orders'), JSON.stringify(labOrders));
   }, [labOrders]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_radiology_orders', JSON.stringify(radiologyOrders));
+    localStorage.setItem(dataKey(clinicId, 'radiology_orders'), JSON.stringify(radiologyOrders));
   }, [radiologyOrders]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_invoices', JSON.stringify(invoices));
+    localStorage.setItem(dataKey(clinicId, 'invoices'), JSON.stringify(invoices));
   }, [invoices]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_certificates', JSON.stringify(certificates));
+    localStorage.setItem(dataKey(clinicId, 'certificates'), JSON.stringify(certificates));
   }, [certificates]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_audit_logs', JSON.stringify(auditLogs));
+    localStorage.setItem(dataKey(clinicId, 'audit_logs'), JSON.stringify(auditLogs));
   }, [auditLogs]);
 
   useEffect(() => {
-    localStorage.setItem('tongfang_v3_notifications', JSON.stringify(notifications));
+    localStorage.setItem(dataKey(clinicId, 'notifications'), JSON.stringify(notifications));
   }, [notifications]);
 
   // Audit Logging
@@ -334,6 +351,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const newSession: SessionData = {
       userId: user.id,
       email: user.email,
+      clinicId,
       loginAt: now,
       expiresAt: now + (remember ? 7 * 24 * 60 * 60 * 1000 : 12 * 60 * 60 * 1000),
       remember
@@ -352,6 +370,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     clearSession();
     setSession(null);
+    onLogout?.();
   };
 
   const changePassword = async (oldPassword: string, newPassword: string): Promise<AuthResult> => {
@@ -377,6 +396,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (target) {
       logAuditAs(currentUser, 'Reset Kata Sandi', `Kata sandi ${target.name} direset oleh administrator`);
     }
+  };
+
+  const addUser = async (input: { name: string; email: string; role: User['role']; department?: string; sipNumber?: string; password: string }): Promise<AuthResult> => {
+    const email = input.email.trim().toLowerCase();
+    if (users.some((u) => u.email.toLowerCase() === email)) {
+      return { ok: false, error: 'Email sudah dipakai akun lain di klinik ini.' };
+    }
+    if (input.password.length < 8) {
+      return { ok: false, error: 'Kata sandi awal minimal 8 karakter.' };
+    }
+    const id = `u-${clinicId}-${Date.now().toString(36)}`;
+    const newUser: User = {
+      id,
+      name: input.name.trim(),
+      email,
+      role: input.role,
+      department: input.department?.trim() || undefined,
+      sipNumber: input.sipNumber?.trim() || undefined,
+      passwordHash: await hashPassword(id, input.password),
+      isActive: true
+    };
+    setUsers((prev) => [...prev, newUser]);
+    logAuditAs(currentUser, 'Tambah Pengguna', `Akun baru dibuat: ${newUser.name} (${newUser.email}, peran ${newUser.role})`);
+    return { ok: true };
   };
 
   // Patient Actions
@@ -774,6 +817,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         logout,
         changePassword,
         resetUserPassword,
+        addUser,
+        clinicId,
         users,
         clinicProfile,
         updateClinicProfile,

@@ -7,20 +7,22 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Palet utama dibaca dari variabel CSS agar TEMA bisa mengganti warna
+        // tanpa mengubah satu pun kelas di komponen (lihat src/index.css).
         clinical: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0284c7',
-          600: '#0369a1',
-          700: '#075985',
-          800: '#0c4a6e',
-          900: '#082f49',
-          navy: '#0f2744',
-          sidebar: '#0b1d33',
-          dark: '#071526',
+          50: 'rgb(var(--clinical-50) / <alpha-value>)',
+          100: 'rgb(var(--clinical-100) / <alpha-value>)',
+          200: 'rgb(var(--clinical-200) / <alpha-value>)',
+          300: 'rgb(var(--clinical-300) / <alpha-value>)',
+          400: 'rgb(var(--clinical-400) / <alpha-value>)',
+          500: 'rgb(var(--clinical-500) / <alpha-value>)',
+          600: 'rgb(var(--clinical-600) / <alpha-value>)',
+          700: 'rgb(var(--clinical-700) / <alpha-value>)',
+          800: 'rgb(var(--clinical-800) / <alpha-value>)',
+          900: 'rgb(var(--clinical-900) / <alpha-value>)',
+          navy: 'rgb(var(--clinical-navy) / <alpha-value>)',
+          sidebar: 'rgb(var(--clinical-sidebar) / <alpha-value>)',
+          dark: 'rgb(var(--clinical-dark) / <alpha-value>)',
         },
         teal: {
           medical: '#0d9488',

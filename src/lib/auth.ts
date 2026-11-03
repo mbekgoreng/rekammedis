@@ -36,6 +36,8 @@ export async function hashPassword(userId: string, password: string): Promise<st
 export interface SessionData {
   userId: string;
   email: string;
+  /** Klinik pemilik akun — sesi selalu terikat ke satu ruang kerja klinik. */
+  clinicId: string;
   loginAt: number;
   expiresAt: number;
   remember: boolean;
@@ -52,6 +54,8 @@ export function loadSession(): SessionData | null {
       clearSession();
       return null;
     }
+    // Sesi lama (sebelum multi-klinik) dianggap milik klinik bawaan
+    if (!parsed.clinicId) parsed.clinicId = 'tongfang';
     return parsed;
   } catch {
     return null;

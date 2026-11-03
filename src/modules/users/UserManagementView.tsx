@@ -15,7 +15,33 @@ import { Button } from '../../components/common/Button';
 import { UserRole } from '../../types';
 
 export const UserManagementView: React.FC = () => {
-  const { users, currentUser, resetUserPassword } = useStore();
+  const { users, currentUser, resetUserPassword, addUser } = useStore();
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'nurse' as UserRole, department: '', sipNumber: '', password: 'klinik2026' });
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addBusy, setAddBusy] = useState(false);
+  const [addSuccess, setAddSuccess] = useState(false);
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (addBusy) return;
+    setAddError(null);
+    if (!addForm.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addForm.email.trim())) {
+      setAddError('Nama dan email yang valid wajib diisi.');
+      return;
+    }
+    setAddBusy(true);
+    const res = await addUser(addForm);
+    setAddBusy(false);
+    if (!res.ok) {
+      setAddError(res.error || 'Gagal membuat akun.');
+      return;
+    }
+    setShowAdd(false);
+    setAddForm({ name: '', email: '', role: 'nurse', department: '', sipNumber: '', password: 'klinik2026' });
+    setAddSuccess(true);
+    window.setTimeout(() => setAddSuccess(false), 3500);
+  };
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [savedFor, setSavedFor] = useState<string | null>(null);
@@ -69,8 +95,68 @@ export const UserManagementView: React.FC = () => {
           <Badge variant="primary" size="md">
             Peran Anda Saat Ini: {currentUser.role.toUpperCase()}
           </Badge>
+          {isAdmin && (
+            <Button variant="primary" size="sm" onClick={() => setShowAdd((v) => !v)} leftIcon={<UserPlus className="w-4 h-4" />}>
+              Tambah Pengguna
+            </Button>
+          )}
         </div>
       </div>
+
+      {addSuccess && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs font-semibold">
+          Akun pengguna baru berhasil dibuat. Petugas bisa langsung masuk dengan email & kata sandi awalnya.
+        </div>
+      )}
+
+      {showAdd && isAdmin && (
+        <Card title="Tambah Pengguna Baru" subtitle="Akun dibuat di klinik ini saja. Kata sandi awal dibagikan ke petugas, lalu wajib diganti saat pertama masuk.">
+          <form onSubmit={handleAddUser} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Nama Lengkap *</label>
+              <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.name}
+                onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="cth. dr. Sari Wulandari" required />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Email (untuk masuk) *</label>
+              <input type="email" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.email}
+                onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} placeholder="nama@klinikanda.id" required />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Peran</label>
+              <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.role}
+                onChange={(e) => setAddForm({ ...addForm, role: e.target.value as UserRole })}>
+                <option value="admin">Administrator</option>
+                <option value="doctor">Dokter</option>
+                <option value="nurse">Perawat / Pendaftaran</option>
+                <option value="pharmacist">Farmasi</option>
+                <option value="lab">Laboratorium / Radiologi</option>
+                <option value="cashier">Kasir</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Unit / Bagian</label>
+              <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.department}
+                onChange={(e) => setAddForm({ ...addForm, department: e.target.value })} placeholder="cth. Poli Umum" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">No. SIP (khusus dokter)</label>
+              <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.sipNumber}
+                onChange={(e) => setAddForm({ ...addForm, sipNumber: e.target.value })} placeholder="cth. 502/SIP/2026" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Kata Sandi Awal *</label>
+              <input type="text" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.password}
+                onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} required />
+            </div>
+            {addError && <p className="sm:col-span-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{addError}</p>}
+            <div className="sm:col-span-2 flex gap-2">
+              <Button type="submit" variant="primary" size="sm" disabled={addBusy}>{addBusy ? 'Membuat…' : 'Buat Akun'}</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowAdd(false)}>Batal</Button>
+            </div>
+          </form>
+        </Card>
+      )}
 
       {/* Staff User Accounts Table */}
       <Card

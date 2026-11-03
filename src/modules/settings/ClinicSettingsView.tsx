@@ -12,13 +12,15 @@ import {
 import { useStore } from '../../context/StoreContext';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
+import { APP_THEMES, themeById } from '../../lib/themes';
+import { dataKey } from '../../lib/clinics';
 import { Input } from '../../components/common/Input';
 
 export const ClinicSettingsView: React.FC = () => {
   const {
     patients, medicalRecords, invoices, medicines, clinicProfile, updateClinicProfile,
     prescriptions, labOrders, radiologyOrders, certificates, queues, schedules,
-    auditLogs, notifications, users
+    auditLogs, notifications, users, clinicId
   } = useStore();
   const [clinicName, setClinicName] = useState(clinicProfile.clinicName);
   const [licenseNumber, setLicenseNumber] = useState(clinicProfile.licenseNumber);
@@ -32,7 +34,7 @@ export const ClinicSettingsView: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateClinicProfile({ clinicName, licenseNumber, faskesCode, address, phone, email, directorName });
+    updateClinicProfile({ clinicName, licenseNumber, faskesCode, address, phone, email, directorName, theme: clinicProfile.theme });
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
@@ -89,12 +91,12 @@ export const ClinicSettingsView: React.FC = () => {
         let restored = 0;
         Object.entries(keyMap).forEach(([field, key]) => {
           if (Array.isArray(store[field])) {
-            localStorage.setItem(`tongfang_v3_${key}`, JSON.stringify(store[field]));
+            localStorage.setItem(dataKey(clinicId, key), JSON.stringify(store[field]));
             restored += 1;
           }
         });
         if (parsed.facility) {
-          localStorage.setItem('tongfang_v3_clinic_profile', JSON.stringify(parsed.facility));
+          localStorage.setItem(dataKey(clinicId, 'clinic_profile'), JSON.stringify(parsed.facility));
         }
         if (restored === 0) {
           setRestoreMsg('Berkas tidak dikenali sebagai backup RekamMedis — tidak ada data yang diubah.');
@@ -127,6 +129,36 @@ export const ClinicSettingsView: React.FC = () => {
           <span>Pengaturan fasilitas kesehatan berhasil disimpan!</span>
         </div>
       )}
+
+      {/* Tema Warna — hanya mengganti warna, langsung diterapkan */}
+      <Card
+        title="Tema Warna Aplikasi"
+        subtitle="Tema hanya mengganti warna tampilan klinik Anda — tata letak dan fitur tetap sama. Pilihan tersimpan per klinik dan langsung diterapkan."
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {APP_THEMES.map((t) => {
+            const active = themeById(clinicProfile.theme).id === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => updateClinicProfile({ ...clinicProfile, theme: t.id })}
+                className={`text-left rounded-xl border-2 p-3 transition ${active ? 'border-clinical-600 bg-clinical-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                aria-pressed={active}
+              >
+                <span className="flex -space-x-1.5 mb-2">
+                  {t.swatches.map((c) => (
+                    <span key={c} className="w-6 h-6 rounded-full border-2 border-white shadow-sm" style={{ background: c }} />
+                  ))}
+                </span>
+                <span className="block text-xs font-extrabold text-slate-800">{t.name}</span>
+                <span className="block text-[10px] text-slate-500 leading-snug mt-0.5">{t.description}</span>
+                {active && <span className="inline-block mt-2 text-[10px] font-bold text-clinical-700 bg-clinical-100 rounded-full px-2 py-0.5">Aktif</span>}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
 
       {/* Main Form */}
       <form onSubmit={handleSave} className="space-y-6">

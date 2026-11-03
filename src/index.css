@@ -2,6 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Tema warna (HANYA warna yang berubah antar tema) =====
+   Nilai = triplet RGB untuk palet `clinical` di tailwind.config.js.
+   Tema aktif dipilih dari profil klinik (Pengaturan → Tema Warna). */
+:root,
+[data-theme='samudra'] {
+  --clinical-50: 240 249 255;
+  --clinical-100: 224 242 254;
+  --clinical-200: 186 230 253;
+  --clinical-300: 125 211 252;
+  --clinical-400: 56 189 248;
+  --clinical-500: 2 132 199;
+  --clinical-600: 3 105 161;
+  --clinical-700: 7 89 133;
+  --clinical-800: 12 74 110;
+  --clinical-900: 8 47 73;
+  --clinical-navy: 15 39 68;
+  --clinical-sidebar: 11 29 51;
+  --clinical-dark: 7 21 38;
+}
+
+[data-theme='tongfang'] {
+  --clinical-50: 242 251 245;
+  --clinical-100: 226 247 233;
+  --clinical-200: 198 239 207;
+  --clinical-300: 132 228 136;
+  --clinical-400: 107 206 144;
+  --clinical-500: 84 183 154;
+  --clinical-600: 64 157 161;
+  --clinical-700: 47 105 139;
+  --clinical-800: 33 58 117;
+  --clinical-900: 23 21 94;
+  --clinical-navy: 23 21 94;
+  --clinical-sidebar: 18 16 74;
+  --clinical-dark: 13 11 51;
+}
+
+[data-theme='zamrud'] {
+  --clinical-50: 236 253 245;
+  --clinical-100: 209 250 229;
+  --clinical-200: 167 243 208;
+  --clinical-300: 110 231 183;
+  --clinical-400: 52 211 153;
+  --clinical-500: 16 185 129;
+  --clinical-600: 5 150 105;
+  --clinical-700: 4 120 87;
+  --clinical-800: 6 95 70;
+  --clinical-900: 6 78 59;
+  --clinical-navy: 2 44 34;
+  --clinical-sidebar: 2 31 24;
+  --clinical-dark: 1 18 13;
+}
+
+[data-theme='terakota'] {
+  --clinical-50: 255 247 237;
+  --clinical-100: 255 237 213;
+  --clinical-200: 254 215 170;
+  --clinical-300: 253 186 116;
+  --clinical-400: 251 146 60;
+  --clinical-500: 249 115 22;
+  --clinical-600: 234 88 12;
+  --clinical-700: 194 65 12;
+  --clinical-800: 154 52 18;
+  --clinical-900: 124 45 18;
+  --clinical-navy: 67 20 7;
+  --clinical-sidebar: 51 16 4;
+  --clinical-dark: 34 10 3;
+}
+
+[data-theme='lavender'] {
+  --clinical-50: 245 243 255;
+  --clinical-100: 237 233 254;
+  --clinical-200: 221 214 254;
+  --clinical-300: 196 181 253;
+  --clinical-400: 167 139 250;
+  --clinical-500: 139 92 246;
+  --clinical-600: 124 58 237;
+  --clinical-700: 109 40 217;
+  --clinical-800: 91 33 182;
+  --clinical-900: 76 29 149;
+  --clinical-navy: 46 16 101;
+  --clinical-sidebar: 35 10 77;
+  --clinical-dark: 24 7 54;
+}
+
 @layer base {
   * {
     border-color: #e2e8f0;

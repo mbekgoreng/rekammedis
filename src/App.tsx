@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -24,9 +24,10 @@ import { ClinicSettingsView } from './modules/settings/ClinicSettingsView';
 import { LoginView } from './modules/auth/LoginView';
 import { ChangePasswordView } from './modules/auth/ChangePasswordView';
 import { canAccess, ROLE_LABELS } from './lib/permissions';
+import { loadSession, type SessionData } from './lib/auth';
 
 const MainLayout: React.FC = () => {
-  const { isAuthenticated, logout, currentUser } = useStore();
+  const { isAuthenticated, logout, currentUser, clinicProfile } = useStore();
   const [currentModule, setCurrentModule] = useState<string>('dashboard');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -42,8 +43,13 @@ const MainLayout: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Sesi tidak valid/kedaluwarsa di tengah pemakaian → keluar bersih
+  useEffect(() => {
+    if (!isAuthenticated) logout();
+  }, [isAuthenticated, logout]);
+
   if (!isAuthenticated) {
-    return <LoginView />;
+    return null;
   }
 
   return (
@@ -177,12 +183,12 @@ const MainLayout: React.FC = () => {
           {/* Clinical Minimalist Footer */}
           <footer className="py-3 px-6 border-t border-slate-200 bg-white text-slate-400 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 no-print">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-600">Klinik Tong Fang Ashiap</span>
+              <span className="font-bold text-slate-600">{clinicProfile.clinicName}</span>
               <span>&bull;</span>
               <span>Sistem Rekam Medis Terpadu</span>
             </div>
             <div className="flex items-center gap-3 text-[11px]">
-              <span>Interoperabilitas SatuSehat / Kemenkes RI</span>
+              <span>RekamMedis &bull; Rekam Medis Elektronik</span>
               <span>&bull;</span>
               <button
                 onClick={logout}
@@ -199,8 +205,18 @@ const MainLayout: React.FC = () => {
 };
 
 export default function App() {
+  const [session, setSession] = useState<SessionData | null>(() => loadSession());
+
+  if (!session) {
+    return <LoginView onAuthenticated={() => setSession(loadSession())} />;
+  }
+
   return (
-    <StoreProvider>
+    <StoreProvider
+      key={session.clinicId}
+      clinicId={session.clinicId}
+      onLogout={() => setSession(null)}
+    >
       <MainLayout />
     </StoreProvider>
   );
