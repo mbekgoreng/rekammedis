@@ -10,6 +10,11 @@ export interface ClinicProfile {
   directorName: string;
   /** ID tema warna aplikasi (lihat src/lib/themes.ts) — hanya mengubah warna. */
   theme?: string;
+  /** Logo klinik sendiri (data URL) untuk kop surat & identitas di aplikasi. */
+  logoDataUrl?: string;
+  npwp?: string;
+  facilityType?: string;
+  accreditation?: string;
 }
 
 export interface User {

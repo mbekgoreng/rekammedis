@@ -15,7 +15,7 @@ import { Button } from '../../components/common/Button';
 import { UserRole } from '../../types';
 
 export const UserManagementView: React.FC = () => {
-  const { users, currentUser, resetUserPassword, addUser } = useStore();
+  const { users, currentUser, resetUserPassword, addUser, settings } = useStore();
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', email: '', role: 'nurse' as UserRole, department: '', sipNumber: '', password: 'klinik2026' });
   const [addError, setAddError] = useState<string | null>(null);
@@ -48,7 +48,7 @@ export const UserManagementView: React.FC = () => {
   const isAdmin = currentUser.role === 'admin';
 
   const handleReset = async (userId: string) => {
-    if (newPassword.length < 8) return;
+    if (newPassword.length < settings.passwordMinLength) return;
     await resetUserPassword(userId, newPassword);
     setResettingId(null);
     setNewPassword('');
@@ -220,7 +220,7 @@ export const UserManagementView: React.FC = () => {
                             variant="primary"
                             size="sm"
                             onClick={() => handleReset(u.id)}
-                            disabled={newPassword.length < 8}
+                            disabled={newPassword.length < settings.passwordMinLength}
                           >
                             Simpan
                           </Button>

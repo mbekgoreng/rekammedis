@@ -40,6 +40,7 @@ import {
 } from '../lib/auth';
 import { dataKey, DEFAULT_CLINIC_ID } from '../lib/clinics';
 import { themeById } from '../lib/themes';
+import { type ClinicSettings, DEFAULT_CLINIC_SETTINGS, mergeSettings } from '../lib/settings';
 
 export interface AuthResult {
   ok: boolean;
@@ -57,6 +58,8 @@ interface StoreContextType {
   resetUserPassword: (userId: string, newPassword: string) => Promise<void>;
   addUser: (input: { name: string; email: string; role: User['role']; department?: string; sipNumber?: string; password: string }) => Promise<AuthResult>;
   clinicId: string;
+  settings: ClinicSettings;
+  updateSettings: (partial: Partial<ClinicSettings>) => void;
   users: User[];
   clinicProfile: ClinicProfile;
   updateClinicProfile: (profile: ClinicProfile) => void;
@@ -193,6 +196,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   const updateClinicProfile = (profile: ClinicProfile) => {
     setClinicProfile(profile);
     logAudit('Pengaturan', 'Perbarui Profil Klinik', `Profil fasilitas diperbarui: ${profile.clinicName}`);
+  };
+
+  const [settings, setSettings] = useState<ClinicSettings>(() =>
+    mergeSettings(loadLocal<Partial<ClinicSettings>>('settings', {}))
+  );
+
+  useEffect(() => {
+    localStorage.setItem(dataKey(clinicId, 'settings'), JSON.stringify(settings));
+  }, [settings, clinicId]);
+
+  const updateSettings = (partial: Partial<ClinicSettings>) => {
+    setSettings((prev) => ({ ...prev, ...partial }));
+    logAudit('Pengaturan', 'Perbarui Pengaturan', `Pengaturan klinik diperbarui: ${Object.keys(partial).join(', ')}`);
   };
   const [patients, setPatients] = useState<Patient[]>(() => loadLocal('patients', clinicId === DEFAULT_CLINIC_ID ? INITIAL_PATIENTS : []));
   const [medicines, setMedicines] = useState<Medicine[]>(() => loadLocal('medicines', clinicId === DEFAULT_CLINIC_ID ? INITIAL_MEDICINES : []));
@@ -380,8 +396,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     if (oldHash !== user.passwordHash) {
       return { ok: false, error: 'Kata sandi lama salah.' };
     }
-    if (newPassword.length < 8) {
-      return { ok: false, error: 'Kata sandi baru minimal 8 karakter.' };
+    if (newPassword.length < settings.passwordMinLength) {
+      return { ok: false, error: `Kata sandi baru minimal ${settings.passwordMinLength} karakter (kebijakan klinik).` };
     }
     const newHash = await hashPassword(user.id, newPassword);
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, passwordHash: newHash } : u)));
@@ -403,8 +419,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     if (users.some((u) => u.email.toLowerCase() === email)) {
       return { ok: false, error: 'Email sudah dipakai akun lain di klinik ini.' };
     }
-    if (input.password.length < 8) {
-      return { ok: false, error: 'Kata sandi awal minimal 8 karakter.' };
+    if (input.password.length < settings.passwordMinLength) {
+      return { ok: false, error: `Kata sandi awal minimal ${settings.passwordMinLength} karakter (kebijakan klinik).` };
     }
     const id = `u-${clinicId}-${Date.now().toString(36)}`;
     const newUser: User = {
@@ -424,8 +440,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
 
   // Patient Actions
   const addPatient = (newP: Omit<Patient, 'id' | 'mrNumber' | 'registeredAt'>): Patient => {
-    const count = patients.length + 1;
-    const mrNumber = `RM-2026-${String(count).padStart(4, '0')}`;
+    const prefix = settings.mrPrefix || 'RM';
+    const year = new Date().getFullYear();
+    const maxNum = patients.reduce((max, p) => {
+      const m = p.mrNumber.match(/(\d+)\s*$/);
+      return m ? Math.max(max, parseInt(m[1], 10)) : max;
+    }, 0);
+    const mrNumber = `${prefix}-${year}-${String(maxNum + 1).padStart(4, '0')}`;
     const today = new Date().toISOString().split('T')[0];
     const created: Patient = {
       ...newP,
@@ -746,7 +767,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     const created: Invoice = {
       ...inv,
       id: 'inv-' + Date.now(),
-      invoiceNumber: `INV-2026-${num}`,
+      invoiceNumber: `${settings.invoicePrefix || 'INV'}-${new Date().getFullYear()}-${num}`,
       date: today,
       dueDate: today,
       status: 'Unpaid',
@@ -819,6 +840,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
         resetUserPassword,
         addUser,
         clinicId,
+        settings,
+        updateSettings,
         users,
         clinicProfile,
         updateClinicProfile,

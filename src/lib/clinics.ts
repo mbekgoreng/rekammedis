@@ -15,6 +15,7 @@
 import type { ClinicProfile, User } from '../types';
 import { INITIAL_USERS } from '../data/mockData';
 import { hashPassword } from './auth';
+import { type ClinicSettings, DEFAULT_CLINIC_SETTINGS, mergeSettings } from './settings';
 
 export const DEFAULT_CLINIC_ID = 'tongfang';
 const REGISTRY_KEY = 'rekammedis_registry_v1';
@@ -119,6 +120,7 @@ export async function createClinic(input: RegisterClinicInput): Promise<{ clinic
   const write = (key: string, value: unknown) =>
     localStorage.setItem(dataKey(clinicId, key), JSON.stringify(value));
 
+  write('settings', DEFAULT_CLINIC_SETTINGS);
   write('users', [admin]);
   write('clinic_profile', profile);
   write('currentUser', admin);
@@ -150,4 +152,15 @@ export async function createClinic(input: RegisterClinicInput): Promise<{ clinic
   saveClinics(clinics);
 
   return { clinicId, admin };
+}
+
+/** Pengaturan satu klinik (dipakai layar masuk untuk kebijakan sesi & kunci). */
+export function readClinicSettings(clinicId: string): ClinicSettings {
+  try {
+    const raw = localStorage.getItem(dataKey(clinicId, 'settings'));
+    if (raw) return mergeSettings(JSON.parse(raw));
+  } catch {
+    // abaikan
+  }
+  return DEFAULT_CLINIC_SETTINGS;
 }

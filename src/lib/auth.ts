@@ -98,11 +98,11 @@ export function loadGuard(): LoginGuard {
   return { fails: 0, lockUntil: 0 };
 }
 
-export function recordFailedLogin(): LoginGuard {
+export function recordFailedLogin(maxFails: number = MAX_FAILS, lockMs: number = LOCK_MS): LoginGuard {
   const guard = loadGuard();
   guard.fails += 1;
-  if (guard.fails >= MAX_FAILS) {
-    guard.lockUntil = Date.now() + LOCK_MS;
+  if (guard.fails >= maxFails) {
+    guard.lockUntil = Date.now() + lockMs;
     guard.fails = 0;
   }
   try {

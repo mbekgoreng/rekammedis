@@ -105,17 +105,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Container */}
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-40 flex flex-col bg-[#0b1d33] text-slate-300 border-r border-slate-800 transition-all duration-300 select-none shadow-xl lg:shadow-none',
+          'fixed lg:static inset-y-0 left-0 z-40 flex flex-col bg-clinical-sidebar text-slate-300 border-r border-slate-800 transition-all duration-300 select-none shadow-xl lg:shadow-none',
           isCollapsed ? 'w-20' : 'w-64',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 bg-[#071526]">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 bg-clinical-dark">
           <div className={clsx('flex items-center gap-3 overflow-hidden', isCollapsed && 'justify-center w-full')}>
-            <div className="w-10 h-10 rounded-lg bg-clinical-600 flex items-center justify-center text-white shadow-md shrink-0">
-              <Activity className="w-6 h-6 text-cyan-200" />
-            </div>
+            {clinicProfile.logoDataUrl ? (
+              <img src={clinicProfile.logoDataUrl} alt="Logo klinik" className="w-10 h-10 rounded-lg object-contain bg-white shadow-md shrink-0" />
+            ) : (
+              <div className="w-10 h-10 rounded-lg bg-clinical-600 flex items-center justify-center text-white shadow-md shrink-0">
+                <Activity className="w-6 h-6 text-clinical-100" />
+              </div>
+            )}
             {!isCollapsed && (
               <div className="leading-tight">
                 <span className="font-extrabold text-white text-base tracking-tight block truncate max-w-[150px]" title={clinicProfile.clinicName}>
@@ -208,7 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                       {/* Tooltip for collapsed view */}
                       {isCollapsed && item.badge !== undefined && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-[#0b1d33]" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-clinical-sidebar" />
                       )}
                     </button>
                   );

@@ -6,7 +6,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 
 export const ChangePasswordView: React.FC = () => {
-  const { currentUser, changePassword } = useStore();
+  const { currentUser, changePassword, settings } = useStore();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -81,7 +81,7 @@ export const ChangePasswordView: React.FC = () => {
             autoComplete="current-password"
           />
           <Input
-            label="Kata Sandi Baru (minimal 8 karakter)"
+            label={`Kata Sandi Baru (minimal ${settings.passwordMinLength} karakter)`}
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}

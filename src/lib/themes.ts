@@ -46,7 +46,7 @@ export const APP_THEMES: AppTheme[] = [
   }
 ];
 
-export const DEFAULT_THEME_ID = 'samudra';
+export const DEFAULT_THEME_ID = 'tongfang';
 
 export function themeById(id: string | undefined): AppTheme {
   return APP_THEMES.find((t) => t.id === id) ?? APP_THEMES.find((t) => t.id === DEFAULT_THEME_ID)!;

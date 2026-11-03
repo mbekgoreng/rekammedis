@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   hashPassword, saveSession, loadGuard, recordFailedLogin, resetGuard, DEFAULT_PASSWORD
 } from '../../lib/auth';
-import { findAccount, emailTaken, createClinic } from '../../lib/clinics';
+import { findAccount, emailTaken, createClinic, readClinicSettings } from '../../lib/clinics';
 
 // Layar masuk & pendaftaran RekamMedis — satu konsep visual dengan landing page:
 // panel navy #17155E → #213A75, aksen hijau #84E488, logo resmi, Plus Jakarta Sans.
@@ -38,13 +38,14 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
   }, []);
 
   const startSession = (clinicId: string, userId: string, userEmail: string, rememberMe: boolean) => {
+    const policy = readClinicSettings(clinicId);
     const now = Date.now();
     saveSession({
       userId,
       email: userEmail,
       clinicId,
       loginAt: now,
-      expiresAt: now + (rememberMe ? 7 * 24 * 60 * 60 * 1000 : 12 * 60 * 60 * 1000),
+      expiresAt: now + (rememberMe ? policy.rememberDays * 24 * 60 * 60 * 1000 : policy.sessionHours * 60 * 60 * 1000),
       remember: rememberMe
     });
     resetGuard();
@@ -58,17 +59,21 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
     setBusy(true);
     try {
       const found = findAccount(email);
-      if (!found || found.user.isActive === false || !found.user.passwordHash) {
-        const guard = recordFailedLogin();
+      const policy = found ? readClinicSettings(found.clinicId) : null;
+      const fail = () => {
+        const guard = policy
+          ? recordFailedLogin(policy.maxLoginAttempts, policy.lockMinutes * 60 * 1000)
+          : recordFailedLogin();
         if (guard.lockUntil > Date.now()) setLockSeconds(Math.ceil((guard.lockUntil - Date.now()) / 1000));
         setError('Email atau kata sandi salah.');
+      };
+      if (!found || found.user.isActive === false || !found.user.passwordHash) {
+        fail();
         return;
       }
       const candidate = await hashPassword(found.user.id, password);
       if (candidate !== found.user.passwordHash) {
-        const guard = recordFailedLogin();
-        if (guard.lockUntil > Date.now()) setLockSeconds(Math.ceil((guard.lockUntil - Date.now()) / 1000));
-        setError('Email atau kata sandi salah.');
+        fail();
         return;
       }
       startSession(found.clinicId, found.user.id, found.user.email, remember);

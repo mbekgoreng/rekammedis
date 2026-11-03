@@ -35,7 +35,8 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
     queues,
     addQueue,
     addPatient,
-    currentUser
+    currentUser,
+    settings
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,11 +66,23 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
   // Available departments — hanya poli yang benar-benar memiliki dokter praktik.
   // (Poli Bedah & Poli Gigi tidak ditawarkan sampai dokternya terdaftar di sistem,
   // agar karcis antrean tidak menampilkan dokter yang salah.)
-  const departments = [
+  const allDepartments = [
     { value: 'Poli Penyakit Dalam', label: 'Poli Penyakit Dalam (dr. Yusuf Tjakep Kalee, Sp.PD)' },
     { value: 'Poli Gizi & Spesialis', label: 'Poli Gizi & Spesialis (dr. Avivien Slebew, Sp.G)' },
     { value: 'Poli Umum', label: 'Poli Umum (Prabowo Jokowow, S teh dua gelas)' }
   ];
+  // Daftar poli yang aktif diatur di Pengaturan → Operasional.
+  // Hanya poli yang memiliki dokter terdaftar yang bisa dipilih; pengaturan
+  // menyaring poli mana yang sedang dibuka klinik.
+  const departments = settings.poliList.length > 0
+    ? allDepartments.filter((d) =>
+        settings.poliList.some((p) => {
+          const token = p.replace(/^Poli\s+/i, '').split(' ')[0];
+          return token.length > 0 && d.value.toLowerCase().includes(token.toLowerCase());
+        })
+      )
+    : allDepartments;
+  const visibleDepartments = departments.length > 0 ? departments : allDepartments;
 
   // Select patient
   const handleSelectPatient = (p: Patient) => {
@@ -395,7 +408,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                     label="Pilih Poliklinik"
                     value={selectedDepartment}
                     onChange={(e) => setSelectedDepartment(e.target.value)}
-                    options={departments}
+                    options={visibleDepartments}
                     requiredIndicator
                   />
 
@@ -445,6 +458,11 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                   />
                 </div>
               </Card>
+
+              {/* Persetujuan pemrosesan data (teks diatur di Pengaturan → Dokumen) */}
+              <p className="text-[11px] text-slate-500 leading-relaxed bg-clinical-50 border border-clinical-100 rounded-xl px-4 py-3">
+                {settings.consentText}
+              </p>
 
               {/* Confirmation & Submit */}
               <div className="p-4 bg-slate-100 rounded-xl flex items-center justify-between border border-slate-200">

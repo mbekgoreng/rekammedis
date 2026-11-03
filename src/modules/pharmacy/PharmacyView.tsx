@@ -21,7 +21,7 @@ import { Select } from '../../components/common/Select';
 import { Medicine } from '../../types';
 
 export const PharmacyView: React.FC = () => {
-  const { medicines, addMedicine, updateMedicineStock, prescriptions, updatePrescriptionStatus } = useStore();
+  const { medicines, addMedicine, updateMedicineStock, prescriptions, updatePrescriptionStatus, settings } = useStore();
   const activePrescriptions = prescriptions.filter(
     (p) => p.status === 'Menunggu Farmasi' || p.status === 'Diproses' || p.status === 'Siap Diambil'
   );
@@ -44,7 +44,7 @@ export const PharmacyView: React.FC = () => {
     form: 'Tablet' as Medicine['form'],
     strength: '500 mg',
     stock: 100,
-    minimumStock: 50,
+    minimumStock: settings.defaultMinimumStock,
     unit: 'Tablet',
     price: 2500,
     batchNumber: 'BATCH-2026',
@@ -58,12 +58,12 @@ export const PharmacyView: React.FC = () => {
   const lowStockItems = medicines.filter((m) => m.stock > 0 && m.stock <= m.minimumStock);
   const outOfStockItems = medicines.filter((m) => m.stock === 0);
   
-  // Expiry check (< 180 days)
+  // Expiry check — ambang hari diatur di Pengaturan → Farmasi
   const today = new Date();
   const nearExpiryItems = medicines.filter((m) => {
     const exp = new Date(m.expiryDate);
     const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays <= 180;
+    return diffDays <= settings.expiryWarningDays;
   });
 
   // Filtered medicines

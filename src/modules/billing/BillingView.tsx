@@ -18,7 +18,7 @@ import { Input } from '../../components/common/Input';
 import { Invoice } from '../../types';
 
 export const BillingView: React.FC = () => {
-  const { invoices, payInvoice, currentUser, medicalRecords, prescriptions, createInvoice } = useStore();
+  const { invoices, payInvoice, currentUser, medicalRecords, prescriptions, createInvoice, settings } = useStore();
   const [search, setSearch] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(invoices[0] || null);
 
@@ -69,9 +69,21 @@ export const BillingView: React.FC = () => {
       description: 'Biaya Administrasi & Rekam Medis',
       category: 'Administrasi',
       quantity: 1,
-      unitPrice: 25000,
-      subtotal: 25000
+      unitPrice: settings.adminFee,
+      subtotal: settings.adminFee
     });
+    if (settings.taxPercent > 0) {
+      const subtotal = items.reduce((sum, it) => sum + it.subtotal, 0);
+      const tax = Math.round((subtotal * settings.taxPercent) / 100);
+      items.push({
+        id: 'bi-tax',
+        description: `PPN (${settings.taxPercent}%)`,
+        category: 'Administrasi',
+        quantity: 1,
+        unitPrice: tax,
+        subtotal: tax
+      });
+    }
     return items;
   };
 
@@ -423,12 +435,18 @@ export const BillingView: React.FC = () => {
                 onChange={(e) => setPayMethod(e.target.value as Invoice['paymentMethod'])}
                 className="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 text-slate-900"
               >
-                <option value="Tunai">Tunai / Cash</option>
-                <option value="QRIS">QRIS Statis/Dinamis</option>
-                <option value="Transfer Bank">Transfer Bank Mandiri/BCA</option>
-                <option value="Kartu Debit">Kartu Debit (EDC)</option>
-                <option value="Kartu Kredit">Kartu Kredit (EDC)</option>
-                <option value="Klaim BPJS">Klaim BPJS Kesehatan</option>
+                {[
+                  { setting: 'Tunai', value: 'Tunai', label: 'Tunai / Cash' },
+                  { setting: 'QRIS', value: 'QRIS', label: 'QRIS Statis/Dinamis' },
+                  { setting: 'Transfer', value: 'Transfer Bank', label: 'Transfer Bank' },
+                  { setting: 'Debit', value: 'Kartu Debit', label: 'Kartu Debit (EDC)' },
+                  { setting: 'Kredit', value: 'Kartu Kredit', label: 'Kartu Kredit (EDC)' },
+                  { setting: 'BPJS', value: 'Klaim BPJS', label: 'Klaim BPJS Kesehatan' }
+                ]
+                  .filter((o) => settings.paymentMethods.includes(o.setting))
+                  .map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
               </select>
             </div>
           </form>
