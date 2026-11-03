@@ -76,7 +76,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       value: totalPatientsToday,
       subtitle: 'Antrian terdaftar hari ini',
       icon: Users,
-      color: 'bg-blue-50 text-blue-700 border-blue-200'
+      color: 'bg-clinical-50 text-clinical-700 border-clinical-200'
     },
     {
       title: 'Pasien Baru',
@@ -97,21 +97,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       value: completedPatients,
       subtitle: 'Pemeriksaan tuntas',
       icon: CheckCircle2,
-      color: 'bg-teal-50 text-teal-700 border-teal-200'
+      color: 'bg-clinical-50 text-clinical-700 border-clinical-200'
     },
     {
       title: 'Pendapatan Lunas',
       value: `Rp ${todayRevenue.toLocaleString('id-ID')}`,
       subtitle: 'Total seluruh faktur berstatus Paid',
       icon: DollarSign,
-      color: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+      color: 'bg-clinical-50 text-clinical-700 border-clinical-200'
     },
     {
       title: 'Dokter Bertugas',
       value: schedules.filter((s) => s.isActive).length,
       subtitle: 'Sesi aktif di poliklinik',
       icon: Calendar,
-      color: 'bg-purple-50 text-purple-700 border-purple-200'
+      color: 'bg-clinical-50 text-clinical-700 border-clinical-200'
     }
   ];
 
@@ -343,11 +343,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </Card>
 
           {/* Quick Notice / Alert */}
-          <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/50 flex gap-3 text-xs text-blue-900">
-            <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div className="p-4 rounded-xl border border-clinical-200 bg-clinical-50/50 flex gap-3 text-xs text-clinical-900">
+            <AlertCircle className="w-5 h-5 text-clinical-600 shrink-0 mt-0.5" />
             <div>
               <span className="font-bold block">Standar Pelayanan EMR Klinik Tong Fang Ashiap</span>
-              <p className="mt-0.5 text-blue-800 leading-relaxed">
+              <p className="mt-0.5 text-clinical-800 leading-relaxed">
                 Pastikan identifikasi pasien menggunakan 2 parameter (Nama & Tanggal Lahir) sebelum memulai anamnesis atau pemeriksaan fisik.
               </p>
             </div>
@@ -388,7 +388,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       title={`BPJS: ${bar.bpjs}`}
                     />
                     <div
-                      className="bg-teal-500 w-full"
+                      className="bg-clinical-500 w-full"
                       style={{ height: `${bar.count ? (bar.umum / bar.count) * 100 : 0}%` }}
                       title={`Umum/Swasta: ${bar.umum}`}
                     />
@@ -406,7 +406,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span>Pasien BPJS Kesehatan</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-xs bg-teal-500" />
+                <span className="w-3 h-3 rounded-xs bg-clinical-500" />
                 <span>Pasien Umum / Asuransi Swasta</span>
               </div>
             </div>
