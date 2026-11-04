@@ -36,7 +36,10 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
-  const [selectedRx, setSelectedRx] = useState<Prescription | null>(prescriptions[0] || null);
+  // Panel detail selalu diturunkan segar dari store berdasarkan ID terpilih,
+  // agar perubahan status langsung tercermin (bukan snapshot basi).
+  const [selectedId, setSelectedId] = useState<string | null>(prescriptions[0]?.id || null);
+  const selectedRx: Prescription | null = prescriptions.find((rx) => rx.id === selectedId) || null;
 
   // Filter
   const filtered = prescriptions.filter((rx) => {
@@ -100,6 +103,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                 <option value="Diproses">Diproses</option>
                 <option value="Siap Diambil">Siap Diambil</option>
                 <option value="Selesai">Selesai</option>
+                <option value="Dibatalkan">Dibatalkan</option>
               </select>
             </div>
           </Card>
@@ -140,7 +144,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                       return (
                         <tr
                           key={rx.id}
-                          onClick={() => setSelectedRx(rx)}
+                          onClick={() => setSelectedId(rx.id)}
                           className={`cursor-pointer transition-colors ${
                             isSelected ? 'bg-clinical-50/70 font-medium' : 'hover:bg-slate-50'
                           }`}
@@ -174,7 +178,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedRx(rx);
+                                setSelectedId(rx.id);
                               }}
                             >
                               Lihat
@@ -292,8 +296,22 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                       Siap Diambil Pasien
                     </Button>
                   )}
+                  {(selectedRx.status === 'Menunggu Farmasi' || selectedRx.status === 'Diproses') && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => updatePrescriptionStatus(selectedRx.id, 'Dibatalkan')}
+                    >
+                      Batalkan Resep
+                    </Button>
+                  )}
                 </div>
               </div>
+              {(selectedRx.status === 'Menunggu Farmasi' || selectedRx.status === 'Diproses') && (
+                <p className="mt-2 text-[10px] text-slate-400 text-right">
+                  Pembatalan tidak mengubah stok obat — stok hanya berkurang saat resep Selesai diserahkan.
+                </p>
+              )}
             </Card>
           ) : (
             <Card>

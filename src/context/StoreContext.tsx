@@ -55,6 +55,30 @@ const QUEUE_TRANSITIONS: Record<QueueItem['status'], QueueItem['status'][]> = {
   'Dibatalkan': []
 };
 
+// Transisi status radiologi yang sah (ditegakkan di store):
+// Permintaan → Dijadwalkan → Selesai Scan. 'Hasil Terbaca' BUKAN transisi di
+// sini — hanya bisa dicapai lewat ekspertise (updateRadiologyFinding) dan
+// hanya dari 'Selesai Scan', agar tahapan tidak bisa dilompati.
+const RADIOLOGY_TRANSITIONS: Record<RadiologyOrder['status'], RadiologyOrder['status'][]> = {
+  'Permintaan': ['Dijadwalkan'],
+  'Dijadwalkan': ['Selesai Scan'],
+  'Selesai Scan': [],
+  'Hasil Terbaca': []
+};
+
+// Transisi status resep yang sah (ditegakkan di store): alur farmasi berurutan
+// Menunggu Farmasi → Diproses → Siap Diambil → Selesai. Pembatalan hanya dari
+// Menunggu Farmasi/Diproses; Selesai dan Dibatalkan adalah status akhir.
+// Stok obat hanya berkurang saat transisi ke Selesai (bukan saat dibatalkan).
+const PRESCRIPTION_TRANSITIONS: Record<Prescription['status'], Prescription['status'][]> = {
+  'Draft': ['Menunggu Farmasi'],
+  'Menunggu Farmasi': ['Diproses', 'Dibatalkan'],
+  'Diproses': ['Siap Diambil', 'Dibatalkan'],
+  'Siap Diambil': ['Selesai'],
+  'Selesai': [],
+  'Dibatalkan': []
+};
+
 // Format waktu lokal perangkat 'YYYY-MM-DD HH:mm:ss' (bukan UTC mentah) —
 // AuditTrailView menambahkan label "WIB" saat menampilkan nilai ini.
 const formatLocalTimestamp = (d: Date): string => {
@@ -126,6 +150,7 @@ interface StoreContextType {
   updateLabResult: (orderId: string, testIndex: number, resultValue: string, isAbnormal: boolean) => void;
   validateLabOrder: (orderId: string, validatorName: string) => void;
   createRadiologyOrder: (order: Omit<RadiologyOrder, 'id' | 'orderNumber' | 'orderDate' | 'status'>) => RadiologyOrder;
+  updateRadiologyStatus: (orderId: string, status: RadiologyOrder['status']) => void;
   updateRadiologyFinding: (orderId: string, findings: string, impression: string, radiologistName: string) => void;
 
   // Billing Actions
@@ -734,9 +759,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
 
   const updatePrescriptionStatus = (id: string, status: Prescription['status']) => {
     const target = prescriptions.find(rx => rx.id === id);
+    if (!target) return;
+    if (target.status === status) return;
+    // Tolak transisi yang tidak sah (mis. membatalkan resep yang sudah
+    // Selesai, atau melompat dari Menunggu Farmasi langsung ke Selesai) —
+    // status tidak berubah dan stok tidak tersentuh.
+    if (!PRESCRIPTION_TRANSITIONS[target.status].includes(status)) return;
     setPrescriptions(prev => prev.map(rx => (rx.id === id ? { ...rx, status } : rx)));
-    // Dispensing final: kurangi stok obat tepat sekali saat resep mencapai Selesai
-    if (target && status === 'Selesai' && target.status !== 'Selesai') {
+    // Dispensing final: kurangi stok obat tepat sekali saat resep mencapai
+    // Selesai. Pembatalan TIDAK mengurangi stok (obat belum diserahkan).
+    if (status === 'Selesai') {
       setMedicines(prev => prev.map(med => {
         const item = target.items.find(i => i.medicineId === med.id);
         if (!item) return med;
@@ -744,9 +776,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
       }));
       logAudit('Farmasi', 'Penyerahan Obat (Dispensing)', `Resep ${target.patientName} diserahkan; stok ${target.items.length} item obat dikurangi`);
     }
-    if (target) {
-      logAudit('Resep', 'Perubahan Status Resep', `Status resep ${target.id} (${target.patientName}) diubah ke ${status}`);
-    }
+    logAudit('Resep', 'Perubahan Status Resep', `Status resep ${target.id} (${target.patientName}) diubah ke ${status}`);
   };
 
   // Pharmacy Actions
@@ -833,7 +863,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     return created;
   };
 
+  const updateRadiologyStatus = (orderId: string, status: RadiologyOrder['status']) => {
+    const target = radiologyOrders.find(r => r.id === orderId);
+    if (!target) return;
+    if (target.status === status) return;
+    // Tolak lompatan tahap (mis. Permintaan langsung ke Selesai Scan, atau
+    // ke Hasil Terbaca tanpa ekspertise) — status tidak berubah.
+    if (!RADIOLOGY_TRANSITIONS[target.status].includes(status)) return;
+    setRadiologyOrders(prev => prev.map(order => (order.id === orderId ? { ...order, status } : order)));
+    logAudit('Radiologi', 'Ubah Status Radiologi', `Order ${target.orderNumber} (${target.patientName}) diubah ke status ${status}`);
+  };
+
   const updateRadiologyFinding = (orderId: string, findings: string, impression: string, radiologistName: string) => {
+    const target = radiologyOrders.find(r => r.id === orderId);
+    if (!target) return;
+    // Ekspertise hanya sah dari 'Selesai Scan': order yang masih Permintaan/
+    // Dijadwalkan tidak bisa melompat langsung menjadi Hasil Terbaca.
+    if (target.status !== 'Selesai Scan') return;
     const today = new Date().toISOString().split('T')[0];
     setRadiologyOrders(prev => prev.map(order => (order.id === orderId ? {
       ...order,
@@ -843,10 +889,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
       readingDate: today,
       status: 'Hasil Terbaca'
     } : order)));
-    const target = radiologyOrders.find(r => r.id === orderId);
-    if (target) {
-      logAudit('Radiologi', 'Ekspertise Radiologi Selesai', `Hasil ${target.examinationType} (${target.patientName}) dibaca oleh ${radiologistName}`);
-    }
+    logAudit('Radiologi', 'Ekspertise Radiologi Selesai', `Hasil ${target.examinationType} (${target.patientName}) dibaca oleh ${radiologistName}`);
   };
 
   // Billing Actions
@@ -998,6 +1041,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
         updateLabResult,
         validateLabOrder,
         createRadiologyOrder,
+        updateRadiologyStatus,
         updateRadiologyFinding,
         createInvoice,
         payInvoice,

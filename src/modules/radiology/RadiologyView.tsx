@@ -13,7 +13,6 @@ import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
-import { RadiologyOrder } from '../../types';
 
 export const RadiologyView: React.FC = () => {
   const {
@@ -21,10 +20,14 @@ export const RadiologyView: React.FC = () => {
     patients,
     currentUser,
     createRadiologyOrder,
+    updateRadiologyStatus,
     updateRadiologyFinding
   } = useStore();
 
-  const [selectedOrder, setSelectedOrder] = useState<RadiologyOrder | null>(radiologyOrders[0] || null);
+  // Panel detail selalu diturunkan segar dari store berdasarkan ID terpilih,
+  // agar perubahan status/ekspertise langsung tercermin (bukan snapshot basi).
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(radiologyOrders[0]?.id || null);
+  const selectedOrder = radiologyOrders.find((o) => o.id === selectedOrderId) || null;
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(patients[0]?.id || '');
   const [examType, setExamType] = useState('Foto Rontgen Thorax PA');
@@ -62,7 +65,7 @@ export const RadiologyView: React.FC = () => {
       clinicalIndication: indication
     });
 
-    setSelectedOrder(created);
+    setSelectedOrderId(created.id);
     setIsNewOrderModalOpen(false);
   };
 
@@ -119,7 +122,7 @@ export const RadiologyView: React.FC = () => {
                       <tr
                         key={order.id}
                         onClick={() => {
-                          setSelectedOrder(order);
+                          setSelectedOrderId(order.id);
                           setFindingsInput(order.findings || '');
                           setImpressionInput(order.impression || '');
                         }}
@@ -188,6 +191,61 @@ export const RadiologyView: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Tahapan Order: Permintaan → Dijadwalkan → Selesai Scan → Hasil Terbaca */}
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-700">Tahapan Order</span>
+                    <span className="text-[10px] text-slate-500">Status saat ini: <strong className="text-slate-800">{selectedOrder.status}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {(['Permintaan', 'Dijadwalkan', 'Selesai Scan', 'Hasil Terbaca'] as const).map((step, idx, arr) => {
+                      const currentIdx = arr.indexOf(selectedOrder.status);
+                      const state = idx < currentIdx ? 'done' : idx === currentIdx ? 'current' : 'todo';
+                      return (
+                        <React.Fragment key={step}>
+                          {idx > 0 && <span className="text-slate-300 font-bold">→</span>}
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              state === 'current'
+                                ? 'bg-clinical-600 text-white'
+                                : state === 'done'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-200 text-slate-400'
+                            }`}
+                          >
+                            {step}
+                          </span>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                  {selectedOrder.status === 'Permintaan' && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => updateRadiologyStatus(selectedOrder.id, 'Dijadwalkan')}
+                    >
+                      Jadwalkan Pemeriksaan
+                    </Button>
+                  )}
+                  {selectedOrder.status === 'Dijadwalkan' && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => updateRadiologyStatus(selectedOrder.id, 'Selesai Scan')}
+                    >
+                      Tandai Selesai Scan
+                    </Button>
+                  )}
+                  {selectedOrder.status === 'Selesai Scan' && (
+                    <p className="text-[10px] text-slate-500">
+                      Scan selesai — isi ekspertise radiolog di bawah untuk mencapai tahap Hasil Terbaca.
+                    </p>
+                  )}
+                </div>
+
                 {/* Film Viewer Placeholder */}
                 <div className="h-40 bg-slate-900 rounded-lg flex flex-col items-center justify-center text-slate-400 text-xs border border-slate-800">
                   <ImageIcon className="w-8 h-8 text-slate-600 mb-1" />
@@ -195,7 +253,7 @@ export const RadiologyView: React.FC = () => {
                   <span className="text-[10px] text-slate-500">Resolusi Matriks 2048 x 2048 &bull; Window: Lung/Mediastinum</span>
                 </div>
 
-                {/* Form or Display */}
+                {/* Form or Display — form ekspertise hanya terbuka di tahap Selesai Scan */}
                 {selectedOrder.status === 'Hasil Terbaca' ? (
                   <div className="space-y-3 p-3 bg-white rounded-lg border border-slate-200">
                     <div>
@@ -214,7 +272,7 @@ export const RadiologyView: React.FC = () => {
                       Dokter Spesialis Radiologi: <strong>{selectedOrder.radiologistName}</strong>
                     </div>
                   </div>
-                ) : (
+                ) : selectedOrder.status === 'Selesai Scan' ? (
                   <form onSubmit={handleSaveExpertise} className="space-y-3">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -257,6 +315,11 @@ export const RadiologyView: React.FC = () => {
                       </p>
                     )}
                   </form>
+                ) : (
+                  <p className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-700">
+                    Ekspertise radiolog baru dapat diisi setelah pemeriksaan selesai di-scan
+                    (tahap <strong>Selesai Scan</strong>). Majukan tahapan order lewat tombol di atas.
+                  </p>
                 )}
               </div>
             </Card>
