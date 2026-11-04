@@ -18,7 +18,7 @@ import { Input } from '../../components/common/Input';
 import { Invoice } from '../../types';
 
 export const BillingView: React.FC = () => {
-  const { invoices, payInvoice, currentUser, medicalRecords, prescriptions, createInvoice, settings } = useStore();
+  const { invoices, payInvoice, currentUser, medicalRecords, prescriptions, createInvoice, settings, clinicProfile } = useStore();
   const [search, setSearch] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(invoices[0] || null);
 
@@ -301,8 +301,11 @@ export const BillingView: React.FC = () => {
                 {/* Header */}
                 <div className="text-center border-b border-slate-300 pb-3">
                   <h3 className="font-extrabold text-sm text-slate-900 uppercase">
-                    KLINIK TONG FANG ASHIAP
+                    {clinicProfile.clinicName || 'KLINIK TONG FANG ASHIAP'}
                   </h3>
+                  <p className="text-[10px] text-slate-500">
+                    {clinicProfile.address || 'Jl. Jenderal Sudirman Kav. 45, Kebayoran Baru, Jakarta Selatan'} &bull; Telp: {clinicProfile.phone || '(021) 555-0192'}
+                  </p>
                   <p className="text-[10px] text-slate-500">
                     KUITANSI BUKTI PEMBAYARAN RAWAT JALAN
                   </p>
@@ -358,10 +361,28 @@ export const BillingView: React.FC = () => {
                     <span className="text-slate-500">Diskon:</span>
                     <span className="font-mono">- Rp {selectedInvoice.discount.toLocaleString('id-ID')}</span>
                   </div>
+                  {selectedInvoice.tax > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Pajak:</span>
+                      <span className="font-mono">Rp {selectedInvoice.tax.toLocaleString('id-ID')}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-sm text-slate-900 pt-1 border-t border-slate-200">
                     <span>Total Pembayaran:</span>
                     <span className="font-mono text-clinical-700">
                       Rp {selectedInvoice.total.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Jumlah Dibayar:</span>
+                    <span className="font-mono text-emerald-700">
+                      Rp {selectedInvoice.paidAmount.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Sisa Bayar:</span>
+                    <span className="font-mono">
+                      Rp {(selectedInvoice.total - selectedInvoice.paidAmount).toLocaleString('id-ID')}
                     </span>
                   </div>
                 </div>

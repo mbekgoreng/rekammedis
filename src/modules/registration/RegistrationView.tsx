@@ -21,11 +21,14 @@ import { PatientFormModal } from '../patients/PatientFormModal';
 import { Patient, QueueItem } from '../../types';
 
 interface RegistrationViewProps {
+  /** Pasien serah-terima dari daftar/detail pasien (pola sama seperti ExaminationView). */
+  selectedPatientId?: string;
   onNavigate: (module: string) => void;
   onSelectPatient: (patientId: string) => void;
 }
 
 export const RegistrationView: React.FC<RegistrationViewProps> = ({
+  selectedPatientId,
   onNavigate,
   onSelectPatient
 }) => {
@@ -39,13 +42,23 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
     settings
   } = useStore();
 
+  // Handoff: bila dibuka dari daftar/detail pasien, pasien itu langsung terpilih.
+  // Dibuka langsung dari menu → selectedPatientId kosong → perilaku normal (cari manual).
+  const handoffPatient = selectedPatientId
+    ? patients.find((p) => p.id === selectedPatientId) ?? null
+    : null;
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(handoffPatient);
   const [selectedDepartment, setSelectedDepartment] = useState('Poli Umum');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [visitType, setVisitType] = useState<'Baru' | 'Kontrol Rutin' | 'Rujukan' | 'Darurat'>('Kontrol Rutin');
-  const [insuranceType, setInsuranceType] = useState('BPJS Kesehatan');
-  const [priority, setPriority] = useState<'Biasa' | 'Lansia/Disabilitas' | 'Darurat / Cito'>('Biasa');
+  const [insuranceType, setInsuranceType] = useState<Patient['insuranceType']>(
+    handoffPatient?.insuranceType ?? 'BPJS Kesehatan'
+  );
+  const [priority, setPriority] = useState<'Biasa' | 'Lansia/Disabilitas' | 'Darurat / Cito'>(
+    handoffPatient && handoffPatient.age >= 60 ? 'Lansia/Disabilitas' : 'Biasa'
+  );
   const [complaint, setComplaint] = useState('');
 
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
@@ -428,7 +441,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                   <Select
                     label="Penjamin Pelayanan"
                     value={insuranceType}
-                    onChange={(e) => setInsuranceType(e.target.value)}
+                    onChange={(e) => setInsuranceType(e.target.value as Patient['insuranceType'])}
                     options={[
                       { value: 'BPJS Kesehatan', label: 'BPJS Kesehatan' },
                       { value: 'Asuransi Swasta', label: 'Asuransi Swasta' },

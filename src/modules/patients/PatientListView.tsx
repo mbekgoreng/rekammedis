@@ -35,6 +35,7 @@ export const PatientListView: React.FC<PatientListViewProps> = ({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | undefined>(undefined);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   // Filter & Search
   const filtered = patients.filter((p) => {
@@ -63,6 +64,18 @@ export const PatientListView: React.FC<PatientListViewProps> = ({
   });
 
   const handleSavePatient = (data: Omit<Patient, 'id' | 'mrNumber' | 'registeredAt'>) => {
+    setSaveNotice(null);
+    // Cegah duplikat: NIK yang sama tidak boleh dimiliki dua pasien berbeda
+    // (pasien yang sedang diedit dikecualikan dari pemeriksaan).
+    const duplicate = patients.find((p) => p.nik === data.nik && p.id !== editingPatient?.id);
+    if (duplicate) {
+      setSaveNotice(
+        `NIK ${data.nik} sudah terdaftar atas nama ${duplicate.name} (${duplicate.mrNumber}). ` +
+          'Penyimpanan ditolak — gunakan data pasien yang sudah ada atau periksa kembali NIK yang diinput.'
+      );
+      setEditingPatient(undefined);
+      return;
+    }
     if (editingPatient) {
       updatePatient(editingPatient.id, data);
     } else {
@@ -71,6 +84,15 @@ export const PatientListView: React.FC<PatientListViewProps> = ({
     }
     setEditingPatient(undefined);
   };
+
+  // Variant badge mengikuti status pasien (tidak lagi selalu success)
+  const statusVariant = (status: Patient['status']) =>
+    ({
+      Aktif: 'success',
+      Nonaktif: 'neutral',
+      'Rawat Inap': 'warning',
+      Selesai: 'info'
+    })[status] as 'success' | 'neutral' | 'warning' | 'info';
 
   return (
     <div className="space-y-5">
@@ -96,6 +118,13 @@ export const PatientListView: React.FC<PatientListViewProps> = ({
           Tambah Pasien Baru
         </Button>
       </div>
+
+      {saveNotice && (
+        <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-800 text-xs font-semibold flex items-start gap-2" role="alert">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span className="leading-relaxed">{saveNotice}</span>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <Card noPadding className="p-4 bg-white border border-slate-200">
@@ -259,7 +288,7 @@ export const PatientListView: React.FC<PatientListViewProps> = ({
                       {patient.phone}
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant="success" size="sm" dot>
+                      <Badge variant={statusVariant(patient.status)} size="sm" dot>
                         {patient.status}
                       </Badge>
                     </td>

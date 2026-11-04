@@ -17,7 +17,7 @@ import { UserRole } from '../../types';
 export const UserManagementView: React.FC = () => {
   const { users, currentUser, resetUserPassword, addUser, settings } = useStore();
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'nurse' as UserRole, department: '', sipNumber: '', password: 'klinik2026' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'nurse' as UserRole, department: '', sipNumber: '', password: '' });
   const [addError, setAddError] = useState<string | null>(null);
   const [addBusy, setAddBusy] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
@@ -30,6 +30,10 @@ export const UserManagementView: React.FC = () => {
       setAddError('Nama dan email yang valid wajib diisi.');
       return;
     }
+    if (addForm.password.length < 8) {
+      setAddError('Kata sandi awal wajib diisi oleh admin, minimal 8 karakter.');
+      return;
+    }
     setAddBusy(true);
     const res = await addUser(addForm);
     setAddBusy(false);
@@ -38,7 +42,7 @@ export const UserManagementView: React.FC = () => {
       return;
     }
     setShowAdd(false);
-    setAddForm({ name: '', email: '', role: 'nurse', department: '', sipNumber: '', password: 'klinik2026' });
+    setAddForm({ name: '', email: '', role: 'nurse', department: '', sipNumber: '', password: '' });
     setAddSuccess(true);
     window.setTimeout(() => setAddSuccess(false), 3500);
   };
@@ -146,8 +150,8 @@ export const UserManagementView: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">Kata Sandi Awal *</label>
-              <input type="text" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.password}
-                onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} required />
+              <input type="password" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs" value={addForm.password}
+                onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} placeholder="Tentukan sendiri, minimal 8 karakter" autoComplete="new-password" required />
             </div>
             {addError && <p className="sm:col-span-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{addError}</p>}
             <div className="sm:col-span-2 flex gap-2">

@@ -98,6 +98,18 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
 
   // Auto calculate age from birthDate
   const handleBirthDateChange = (val: string) => {
+    // Tanggal lahir di masa depan ditandai sebagai error secara langsung
+    // (bukan di-clamp diam-diam) dan juga ditolak saat submit.
+    const todayStr = new Date().toISOString().split('T')[0];
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (val && val > todayStr) {
+        next.birthDate = 'Tanggal lahir tidak boleh berada di masa depan';
+      } else {
+        delete next.birthDate;
+      }
+      return next;
+    });
     const birth = new Date(val);
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
@@ -146,6 +158,11 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
     }
     if (!formData.phone.trim()) newErrors.phone = 'Nomor telepon aktif wajib diisi';
     if (!formData.address.trim()) newErrors.address = 'Alamat domisili wajib diisi';
+    if (!formData.birthDate) {
+      newErrors.birthDate = 'Tanggal lahir wajib diisi';
+    } else if (formData.birthDate > new Date().toISOString().split('T')[0]) {
+      newErrors.birthDate = 'Tanggal lahir tidak boleh berada di masa depan';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -238,6 +255,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
             type="date"
             value={formData.birthDate}
             onChange={(e) => handleBirthDateChange(e.target.value)}
+            error={errors.birthDate}
             requiredIndicator
           />
           <Input

@@ -170,7 +170,18 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
           </div>
 
           <div className="flex md:flex-col items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
-            <Badge variant="success" dot size="md">
+            <Badge
+              variant={
+                ({
+                  Aktif: 'success',
+                  Nonaktif: 'neutral',
+                  'Rawat Inap': 'warning',
+                  Selesai: 'info'
+                }[patient.status] as 'success' | 'neutral' | 'warning' | 'info')
+              }
+              dot
+              size="md"
+            >
               Pasien {patient.status}
             </Badge>
             <span className="text-[11px] text-slate-400 mt-1">

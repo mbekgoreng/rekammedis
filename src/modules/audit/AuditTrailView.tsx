@@ -13,10 +13,13 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 
+const PAGE_SIZE = 50;
+
 export const AuditTrailView: React.FC = () => {
   const { auditLogs } = useStore();
   const [search, setSearch] = useState('');
   const [filterModule, setFilterModule] = useState('ALL');
+  const [page, setPage] = useState(1);
 
   const filteredLogs = auditLogs.filter((log) => {
     const q = search.toLowerCase();
@@ -29,6 +32,31 @@ export const AuditTrailView: React.FC = () => {
     const matchesModule = filterModule === 'ALL' || log.module === filterModule;
     return matchesSearch && matchesModule;
   });
+
+  // Paginasi sederhana: 50 baris per halaman atas log hasil filter saat ini
+  const pageCount = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const pagedLogs = filteredLogs.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Ekspor CSV: mengunduh SELURUH log hasil filter saat ini (bukan hanya halaman tampil)
+  const handleExportCsv = () => {
+    const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const header = ['Waktu', 'Pengguna', 'Peran', 'Modul', 'Aktivitas', 'Detail Perubahan', 'IP Address'];
+    const lines = filteredLogs.map((log) =>
+      [log.timestamp, log.userName, log.role, log.module, log.action, log.details, log.ipAddress].map(esc).join(',')
+    );
+    const blob = new Blob([[header.map(esc).join(','), ...lines].join('\r\n')], {
+      type: 'text/csv;charset=utf-8'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-trail-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const modules = ['ALL', 'Pasien', 'Rekam Medis', 'Resep', 'Farmasi', 'Laboratorium', 'Radiologi', 'Antrian', 'Kasir', 'Pengguna', 'Pengaturan'];
 
@@ -46,6 +74,15 @@ export const AuditTrailView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={filteredLogs.length === 0}
+            leftIcon={<Download className="w-3.5 h-3.5" />}
+          >
+            Ekspor CSV
+          </Button>
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg border border-slate-200 text-xs font-semibold" title="Log tersimpan lokal di perangkat ini. Integritas anti-tamper (hash-chain sisi server) memerlukan backend.">
             <Lock className="w-3.5 h-3.5 text-slate-500" />
             <span>Pencatatan Aktivitas Lokal</span>
@@ -61,7 +98,10 @@ export const AuditTrailView: React.FC = () => {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Cari user, tindakan, detail perubahan, atau IP address..."
               className="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-clinical-500"
             />
@@ -69,7 +109,10 @@ export const AuditTrailView: React.FC = () => {
 
           <select
             value={filterModule}
-            onChange={(e) => setFilterModule(e.target.value)}
+            onChange={(e) => {
+              setFilterModule(e.target.value);
+              setPage(1);
+            }}
             className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-700"
           >
             {modules.map((m) => (
@@ -103,7 +146,7 @@ export const AuditTrailView: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map((log) => (
+                pagedLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3 px-4 font-mono text-slate-500 text-[11px] whitespace-nowrap">
                       {log.timestamp} WIB
@@ -134,6 +177,38 @@ export const AuditTrailView: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Paginasi */}
+        {filteredLogs.length > 0 && (
+          <div className="p-3.5 bg-slate-50/70 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+            <span>
+              Halaman <strong className="text-slate-800">{safePage}</strong> dari{' '}
+              <strong className="text-slate-800">{pageCount}</strong> &bull; Menampilkan{' '}
+              <strong className="text-slate-800">
+                {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredLogs.length)}
+              </strong>{' '}
+              dari <strong className="text-slate-800">{filteredLogs.length}</strong> log
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+              >
+                Sebelumnya
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                disabled={safePage >= pageCount}
+              >
+                Berikutnya
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

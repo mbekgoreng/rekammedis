@@ -16,8 +16,23 @@ import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
 import { MedicalCertificate } from '../../types';
 
+/** Terbilang Bahasa Indonesia untuk angka hari istirahat (cukup 1–99). */
+const SATUAN = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+export const terbilang = (n: number): string => {
+  if (!Number.isFinite(n) || n <= 0) return String(n);
+  if (n < 12) return SATUAN[n];
+  if (n < 20) return `${terbilang(n - 10)} Belas`;
+  if (n < 100) {
+    const sisa = n % 10;
+    return `${terbilang(Math.floor(n / 10))} Puluh${sisa ? ` ${terbilang(sisa)}` : ''}`;
+  }
+  return String(n);
+};
+
 export const MedicalLettersView: React.FC = () => {
-  const { certificates, patients, currentUser, createCertificate } = useStore();
+  const { certificates, patients, currentUser, createCertificate, clinicProfile } = useStore();
+  // Penerbitan surat medis adalah tindakan dokter — peran lain hanya melihat daftar & pratinjau.
+  const isDoctor = currentUser.role === 'doctor';
   const [selectedCert, setSelectedCert] = useState<MedicalCertificate | null>(certificates[0] || null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
 
@@ -51,7 +66,8 @@ export const MedicalLettersView: React.FC = () => {
       doctorName: currentUser.name,
       doctorSip: currentUser.sipNumber || 'SIP.503/442.1/DOKTER/2024',
       type: certType,
-      startDate: certType === 'Surat Keterangan Sakit' ? startDate : undefined,
+      startDate:
+        certType === 'Surat Keterangan Sakit' || certType === 'Surat Kontrol Ulang' ? startDate : undefined,
       endDate: certType === 'Surat Keterangan Sakit' ? endDateStr : undefined,
       durationDays: certType === 'Surat Keterangan Sakit' ? durationDays : undefined,
       diagnosis: diagnosisText,
@@ -78,13 +94,20 @@ export const MedicalLettersView: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          onClick={() => setIsNewModalOpen(true)}
-          leftIcon={<Plus className="w-4 h-4 text-white" />}
-        >
-          Terbitkan Surat Medis Baru
-        </Button>
+        {isDoctor ? (
+          <Button
+            variant="primary"
+            onClick={() => setIsNewModalOpen(true)}
+            leftIcon={<Plus className="w-4 h-4 text-white" />}
+          >
+            Terbitkan Surat Medis Baru
+          </Button>
+        ) : (
+          <p className="text-[11px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 max-w-xs">
+            Penerbitan surat medis hanya dapat dilakukan oleh dokter. Anda dapat melihat
+            daftar dan pratinjau surat yang sudah diterbitkan.
+          </p>
+        )}
       </div>
 
       {/* Grid */}
@@ -141,13 +164,13 @@ export const MedicalLettersView: React.FC = () => {
                 {/* Official Letterhead (KOP SURAT) */}
                 <div className="text-center border-b-2 border-slate-900 pb-4">
                   <h2 className="text-base font-black tracking-tight text-slate-900 uppercase">
-                    KLINIK TONG FANG ASHIAP
+                    {clinicProfile.clinicName || 'KLINIK TONG FANG ASHIAP'}
                   </h2>
                   <p className="text-[11px] text-slate-600">
-                    Izin Operasional No: 503/021/KOP-PELKES/2023 &bull; Kode Faskes: 31710502
+                    Izin Operasional No: {clinicProfile.licenseNumber || '503/021/KOP-PELKES/2023'} &bull; Kode Faskes: {clinicProfile.faskesCode || '31710502'}
                   </p>
                   <p className="text-[10px] text-slate-500">
-                    Jl. Jenderal Sudirman Kav. 45, Kebayoran Baru, Jakarta Selatan &bull; Telp: (021) 555-0192 &bull; info@tongfangashiap.id
+                    {clinicProfile.address || 'Jl. Jenderal Sudirman Kav. 45, Kebayoran Baru, Jakarta Selatan'} &bull; Telp: {clinicProfile.phone || '(021) 555-0192'} &bull; {clinicProfile.email || 'info@tongfangashiap.id'}
                   </p>
                 </div>
 
@@ -163,7 +186,7 @@ export const MedicalLettersView: React.FC = () => {
 
                 {/* Doctor Opening Statement */}
                 <p className="leading-relaxed">
-                  Yang bertanda tangan di bawah ini, Dokter Pemeriksa pada KLINIK TONG FANG ASHIAP, menerangkan dengan sebenarnya bahwa:
+                  Yang bertanda tangan di bawah ini, Dokter Pemeriksa pada {(clinicProfile.clinicName || 'Klinik Tong Fang Ashiap').toUpperCase()}, menerangkan dengan sebenarnya bahwa:
                 </p>
 
                 {/* Patient Information Table */}
@@ -193,7 +216,7 @@ export const MedicalLettersView: React.FC = () => {
                       Berdasarkan hasil pemeriksaan klinis yang telah dilakukan, pasien tersebut di atas dalam kondisi <strong className="text-slate-900">SAKIT</strong> sehingga memerlukan istirahat fisik selama:
                     </p>
                     <p className="font-bold text-sm text-slate-900 text-center py-2 bg-white rounded border border-slate-200 font-mono">
-                      {selectedCert.durationDays} (Tiga) Hari
+                      {selectedCert.durationDays} ({terbilang(selectedCert.durationDays ?? 0)}) Hari
                     </p>
                     <p className="text-center text-slate-700">
                       Terhitung mulai tanggal <strong>{selectedCert.startDate}</strong> sampai dengan <strong>{selectedCert.endDate}</strong>.
@@ -208,6 +231,24 @@ export const MedicalLettersView: React.FC = () => {
                     </p>
                     <p>
                       Surat keterangan ini diberikan untuk: <strong>{selectedCert.purpose || 'Keperluan Administrasi'}</strong>.
+                    </p>
+                  </div>
+                )}
+
+                {selectedCert.type === 'Surat Kontrol Ulang' && (
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 leading-relaxed text-xs space-y-2">
+                    <p>
+                      Berdasarkan hasil pemeriksaan yang telah dilakukan
+                      {selectedCert.diagnosis ? (
+                        <> dengan diagnosis <strong className="text-slate-900">{selectedCert.diagnosis}</strong></>
+                      ) : null}
+                      , pasien tersebut di atas diminta untuk <strong className="text-slate-900">kontrol kembali</strong> guna evaluasi lanjutan terhadap hasil pengobatan dan perkembangan kondisi kesehatannya.
+                    </p>
+                    <p className="text-center text-slate-700">
+                      Tanggal kontrol kembali: <strong>{selectedCert.startDate || selectedCert.issueDate}</strong>
+                    </p>
+                    <p>
+                      Pasien diharapkan membawa surat keterangan ini beserta hasil pemeriksaan penunjang sebelumnya pada saat kontrol.
                     </p>
                   </div>
                 )}
@@ -260,7 +301,8 @@ export const MedicalLettersView: React.FC = () => {
         </div>
       </div>
 
-      {/* New Letter Modal */}
+      {/* New Letter Modal — hanya dirender untuk dokter */}
+      {isDoctor && (
       <Modal
         isOpen={isNewModalOpen}
         onClose={() => setIsNewModalOpen(false)}
@@ -325,6 +367,15 @@ export const MedicalLettersView: React.FC = () => {
             </div>
           )}
 
+          {certType === 'Surat Kontrol Ulang' && (
+            <Input
+              label="Tanggal Kontrol Kembali"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          )}
+
           {certType === 'Surat Keterangan Berbadan Sehat' && (
             <Input
               label="Keperluan Surat"
@@ -356,6 +407,7 @@ export const MedicalLettersView: React.FC = () => {
           />
         </form>
       </Modal>
+      )}
     </div>
   );
 };

@@ -31,7 +31,8 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
     medicines,
     currentUser,
     createPrescription,
-    updatePrescriptionStatus
+    updatePrescriptionStatus,
+    clinicProfile
   } = useStore();
 
   const [search, setSearch] = useState('');
@@ -216,10 +217,10 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                 {/* Kop Resep */}
                 <div className="text-center border-b-2 border-slate-800 pb-3">
                   <h3 className="font-extrabold text-sm text-slate-900 uppercase tracking-tight">
-                    KLINIK TONG FANG ASHIAP
+                    {clinicProfile.clinicName || 'KLINIK TONG FANG ASHIAP'}
                   </h3>
                   <p className="text-[10px] text-slate-500">
-                    Jl. Jenderal Sudirman Kav. 45, Jakarta Selatan &bull; Telp: (021) 555-0192
+                    {clinicProfile.address || 'Jl. Jenderal Sudirman Kav. 45, Jakarta Selatan'} &bull; Telp: {clinicProfile.phone || '(021) 555-0192'}
                   </p>
                   <p className="text-[10px] font-semibold text-clinical-800 mt-1">
                     {selectedRx.doctorName}

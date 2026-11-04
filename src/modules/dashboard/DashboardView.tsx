@@ -70,6 +70,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     .filter((inv) => inv.status === 'Paid')
     .reduce((sum, inv) => sum + inv.total, 0);
 
+  // Jadwal dokter HARI INI: nama hari Bahasa Indonesia dari tanggal berjalan
+  // (format sama dengan field dayOfWeek pada jadwal) + sesi yang aktif saja.
+  const todayName = new Date().toLocaleDateString('id-ID', { weekday: 'long' });
+  const todaySchedules = schedules.filter((s) => s.dayOfWeek === todayName && s.isActive);
+
   const stats = [
     {
       title: 'Total Pasien Hari Ini',
@@ -108,8 +113,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'Dokter Bertugas',
-      value: schedules.filter((s) => s.isActive).length,
-      subtitle: 'Sesi aktif di poliklinik',
+      value: todaySchedules.length,
+      subtitle: `Sesi aktif hari ini (${todayName})`,
       icon: Calendar,
       color: 'bg-clinical-50 text-clinical-700 border-clinical-200'
     }
@@ -211,7 +216,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {queues.slice(0, 5).map((q) => {
+                  {todayQueues.slice(0, 5).map((q) => {
                     const statusVariant = {
                       Menunggu: 'warning',
                       Dipanggil: 'info',
@@ -316,7 +321,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             }
           >
             <div className="space-y-3">
-              {schedules.map((s) => (
+              {todaySchedules.length === 0 && (
+                <p className="text-xs text-slate-400">
+                  Tidak ada sesi dokter aktif untuk hari {todayName}.
+                </p>
+              )}
+              {todaySchedules.map((s) => (
                 <div
                   key={s.id}
                   className="p-3 rounded-lg border border-slate-200 bg-slate-50/50 flex items-center justify-between"

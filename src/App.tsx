@@ -179,6 +179,7 @@ const MainLayout: React.FC = () => {
 
             {currentModule === 'registration' && (
               <RegistrationView
+                selectedPatientId={selectedPatientId || undefined}
                 onNavigate={handleNavigate}
                 onSelectPatient={handleSelectPatient}
               />
