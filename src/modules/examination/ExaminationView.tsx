@@ -10,7 +10,9 @@ import {
   Search,
   CheckCircle2,
   Calendar,
-  Activity
+  Activity,
+  FlaskConical,
+  Scan
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { Card } from '../../components/common/Card';
@@ -33,6 +35,35 @@ interface ExaminationViewProps {
   onSelectPatient: (patientId: string) => void;
 }
 
+// Paket panel laboratorium — daftar yang SAMA PERSIS dengan yang dipakai
+// LaboratoryView saat membuat order (jangan diubah sepihak di sini saja).
+const labPanelItems = (category: string) => {
+  if (category === 'Kimia Klinik') {
+    return [
+      { testName: 'Glukosa Darah Puasa (GDP)', category: 'Kimia Klinik', referenceRange: '70 - 100', unit: 'mg/dL' },
+      { testName: 'Ureum Darah', category: 'Fungsi Ginjal', referenceRange: '15 - 45', unit: 'mg/dL' },
+      { testName: 'Kreatinin Serum', category: 'Fungsi Ginjal', referenceRange: '0.7 - 1.3', unit: 'mg/dL' },
+      { testName: 'SGOT (AST)', category: 'Fungsi Hati', referenceRange: '< 35', unit: 'U/L' },
+      { testName: 'SGPT (ALT)', category: 'Fungsi Hati', referenceRange: '< 45', unit: 'U/L' }
+    ];
+  }
+  if (category === 'Profil Lipid') {
+    return [
+      { testName: 'Kolesterol Total', category: 'Profil Lipid', referenceRange: '< 200', unit: 'mg/dL' },
+      { testName: 'Kolesterol HDL', category: 'Profil Lipid', referenceRange: '> 40', unit: 'mg/dL' },
+      { testName: 'Kolesterol LDL', category: 'Profil Lipid', referenceRange: '< 100', unit: 'mg/dL' },
+      { testName: 'Trigliserida', category: 'Profil Lipid', referenceRange: '< 150', unit: 'mg/dL' }
+    ];
+  }
+  // Hematologi (panel default LaboratoryView)
+  return [
+    { testName: 'Hemoglobin (Hb)', category: 'Hematologi', referenceRange: '13.0 - 17.5', unit: 'g/dL' },
+    { testName: 'Leukosit', category: 'Hematologi', referenceRange: '4.000 - 10.000', unit: '/µL' },
+    { testName: 'Trombosit', category: 'Hematologi', referenceRange: '150.000 - 450.000', unit: '/µL' },
+    { testName: 'Hematokrit', category: 'Hematologi', referenceRange: '40 - 52', unit: '%' }
+  ];
+};
+
 export const ExaminationView: React.FC<ExaminationViewProps> = ({
   selectedPatientId,
   onNavigate,
@@ -44,7 +75,11 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     currentUser,
     saveMedicalRecord,
     updateMedicalRecord,
-    medicalRecords
+    medicalRecords,
+    labOrders,
+    radiologyOrders,
+    createLabOrder,
+    createRadiologyOrder
   } = useStore();
 
   const [currentPatientId, setCurrentPatientId] = useState<string>(
@@ -113,6 +148,15 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
   const [medDuration, setMedDuration] = useState(5);
   const [medQty, setMedQty] = useState(15);
   const [medInstruction, setMedInstruction] = useState('Minum teratur setelah makan');
+  const [rxError, setRxError] = useState<string | null>(null);
+
+  // Penunjang: order lab & radiologi dari pemeriksaan (paket/jenis sama
+  // dengan yang dipakai LaboratoryView & RadiologyView)
+  const [labCategory, setLabCategory] = useState('Kimia Klinik');
+  const [radExamType, setRadExamType] = useState('Foto Rontgen Thorax PA');
+  const [radIndication, setRadIndication] = useState('');
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
 
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
 
@@ -143,6 +187,12 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     setPrescriptions([]);
     setSaveError(null);
     setLoadedDraftId(null);
+    setRxError(null);
+    setLabCategory('Kimia Klinik');
+    setRadExamType('Foto Rontgen Thorax PA');
+    setRadIndication('');
+    setOrderError(null);
+    setOrderSuccess(null);
 
     const draft = medicalRecords
       .filter((r) => r.patientId === currentPatientId && r.status === 'Draft')
@@ -206,10 +256,30 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     setDiagnoses((prev) => prev.filter((d) => d.id !== id));
   };
 
-  // Add prescription item
+  // Add prescription item — qty wajib bilangan bulat >= 1 dan total qty obat
+  // yang sama di resep tidak boleh melebihi stok master farmasi.
   const handleAddMedicineToRx = () => {
     const med = medicines.find((m) => m.id === selectedMedId);
     if (!med) return;
+    setRxError(null);
+
+    if (!Number.isInteger(medQty) || medQty < 1) {
+      setRxError(`Jumlah obat ${med.name} tidak valid: harus bilangan bulat minimal 1 (terisi ${medQty}).`);
+      return;
+    }
+
+    const alreadyQty = prescriptions
+      .filter((p) => p.medicineId === med.id)
+      .reduce((sum, p) => sum + p.quantity, 0);
+    const totalQty = alreadyQty + medQty;
+    if (totalQty > med.stock) {
+      setRxError(
+        `Stok ${med.name} tidak mencukupi: total diminta ${totalQty} ${med.unit}` +
+          (alreadyQty > 0 ? ` (sudah ${alreadyQty} ${med.unit} di resep)` : '') +
+          `, stok tersedia ${med.stock} ${med.unit}.`
+      );
+      return;
+    }
 
     const newItem: PrescriptionItem = {
       id: 'rx-item-' + Date.now(),
@@ -232,13 +302,85 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     setPrescriptions((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Check allergy conflict
-  const checkAllergyWarning = (medName: string) => {
-    if (!activePatient || activePatient.allergies.length === 0) return false;
-    return activePatient.allergies.some((allergy) =>
-      medName.toLowerCase().includes(allergy.toLowerCase()) ||
-      allergy.toLowerCase().includes(medName.toLowerCase())
+  // Check allergy conflict — SATU logika pencocokan untuk banner peringatan
+  // maupun pemblokiran simpan final: kembalikan nama alergi yang cocok.
+  const getAllergyConflict = (medName: string): string | null => {
+    if (!activePatient || activePatient.allergies.length === 0) return null;
+    return (
+      activePatient.allergies.find(
+        (allergy) =>
+          medName.toLowerCase().includes(allergy.toLowerCase()) ||
+          allergy.toLowerCase().includes(medName.toLowerCase())
+      ) || null
     );
+  };
+
+  const checkAllergyWarning = (medName: string) => getAllergyConflict(medName) !== null;
+
+  // Validasi rentang tanda vital untuk SIMPAN FINAL. Nilai 0 berarti kolom
+  // dikosongkan pada input (input mengonversi kosong menjadi 0), jadi nilai 0
+  // dianggap TIDAK TERISI dan tidak divalidasi — yang kosong tetap boleh kosong.
+  const validateVitalsForFinal = (): string[] => {
+    const errs: string[] = [];
+    const filled = (v: number) => Number.isFinite(v) && v !== 0;
+    const check = (label: string, value: number, min: number, max: number, unit: string) => {
+      if (filled(value) && (value < min || value > max)) {
+        errs.push(`${label} ${value} ${unit} di luar rentang aman (${min}–${max} ${unit})`);
+      }
+    };
+    check('Tekanan darah sistol', vitals.systolic, 40, 300, 'mmHg');
+    check('Tekanan darah diastol', vitals.diastolic, 20, 200, 'mmHg');
+    check('Denyut nadi', vitals.heartRate, 20, 250, 'bpm');
+    check('Suhu tubuh', vitals.temperature, 30, 45, '°C');
+    check('SpO2', vitals.spO2, 50, 100, '%');
+    check('Respirasi', vitals.respiratoryRate, 4, 60, 'x/menit');
+    check('Berat badan', vitals.weight, 0.5, 500, 'kg');
+    check('Tinggi badan', vitals.height, 20, 250, 'cm');
+    if (filled(vitals.systolic) && filled(vitals.diastolic) && vitals.diastolic >= vitals.systolic) {
+      errs.push(
+        `Tekanan darah diastol (${vitals.diastolic} mmHg) harus lebih kecil dari sistol (${vitals.systolic} mmHg)`
+      );
+    }
+    return errs;
+  };
+
+  // Order penunjang untuk pasien yang sedang diperiksa
+  const patientLabOrders = labOrders.filter((o) => o.patientId === currentPatientId);
+  const patientRadOrders = radiologyOrders.filter((o) => o.patientId === currentPatientId);
+
+  const handleCreateLabOrderFromExam = () => {
+    if (!activePatient) return;
+    setOrderError(null);
+    setOrderSuccess(null);
+    const created = createLabOrder({
+      patientId: activePatient.id,
+      patientName: activePatient.name,
+      mrNumber: activePatient.mrNumber,
+      doctorName: currentUser.name,
+      items: labPanelItems(labCategory),
+      notes: `Order ${labCategory} rujukan klinis`
+    });
+    setOrderSuccess(`Order laboratorium ${created.orderNumber} (${labCategory}) dibuat untuk ${activePatient.name} dan diteruskan ke instalasi laboratorium.`);
+  };
+
+  const handleCreateRadiologyOrderFromExam = () => {
+    if (!activePatient) return;
+    setOrderError(null);
+    setOrderSuccess(null);
+    if (!radIndication.trim()) {
+      setOrderError('Indikasi klinis radiologi wajib diisi sebelum membuat order.');
+      return;
+    }
+    const created = createRadiologyOrder({
+      patientId: activePatient.id,
+      patientName: activePatient.name,
+      mrNumber: activePatient.mrNumber,
+      doctorName: currentUser.name,
+      examinationType: radExamType,
+      clinicalIndication: radIndication.trim()
+    });
+    setOrderSuccess(`Order radiologi ${created.orderNumber} (${radExamType}) dibuat untuk ${activePatient.name} dan diteruskan ke instalasi radiologi.`);
+    setRadIndication('');
   };
 
   // Save Medical Record (Draft or Final)
@@ -255,6 +397,31 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     if (!isDraft && diagnoses.length === 0) {
       setSaveError('Rekam medis final wajib memiliki minimal satu diagnosa ICD-10.');
       return;
+    }
+
+    // Keamanan simpan FINAL (draft sengaja dibiarkan longgar agar pekerjaan
+    // dokter tidak hilang): tanda vital wajib dalam rentang aman, dan obat
+    // yang bertentangan dengan alergi pasien MEMBLOKIR finalisasi.
+    if (!isDraft) {
+      const vitalErrors = validateVitalsForFinal();
+      if (vitalErrors.length > 0) {
+        setSaveError('Simpan final ditolak — tanda vital tidak valid: ' + vitalErrors.join('; ') + '.');
+        return;
+      }
+
+      const allergyConflicts = prescriptions
+        .map((rx) => ({ rx, allergy: getAllergyConflict(rx.medicineName) }))
+        .filter((c) => c.allergy !== null);
+      if (allergyConflicts.length > 0) {
+        const detail = allergyConflicts
+          .map((c) => `${c.rx.medicineName} (alergi: ${c.allergy})`)
+          .join('; ');
+        setSaveError(
+          `Simpan final ditolak — resep mengandung obat yang bertentangan dengan alergi pasien: ${detail}. ` +
+            'Ganti obat tersebut terlebih dahulu, atau simpan sebagai draft bila masih perlu ditinjau.'
+        );
+        return;
+      }
     }
 
     const payload = {
@@ -850,6 +1017,14 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
                 </div>
               </div>
 
+              {/* Rx validation error (qty / stok) */}
+              {rxError && (
+                <div className="p-2.5 bg-red-50 border border-red-300 rounded-lg text-red-800 text-xs flex items-center gap-2" role="alert">
+                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{rxError}</span>
+                </div>
+              )}
+
               {/* Allergy Warning if current selected med is allergic */}
               {(() => {
                 const currentMed = medicines.find((m) => m.id === selectedMedId);
@@ -925,6 +1100,121 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
                 onChange={(e) => setDoctorNotes(e.target.value)}
                 placeholder="Catatan tambahan untuk apoteker atau perawat..."
               />
+            </div>
+          </div>
+        </Card>
+
+        {/* PENUNJANG — Order Laboratorium & Radiologi dari pemeriksaan */}
+        <Card
+          title={
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-clinical-700 text-white flex items-center justify-center text-xs font-black">
+                <FlaskConical className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-base font-bold text-slate-900">
+                Penunjang (Order Laboratorium & Radiologi)
+              </span>
+            </div>
+          }
+          subtitle="Buat order penunjang untuk pasien yang sedang diperiksa — order langsung diteruskan ke instalasi terkait"
+        >
+          <div className="space-y-4">
+            {orderError && (
+              <div className="p-2.5 bg-red-50 border border-red-300 rounded-lg text-red-800 text-xs flex items-center gap-2" role="alert">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{orderError}</span>
+              </div>
+            )}
+            {orderSuccess && (
+              <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{orderSuccess}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Order Laboratorium */}
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <FlaskConical className="w-4 h-4 text-clinical-600" /> Order Laboratorium
+                </span>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Paket Panel Pemeriksaan
+                  </label>
+                  <select
+                    value={labCategory}
+                    onChange={(e) => setLabCategory(e.target.value)}
+                    className="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 text-slate-900 focus:outline-none"
+                  >
+                    <option value="Kimia Klinik">Panel Kimia Darah Lengkap (GDP, Ureum, Kreatinin, SGOT, SGPT)</option>
+                    <option value="Hematologi">Panel Darah Rutin (Hb, Leukosit, Trombosit, Hematokrit)</option>
+                    <option value="Profil Lipid">Panel Profil Lipid (Kolesterol Total, HDL, LDL, Trigliserida)</option>
+                  </select>
+                </div>
+                <Button type="button" variant="primary" size="sm" onClick={handleCreateLabOrderFromExam} className="w-full">
+                  + Buat Order Lab
+                </Button>
+
+                {patientLabOrders.length > 0 ? (
+                  <ul className="space-y-1.5 pt-1">
+                    {patientLabOrders.map((o) => (
+                      <li key={o.id} className="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px]">
+                        <span className="font-mono font-bold text-slate-800">{o.orderNumber}</span>
+                        <span className="text-slate-500 flex-1 truncate">{o.items.map((i) => i.testName).join(', ')}</span>
+                        <Badge variant="neutral" size="sm">{o.status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[11px] text-slate-400 italic">Belum ada order laboratorium untuk pasien ini.</p>
+                )}
+              </div>
+
+              {/* Order Radiologi */}
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <Scan className="w-4 h-4 text-clinical-600" /> Order Radiologi
+                </span>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Jenis Pemeriksaan
+                  </label>
+                  <select
+                    value={radExamType}
+                    onChange={(e) => setRadExamType(e.target.value)}
+                    className="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 text-slate-900 focus:outline-none"
+                  >
+                    <option value="Foto Rontgen Thorax PA">Foto Rontgen Thorax PA</option>
+                    <option value="USG Abdomen 2 Posisi">USG Abdomen 2 Posisi</option>
+                    <option value="Foto Rontgen Ekstremitas">Foto Rontgen Ekstremitas</option>
+                    <option value="Panoramic Gigi">Panoramic Foto Gigi & Rahang</option>
+                  </select>
+                </div>
+                <Input
+                  label="Indikasi Klinis / Diagnosis Kerja"
+                  value={radIndication}
+                  onChange={(e) => setRadIndication(e.target.value)}
+                  placeholder="Alasan rujukan foto radiologi..."
+                />
+                <Button type="button" variant="primary" size="sm" onClick={handleCreateRadiologyOrderFromExam} className="w-full">
+                  + Buat Order Radiologi
+                </Button>
+
+                {patientRadOrders.length > 0 ? (
+                  <ul className="space-y-1.5 pt-1">
+                    {patientRadOrders.map((o) => (
+                      <li key={o.id} className="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px]">
+                        <span className="font-mono font-bold text-slate-800">{o.orderNumber}</span>
+                        <span className="text-slate-500 flex-1 truncate">{o.examinationType}</span>
+                        <Badge variant="neutral" size="sm">{o.status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[11px] text-slate-400 italic">Belum ada order radiologi untuk pasien ini.</p>
+                )}
+              </div>
             </div>
           </div>
         </Card>
