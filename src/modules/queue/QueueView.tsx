@@ -30,7 +30,8 @@ export const QueueView: React.FC<QueueViewProps> = ({
   const {
     queues,
     callQueuePatient,
-    updateQueueStatus
+    updateQueueStatus,
+    clinicProfile
   } = useStore();
 
   const [activeDeptFilter, setActiveDeptFilter] = useState('ALL');
@@ -101,7 +102,7 @@ export const QueueView: React.FC<QueueViewProps> = ({
               <div className="flex items-center gap-2.5">
                 <Building2 className="w-5 h-5 text-cyan-400" />
                 <span className="font-extrabold tracking-tight text-sm uppercase text-slate-300">
-                  MONITOR RUANG TUNGGU &bull; KLINIK TONG FANG ASHIAP
+                  MONITOR RUANG TUNGGU &bull; {clinicProfile.clinicName || 'KLINIK TONG FANG ASHIAP'}
                 </span>
               </div>
               <span className="text-xs font-mono text-cyan-300 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">

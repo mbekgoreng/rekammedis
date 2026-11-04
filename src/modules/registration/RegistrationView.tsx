@@ -39,7 +39,8 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
     addQueue,
     addPatient,
     currentUser,
-    settings
+    settings,
+    clinicProfile
   } = useStore();
 
   // Handoff: bila dibuka dari daftar/detail pasien, pasien itu langsung terpilih.
@@ -228,7 +229,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
             {/* Printable Ticket Box */}
             <div className="max-w-md mx-auto p-6 bg-slate-50 border border-slate-300 rounded-xl text-center space-y-3 font-mono shadow-inner print-only">
               <div className="text-xs text-slate-500 uppercase tracking-widest border-b border-slate-200 pb-2">
-                KLINIK TONG FANG ASHIAP
+                {clinicProfile.clinicName || 'KLINIK TONG FANG ASHIAP'}
               </div>
 
               <div>
