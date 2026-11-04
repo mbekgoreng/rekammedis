@@ -135,6 +135,11 @@ interface StoreContextType {
   // Certificate Actions
   createCertificate: (cert: Omit<MedicalCertificate, 'id' | 'certificateNumber' | 'issueDate'>) => MedicalCertificate;
 
+  // Schedule Actions
+  addSchedule: (schedule: Omit<DoctorSchedule, 'id' | 'bookedCount' | 'isActive'>) => DoctorSchedule;
+  updateSchedule: (id: string, updates: Partial<DoctorSchedule>) => void;
+  deleteSchedule: (id: string) => void;
+
   // Notification Actions
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
@@ -906,6 +911,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     return created;
   };
 
+  // Schedule Actions
+  const addSchedule = (schedule: Omit<DoctorSchedule, 'id' | 'bookedCount' | 'isActive'>): DoctorSchedule => {
+    const created: DoctorSchedule = {
+      ...schedule,
+      id: 'sch-' + Date.now(),
+      bookedCount: 0,
+      isActive: true
+    };
+    setSchedules(prev => [...prev, created]);
+    logAudit('Pengaturan', 'Tambah Jadwal Praktik', `Jadwal ${created.doctorName} di ${created.department} — ${created.dayOfWeek} pukul ${created.startTime}–${created.endTime} WIB, kuota ${created.maxPatients} pasien`);
+    return created;
+  };
+
+  const updateSchedule = (id: string, updates: Partial<DoctorSchedule>) => {
+    const target = schedules.find(s => s.id === id);
+    if (!target) return;
+    setSchedules(prev => prev.map(s => (s.id === id ? { ...s, ...updates } : s)));
+    if (updates.isActive !== undefined && updates.isActive !== target.isActive) {
+      logAudit('Pengaturan', 'Ubah Status Jadwal Praktik', `Jadwal ${target.doctorName} (${target.dayOfWeek} ${target.startTime}–${target.endTime} WIB) ${updates.isActive ? 'diaktifkan kembali' : 'dinonaktifkan'}`);
+    } else {
+      logAudit('Pengaturan', 'Perbarui Jadwal Praktik', `Jadwal ${target.doctorName} diperbarui: ${updates.dayOfWeek ?? target.dayOfWeek} pukul ${updates.startTime ?? target.startTime}–${updates.endTime ?? target.endTime} WIB di ${updates.department ?? target.department}`);
+    }
+  };
+
+  const deleteSchedule = (id: string) => {
+    const target = schedules.find(s => s.id === id);
+    if (!target) return;
+    setSchedules(prev => prev.filter(s => s.id !== id));
+    logAudit('Pengaturan', 'Hapus Jadwal Praktik', `Jadwal ${target.doctorName} di ${target.department} (${target.dayOfWeek} ${target.startTime}–${target.endTime} WIB) dihapus`);
+  };
+
   // Notification Actions
   const markNotificationRead = (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
@@ -966,6 +1002,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
         createInvoice,
         payInvoice,
         createCertificate,
+        addSchedule,
+        updateSchedule,
+        deleteSchedule,
         markNotificationRead,
         markAllNotificationsRead,
         logAudit
