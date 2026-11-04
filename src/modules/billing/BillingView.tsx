@@ -137,9 +137,13 @@ export const BillingView: React.FC = () => {
     setIsPayModalOpen(true);
   };
 
+  // Sisa tagihan faktur terpilih & validitas nominal pembayaran
+  const payRemaining = selectedInvoice ? selectedInvoice.total - selectedInvoice.paidAmount : 0;
+  const payAmountInvalid = payAmount <= 0 || payAmount > payRemaining;
+
   const handleProcessPayment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedInvoice) return;
+    if (!selectedInvoice || payAmountInvalid) return;
     payInvoice(selectedInvoice.id, payAmount, payMethod);
     setIsPayModalOpen(false);
   };
@@ -396,7 +400,7 @@ export const BillingView: React.FC = () => {
               <Button variant="secondary" size="sm" onClick={() => setIsPayModalOpen(false)}>
                 Batal
               </Button>
-              <Button variant="primary" size="sm" onClick={handleProcessPayment}>
+              <Button variant="primary" size="sm" onClick={handleProcessPayment} disabled={payAmountInvalid}>
                 Konfirmasi Pelunasan
               </Button>
             </>
@@ -421,8 +425,11 @@ export const BillingView: React.FC = () => {
             <Input
               label="Nominal Pembayaran Diterima (Rp)"
               type="number"
+              min={0}
+              max={payRemaining}
               value={payAmount}
               onChange={(e) => setPayAmount(parseInt(e.target.value) || 0)}
+              error={payAmountInvalid ? `Nominal harus lebih dari Rp 0 dan tidak melebihi sisa tagihan Rp ${payRemaining.toLocaleString('id-ID')}.` : undefined}
               requiredIndicator
             />
 

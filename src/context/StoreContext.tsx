@@ -44,6 +44,24 @@ import { apiFetch } from '../lib/api';
 import { themeById } from '../lib/themes';
 import { type ClinicSettings, DEFAULT_CLINIC_SETTINGS, mergeSettings } from '../lib/settings';
 
+// Transisi status antrean yang sah (sumber kebenaran — ditegakkan di store):
+// Menunggu → Dipanggil → Sedang Diperiksa → Selesai; Menunggu/Dipanggil → Dibatalkan.
+// Status akhir (Selesai/Dibatalkan) tidak bisa berubah lagi.
+const QUEUE_TRANSITIONS: Record<QueueItem['status'], QueueItem['status'][]> = {
+  'Menunggu': ['Dipanggil', 'Dibatalkan'],
+  'Dipanggil': ['Sedang Diperiksa', 'Dibatalkan'],
+  'Sedang Diperiksa': ['Selesai'],
+  'Selesai': [],
+  'Dibatalkan': []
+};
+
+// Format waktu lokal perangkat 'YYYY-MM-DD HH:mm:ss' (bukan UTC mentah) —
+// AuditTrailView menambahkan label "WIB" saat menampilkan nilai ini.
+const formatLocalTimestamp = (d: Date): string => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
 export interface AuthResult {
   ok: boolean;
   error?: string;
@@ -278,19 +296,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     persistSlice(clinicId, 'notifications', JSON.stringify(notifications));
   }, [notifications]);
 
-  // Audit Logging
+  // Audit Logging — mode lokal tidak memiliki alamat IP jaringan yang nyata,
+  // jadi kolom IP dicatat jujur sebagai 'Lokal' (tanpa IP fiktif).
   const logAudit = (module: AuditLog['module'], action: string, details: string) => {
     const now = new Date();
-    const formattedTime = now.toISOString().replace('T', ' ').substring(0, 19);
     const newLog: AuditLog = {
       id: 'log-' + Date.now(),
-      timestamp: formattedTime,
+      timestamp: formatLocalTimestamp(now),
       userName: currentUser.name,
       role: currentUser.role,
       module,
       action,
       details,
-      ipAddress: '192.168.1.' + Math.floor(100 + Math.random() * 50)
+      ipAddress: 'Lokal'
     };
     setAuditLogs(prev => [newLog, ...prev]);
   };
@@ -341,13 +359,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     const now = new Date();
     const newLog: AuditLog = {
       id: 'log-' + Date.now(),
-      timestamp: now.toISOString().replace('T', ' ').substring(0, 19),
+      timestamp: formatLocalTimestamp(now),
       userName: user.name,
       role: user.role,
       module: 'Pengguna',
       action,
       details,
-      ipAddress: '192.168.1.' + Math.floor(100 + Math.random() * 50)
+      ipAddress: 'Lokal'
     };
     setAuditLogs((prev) => [newLog, ...prev]);
   };
@@ -558,22 +576,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   };
 
   const updateQueueStatus = (id: string, status: QueueItem['status']) => {
-    setQueues(prev => prev.map(q => (q.id === id ? { ...q, status } : q)));
     const target = queues.find(q => q.id === id);
-    if (target) {
-      logAudit('Antrian', 'Ubah Status Antrian', `Nomor ${target.queueNumber} (${target.patientName}) diubah ke status ${status}`);
-    }
+    if (!target) return;
+    // Tolak transisi yang tidak sah (mis. dari Dibatalkan, atau langsung
+    // Selesai tanpa melewati Sedang Diperiksa) — status tidak berubah.
+    if (target.status === status) return;
+    if (!QUEUE_TRANSITIONS[target.status].includes(status)) return;
+    setQueues(prev => prev.map(q => (q.id === id ? { ...q, status } : q)));
+    logAudit('Antrian', 'Ubah Status Antrian', `Nomor ${target.queueNumber} (${target.patientName}) diubah ke status ${status}`);
   };
 
   const callQueuePatient = (queueId: string) => {
     const target = queues.find(q => q.id === queueId);
     if (!target) return;
+    // Antrean yang sudah Selesai/Dibatalkan tidak bisa dipanggil lagi.
+    if (target.status === 'Selesai' || target.status === 'Dibatalkan') return;
 
-    // Set previous "Sedang Diperiksa" or "Dipanggil" in same department to Selesai/Menunggu or just update this to Dipanggil
-    setQueues(prev => prev.map(q => {
-      if (q.id === queueId) return { ...q, status: 'Dipanggil' };
-      return q;
-    }));
+    // Hanya dari Menunggu status berubah menjadi Dipanggil. Pada Dipanggil /
+    // Sedang Diperiksa ini adalah panggil ulang: suara saja, status tetap
+    // (tidak menurunkan Sedang Diperiksa kembali ke Dipanggil).
+    if (target.status === 'Menunggu') {
+      setQueues(prev => prev.map(q => {
+        if (q.id === queueId) return { ...q, status: 'Dipanggil' as const };
+        return q;
+      }));
+    }
 
     playQueueChime(target.queueNumber, target.patientName, target.department);
     logAudit('Antrian', 'Panggil Antrian Pasien', `Memanggil antrian ${target.queueNumber} - ${target.patientName}`);
@@ -749,7 +776,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     const created: LabOrder = {
       ...order,
       id: 'lab-' + Date.now(),
-      orderNumber: `LAB-2026-${num}`,
+      orderNumber: `LAB-${new Date().getFullYear()}-${num}`,
       orderDate: today,
       status: 'Requested'
     };
@@ -761,6 +788,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   const updateLabResult = (orderId: string, testIndex: number, resultValue: string, isAbnormal: boolean) => {
     setLabOrders(prev => prev.map(order => {
       if (order.id === orderId) {
+        // Hasil yang sudah tervalidasi terkunci: tolak perubahan apa pun
+        // (termasuk penurunan status kembali ke Processing).
+        if (order.status === 'Validated') return order;
         const updatedItems = [...order.items];
         updatedItems[testIndex] = {
           ...updatedItems[testIndex],
@@ -789,7 +819,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     const created: RadiologyOrder = {
       ...order,
       id: 'rad-' + Date.now(),
-      orderNumber: `RAD-2026-${num}`,
+      orderNumber: `RAD-${new Date().getFullYear()}-${num}`,
       orderDate: today,
       status: 'Permintaan'
     };
@@ -833,6 +863,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
   };
 
   const payInvoice = (id: string, amount: number, method: Invoice['paymentMethod']) => {
+    const target = invoices.find(i => i.id === id);
+    if (!target) return;
+    // Validasi nominal: harus positif dan tidak melebihi sisa tagihan.
+    // Pembayaran yang tidak valid ditolak tanpa mengubah status/data.
+    const remaining = target.total - target.paidAmount;
+    if (!Number.isFinite(amount) || amount <= 0 || amount > remaining) return;
     const now = new Date();
     const formatted = `${now.toISOString().split('T')[0]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     setInvoices(prev => prev.map(inv => {
@@ -849,10 +885,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
       }
       return inv;
     }));
-    const target = invoices.find(i => i.id === id);
-    if (target) {
-      logAudit('Kasir', 'Pembayaran Tagihan', `Pelunasan ${target.invoiceNumber} sebesar Rp ${amount.toLocaleString('id-ID')} melalui ${method}`);
-    }
+    logAudit('Kasir', 'Pembayaran Tagihan', `Pelunasan ${target.invoiceNumber} sebesar Rp ${amount.toLocaleString('id-ID')} melalui ${method}`);
   };
 
   // Certificate Actions
@@ -860,7 +893,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     const today = new Date().toISOString().split('T')[0];
     const prefix = cert.type.includes('Sakit') ? 'SKD' : cert.type.includes('Sehat') ? 'SKBS' : 'SRK';
     const num = nextDocNumber(certificates.map(o => o.certificateNumber), 'X', 3).split('-').pop() as string;
-    const certificateNumber = `${prefix}/2026/02/${num}`;
+    const issueMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    const certificateNumber = `${prefix}/${new Date().getFullYear()}/${issueMonth}/${num}`;
     const created: MedicalCertificate = {
       ...cert,
       id: 'cert-' + Date.now(),

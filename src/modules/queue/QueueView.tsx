@@ -184,14 +184,16 @@ export const QueueView: React.FC<QueueViewProps> = ({
                   >
                     Panggil Ulang Suara
                   </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleStartExam(currentlyServing)}
-                    leftIcon={<Stethoscope className="w-3.5 h-3.5 text-white" />}
-                  >
-                    Mulai Pemeriksaan SOAP
-                  </Button>
+                  {currentlyServing.status === 'Dipanggil' && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleStartExam(currentlyServing)}
+                      leftIcon={<Stethoscope className="w-3.5 h-3.5 text-white" />}
+                    >
+                      Mulai Pemeriksaan SOAP
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -351,8 +353,8 @@ export const QueueView: React.FC<QueueViewProps> = ({
                             </Button>
                           )}
 
-                          {/* Start Examination */}
-                          {q.status !== 'Selesai' && (
+                          {/* Start Examination — hanya sah dari Dipanggil */}
+                          {q.status === 'Dipanggil' && (
                             <Button
                               variant="primary"
                               size="sm"
@@ -364,8 +366,8 @@ export const QueueView: React.FC<QueueViewProps> = ({
                             </Button>
                           )}
 
-                          {/* Mark Done */}
-                          {q.status !== 'Selesai' && (
+                          {/* Mark Done — hanya sah dari Sedang Diperiksa */}
+                          {q.status === 'Sedang Diperiksa' && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -376,8 +378,8 @@ export const QueueView: React.FC<QueueViewProps> = ({
                             </Button>
                           )}
 
-                          {/* Cancel / Skip */}
-                          {q.status !== 'Selesai' && q.status !== 'Dibatalkan' && (
+                          {/* Cancel / Skip — hanya dari Menunggu / Dipanggil */}
+                          {(q.status === 'Menunggu' || q.status === 'Dipanggil') && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -391,6 +393,12 @@ export const QueueView: React.FC<QueueViewProps> = ({
                           {q.status === 'Selesai' && (
                             <span className="text-xs text-emerald-600 font-semibold px-2 py-0.5 bg-emerald-50 rounded">
                               Tuntas
+                            </span>
+                          )}
+
+                          {q.status === 'Dibatalkan' && (
+                            <span className="text-xs text-red-500 font-semibold px-2 py-0.5 bg-red-50 rounded">
+                              Dibatalkan
                             </span>
                           )}
                         </div>
