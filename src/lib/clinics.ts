@@ -12,8 +12,8 @@
 // backend dengan isolasi tenant di server (satu basis data per tenant atau
 // row-level security), autentikasi server, dan pencadangan terpusat.
 
-import type { ClinicProfile, User } from '../types';
-import { INITIAL_USERS } from '../data/mockData';
+import type { ClinicProfile, User, UserRole } from '../types';
+import { INITIAL_USERS } from '../data/seedUsers';
 import { hashPassword } from './auth';
 import { type ClinicSettings, DEFAULT_CLINIC_SETTINGS, mergeSettings } from './settings';
 
@@ -80,6 +80,28 @@ export function findAccount(email: string): { clinicId: string; user: User } | n
 
 export function emailTaken(email: string): boolean {
   return findAccount(email) !== null;
+}
+
+export interface DemoAccount {
+  role: UserRole;
+  user: User;
+}
+
+/**
+ * Akun demo klinik bawaan untuk panel "masuk 1 klik" di layar masuk
+ * (hanya mode lokal). Satu akun aktif per peran, urutan tampil tetap:
+ * admin, dokter, perawat, farmasi, kasir, lab. Peran tanpa akun aktif
+ * tidak dikembalikan (tombolnya tidak tampil).
+ */
+export function listDemoAccounts(): DemoAccount[] {
+  const users = readClinicUsers(DEFAULT_CLINIC_ID);
+  const order: UserRole[] = ['admin', 'doctor', 'nurse', 'pharmacist', 'cashier', 'lab'];
+  const result: DemoAccount[] = [];
+  for (const role of order) {
+    const user = users.find((u) => u.role === role && u.isActive !== false && !!u.passwordHash);
+    if (user) result.push({ role, user });
+  }
+  return result;
 }
 
 export interface RegisterClinicInput {

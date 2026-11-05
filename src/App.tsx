@@ -1,279 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import { StoreProvider, useStore } from './context/StoreContext';
-import { Sidebar } from './components/layout/Sidebar';
-import { Header } from './components/layout/Header';
-
-// Views
-import { DashboardView } from './modules/dashboard/DashboardView';
-import { PatientListView } from './modules/patients/PatientListView';
-import { PatientDetailView } from './modules/patients/PatientDetailView';
-import { RegistrationView } from './modules/registration/RegistrationView';
-import { QueueView } from './modules/queue/QueueView';
-import { ExaminationView } from './modules/examination/ExaminationView';
-import { PrescriptionView } from './modules/prescription/PrescriptionView';
-import { PharmacyView } from './modules/pharmacy/PharmacyView';
-import { LaboratoryView } from './modules/laboratory/LaboratoryView';
-import { RadiologyView } from './modules/radiology/RadiologyView';
-import { DoctorScheduleView } from './modules/schedule/DoctorScheduleView';
-import { BillingView } from './modules/billing/BillingView';
-import { MedicalLettersView } from './modules/letters/MedicalLettersView';
-import { ReportsView } from './modules/reports/ReportsView';
-import { UserManagementView } from './modules/users/UserManagementView';
-import { AuditTrailView } from './modules/audit/AuditTrailView';
-import { ClinicSettingsView } from './modules/settings/ClinicSettingsView';
+import React, { Suspense, useEffect, useState } from 'react';
 import { LoginView } from './modules/auth/LoginView';
-import { ChangePasswordView } from './modules/auth/ChangePasswordView';
-import { GuideView } from './modules/guide/GuideView';
-import { BpjsView } from './modules/bpjs/BpjsView';
-import { TourOverlay, tourStorageKey } from './components/onboarding/TourOverlay';
-import { DEFAULT_CLINIC_ID, dataKey } from './lib/clinics';
+import { dataKey } from './lib/clinics';
 import { apiFetch } from './lib/api';
 import { hydrateFromServer } from './lib/sync';
 import type { User } from './types';
-import { canAccess, ROLE_LABELS } from './lib/permissions';
 import { loadSession, type SessionData } from './lib/auth';
 
+// Cangkang ruang kerja (store + sidebar/header + seluruh modul) dimuat
+// sebagai chunk terpisah lewat React.lazy — chunk awal yang diterima
+// pengunjung di halaman masuk hanya berisi App tipis + LoginView + lib kecil.
+const loadWorkspace = () => import('./Workspace');
+const Workspace = React.lazy(loadWorkspace);
 
-const SubscriptionBanner: React.FC = () => {
-  const [info, setInfo] = useState<{ expired: boolean; status: string; trialEndsAt?: string | null; currentPeriodEnd?: string | null } | null>(null);
-  useEffect(() => {
-    const s = loadSession();
-    if (!s?.apiToken) return;
-    void apiFetch<{ subscription: { expired: boolean; status: string; trialEndsAt?: string | null; currentPeriodEnd?: string | null } }>('/api/billing')
-      .then(({ data }) => setInfo(data.subscription || null))
-      .catch(() => undefined);
-  }, []);
-  if (!info) return null;
-  const trialDays = info.trialEndsAt ? Math.ceil((new Date(info.trialEndsAt).getTime() - Date.now()) / 86400000) : null;
-  if (info.expired) {
-    return (
-      <div className="bg-red-600 text-white text-center text-xs font-semibold px-4 py-2">
-        Masa langganan klinik Anda telah berakhir — data tetap aman, tetapi pencatatan baru tidak tersinkron ke server. Perpanjang di Pengaturan → Langganan.
-      </div>
-    );
-  }
-  if (info.status === 'trialing' && trialDays !== null && trialDays <= 3) {
-    return (
-      <div className="bg-amber-500 text-white text-center text-xs font-semibold px-4 py-2">
-        Masa trial berakhir dalam {Math.max(trialDays, 0)} hari — aktifkan langganan di Pengaturan → Langganan agar layanan tidak terjeda.
-      </div>
-    );
-  }
-  return null;
-};
-
-const MainLayout: React.FC = () => {
-  const { isAuthenticated, logout, currentUser, clinicProfile, clinicId } = useStore();
-  const [tourOpen, setTourOpen] = useState(false);
-
-  // Tutorial tampil otomatis SEKALI untuk admin klinik yang baru mendaftar
-  useEffect(() => {
-    if (!isAuthenticated || currentUser.role !== 'admin' || clinicId === DEFAULT_CLINIC_ID) return;
-    try {
-      if (!localStorage.getItem(tourStorageKey(clinicId, currentUser.id))) {
-        setTourOpen(true);
-      }
-    } catch {
-      // abaikan
-    }
-  }, [isAuthenticated, currentUser, clinicId]);
-  const [currentModule, setCurrentModule] = useState<string>('dashboard');
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  const handleSelectPatient = (patientId: string) => {
-    setSelectedPatientId(patientId);
-    setCurrentModule('patient_detail');
-  };
-
-  const handleNavigate = (module: string) => {
-    setCurrentModule(module);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Sesi tidak valid/kedaluwarsa di tengah pemakaian → keluar bersih
-  useEffect(() => {
-    if (!isAuthenticated) logout();
-  }, [isAuthenticated, logout]);
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col antialiased">
-      <SubscriptionBanner />
-      <div className="flex-1 flex w-full">
-        {/* Left Clinical Sidebar */}
-        <Sidebar
-          currentModule={selectedPatientId && currentModule === 'patient_detail' ? 'patients' : currentModule}
-          onNavigate={(mod) => {
-            setSelectedPatientId(null);
-            handleNavigate(mod);
-          }}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
-          isMobileOpen={isMobileSidebarOpen}
-          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+/** Layar pemuatan bermerek (logo + nama RekamMedis), selaras panel masuk. */
+const ShellLoadingScreen: React.FC<{ title?: string; subtitle?: string }> = ({
+  title = 'Memuat ruang kerja…',
+  subtitle = 'Menyiapkan aplikasi RekamMedis'
+}) => (
+  <div
+    className="min-h-screen flex items-center justify-center font-sans"
+    style={{ background: 'linear-gradient(150deg, #17155E 0%, #213A75 48%, #2F698B 100%)' }}
+  >
+    <div className="text-center text-white px-6">
+      <span className="bg-white rounded-2xl p-2 inline-flex shadow-lg">
+        <img src="/logo.svg" alt="Logo RekamMedis" className="w-12 h-12" />
+      </span>
+      <p className="font-extrabold text-xl tracking-tight mt-4">RekamMedis</p>
+      <p className="text-sm font-semibold text-white/85 mt-3">{title}</p>
+      <p className="text-[11px] text-white/60 mt-1">{subtitle}</p>
+      <div className="mt-6 flex justify-center">
+        <span
+          className="w-8 h-8 rounded-full border-[3px] border-white/25 border-t-[#84E488] animate-spin"
+          role="status"
+          aria-label="Memuat"
         />
-
-        {/* Right Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Clinical Top Header */}
-          <Header
-            onOpenTour={() => setTourOpen(true)}
-            onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
-            onNavigate={(mod) => {
-              setSelectedPatientId(null);
-              handleNavigate(mod);
-            }}
-            onSelectPatient={handleSelectPatient}
-          />
-
-          {/* Module Canvas */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-            {!canAccess(currentUser.role, currentModule) ? (
-              <div className="max-w-lg mx-auto mt-16 text-center space-y-4 bg-white border border-slate-200 rounded-2xl p-8 shadow-xs">
-                <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto text-2xl font-black">
-                  !
-                </div>
-                <h2 className="text-lg font-bold text-slate-800">Akses Dibatasi untuk Peran Anda</h2>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Akun {currentUser.name} masuk sebagai {ROLE_LABELS[currentUser.role]} dan tidak memiliki
-                  hak akses ke modul ini. Hak akses ditetapkan oleh administrator sesuai matriks RBAC.
-                </p>
-                <button
-                  onClick={() => handleNavigate('dashboard')}
-                  className="px-4 py-2 rounded-lg bg-clinical-700 text-white text-xs font-bold hover:bg-clinical-800"
-                >
-                  Kembali ke Dashboard
-                </button>
-              </div>
-            ) : (
-              <>
-            {currentModule === 'dashboard' && (
-              <DashboardView
-                onNavigate={handleNavigate}
-                onSelectPatient={handleSelectPatient}
-              />
-            )}
-
-            {currentModule === 'patients' && (
-              <PatientListView
-                onSelectPatient={handleSelectPatient}
-                onNavigate={handleNavigate}
-              />
-            )}
-
-            {currentModule === 'patient_detail' && selectedPatientId && (
-              <PatientDetailView
-                patientId={selectedPatientId}
-                onBack={() => {
-                  setSelectedPatientId(null);
-                  setCurrentModule('patients');
-                }}
-                onNavigate={handleNavigate}
-              />
-            )}
-
-            {currentModule === 'registration' && (
-              <RegistrationView
-                selectedPatientId={selectedPatientId || undefined}
-                onNavigate={handleNavigate}
-                onSelectPatient={handleSelectPatient}
-              />
-            )}
-
-            {currentModule === 'queue' && (
-              <QueueView
-                onNavigate={handleNavigate}
-                onSelectPatient={handleSelectPatient}
-              />
-            )}
-
-            {(currentModule === 'examination' || currentModule === 'medical_records') && (
-              <ExaminationView
-                selectedPatientId={selectedPatientId || undefined}
-                onNavigate={handleNavigate}
-                onSelectPatient={handleSelectPatient}
-              />
-            )}
-
-            {currentModule === 'prescription' && (
-              <PrescriptionView
-                onNavigate={handleNavigate}
-                onSelectPatient={handleSelectPatient}
-              />
-            )}
-
-            {currentModule === 'pharmacy' && <PharmacyView />}
-
-            {currentModule === 'laboratory' && <LaboratoryView />}
-
-            {currentModule === 'radiology' && <RadiologyView />}
-
-            {currentModule === 'schedule' && <DoctorScheduleView />}
-
-            {currentModule === 'billing' && <BillingView />}
-
-            {currentModule === 'letters' && <MedicalLettersView />}
-
-            {currentModule === 'reports' && <ReportsView />}
-
-            {currentModule === 'bpjs' && <BpjsView />}
-
-            {currentModule === 'users' && <UserManagementView />}
-
-            {currentModule === 'audit' && <AuditTrailView />}
-
-            {currentModule === 'settings' && <ClinicSettingsView />}
-
-            {currentModule === 'change_password' && <ChangePasswordView />}
-
-            {currentModule === 'guide' && <GuideView onStartTour={() => setTourOpen(true)} />}
-              </>
-            )}
-          </main>
-
-          {/* Clinical Minimalist Footer */}
-          <footer className="py-3 px-6 border-t border-slate-200 bg-white text-slate-400 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 no-print">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-600">{clinicProfile.clinicName}</span>
-              <span>&bull;</span>
-              <span>Sistem Rekam Medis Terpadu</span>
-            </div>
-            <div className="flex items-center gap-3 text-[11px]">
-              <span>RekamMedis &bull; Rekam Medis Elektronik</span>
-              <span>&bull;</span>
-              <button
-                onClick={logout}
-                className="text-slate-500 hover:text-red-600 font-semibold"
-              >
-                Kunci Layar (Logout)
-              </button>
-            </div>
-          </footer>
-        </div>
       </div>
-
-      {tourOpen && (
-        <TourOverlay
-          onNavigate={(mod) => {
-            setSelectedPatientId(null);
-            handleNavigate(mod);
-          }}
-          onClose={() => setTourOpen(false)}
-        />
-      )}
     </div>
-  );
-};
+  </div>
+);
 
 export default function App() {
   const [session, setSession] = useState<SessionData | null>(() => loadSession());
   const [bootKey, setBootKey] = useState<string | null>(null);
   const sessionKey = session?.apiToken ? `${session.clinicId}:${session.apiToken}` : null;
+
+  // Prefetch chunk cangkang: mulai dimuat saat halaman masuk idle
+  // (requestIdleCallback; cadangan setTimeout ±1200ms) atau saat interaksi
+  // pertama pengguna dengan halaman — mana yang lebih dulu — supaya proses
+  // masuk sesudahnya terasa instan.
+  useEffect(() => {
+    if (session) return;
+    let cancelled = false;
+    const prefetch = () => {
+      if (!cancelled) void loadWorkspace();
+    };
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let idleId: number | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (typeof w.requestIdleCallback === 'function') {
+      idleId = w.requestIdleCallback(prefetch, { timeout: 2500 });
+    } else {
+      timer = setTimeout(prefetch, 1200);
+    }
+    const events: (keyof WindowEventMap)[] = ['pointerdown', 'keydown', 'focusin'];
+    events.forEach((ev) => window.addEventListener(ev, prefetch, { once: true, capture: true }));
+    return () => {
+      cancelled = true;
+      if (idleId !== undefined && typeof w.cancelIdleCallback === 'function') w.cancelIdleCallback(idleId);
+      if (timer) clearTimeout(timer);
+      events.forEach((ev) => window.removeEventListener(ev, prefetch, { capture: true }));
+    };
+  }, [session]);
 
   // Mode server: sebelum ruang kerja dimuat, tarik snapshot server ke cache
   // lokal dan samakan daftar akun login dari server (sumber kebenaran akun).
@@ -321,22 +121,16 @@ export default function App() {
 
   if (session.apiToken && bootKey !== sessionKey) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f6f8fb]">
-        <div className="text-center">
-          <p className="text-sm font-bold text-slate-700">Menyiapkan ruang kerja klinik…</p>
-          <p className="text-[11px] text-slate-400 mt-1">Mengambil data terbaru dari server RekamMedis</p>
-        </div>
-      </div>
+      <ShellLoadingScreen
+        title="Menyiapkan ruang kerja klinik…"
+        subtitle="Mengambil data terbaru dari server RekamMedis"
+      />
     );
   }
 
   return (
-    <StoreProvider
-      key={session.clinicId}
-      clinicId={session.clinicId}
-      onLogout={() => setSession(null)}
-    >
-      <MainLayout />
-    </StoreProvider>
+    <Suspense fallback={<ShellLoadingScreen />}>
+      <Workspace clinicId={session.clinicId} onLogout={() => setSession(null)} />
+    </Suspense>
   );
 }

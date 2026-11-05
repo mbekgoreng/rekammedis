@@ -1,9 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   hashPassword, saveSession, loadGuard, recordFailedLogin, resetGuard, DEFAULT_PASSWORD
 } from '../../lib/auth';
-import { findAccount, emailTaken, createClinic, readClinicSettings } from '../../lib/clinics';
+import { findAccount, emailTaken, createClinic, readClinicSettings, listDemoAccounts } from '../../lib/clinics';
 import { apiHealth, apiLogin, apiRegisterClinic, type ApiLoginResult } from '../../lib/api';
+import type { UserRole } from '../../types';
+
+const LAST_EMAIL_KEY = 'rekammedis_last_email';
+
+const readLastEmail = (): string => {
+  try {
+    return localStorage.getItem(LAST_EMAIL_KEY) || '';
+  } catch {
+    return '';
+  }
+};
+
+const saveLastEmail = (value: string) => {
+  try {
+    localStorage.setItem(LAST_EMAIL_KEY, value);
+  } catch {
+    // abaikan — prefill hanya kenyamanan
+  }
+};
+
+const DEMO_ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Admin',
+  doctor: 'Dokter',
+  nurse: 'Perawat/Pendaftaran',
+  pharmacist: 'Farmasi',
+  cashier: 'Kasir',
+  lab: 'Lab/Radiologi'
+};
 
 // Layar masuk & pendaftaran RekamMedis — satu konsep visual dengan landing page:
 // panel navy #17155E → #213A75, aksen hijau #84E488, logo resmi, Plus Jakarta Sans.
@@ -22,11 +50,19 @@ const labelCls = 'block text-xs font-bold text-slate-600 mb-1.5';
 export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthenticated }) => {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [apiMode, setApiMode] = useState(false);
-  useEffect(() => { void apiHealth().then(setApiMode); }, []);
+  const [apiChecked, setApiChecked] = useState(false);
+  useEffect(() => {
+    void apiHealth().then((mode) => {
+      setApiMode(mode);
+      setApiChecked(true);
+    });
+  }, []);
 
   // ---- Login state ----
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState<string>(readLastEmail);
+  const [hadPrefill] = useState<boolean>(() => readLastEmail() !== '');
   const [password, setPassword] = useState('');
+  const [capsLock, setCapsLock] = useState(false);
   const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +77,7 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
   }, []);
 
   const startSession = (clinicId: string, userId: string, userEmail: string, rememberMe: boolean) => {
+    saveLastEmail(userEmail);
     const policy = readClinicSettings(clinicId);
     const now = Date.now();
     saveSession({
@@ -56,6 +93,7 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
   };
 
   const startApiSession = (result: ApiLoginResult, rememberMe: boolean) => {
+    saveLastEmail(result.user.email);
     const now = Date.now();
     saveSession({
       userId: result.user.id,
@@ -68,6 +106,20 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
     });
     resetGuard();
     onAuthenticated();
+  };
+
+  // Panel demo 1-klik hanya ada di mode lokal; daftar akun berasal dari
+  // helper clinics (akun aktif klinik bawaan, satu per peran).
+  const demoAccounts = useMemo(
+    () => (apiChecked && !apiMode ? listDemoAccounts() : []),
+    [apiChecked, apiMode]
+  );
+
+  const applyLoginFailure = (policy: ReturnType<typeof readClinicSettings> | null) => {
+    const guard = policy
+      ? recordFailedLogin(policy.maxLoginAttempts, policy.lockMinutes * 60 * 1000)
+      : recordFailedLogin();
+    if (guard.lockUntil > Date.now()) setLockSeconds(Math.ceil((guard.lockUntil - Date.now()) / 1000));
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -88,10 +140,7 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
       const found = findAccount(email);
       const policy = found ? readClinicSettings(found.clinicId) : null;
       const fail = () => {
-        const guard = policy
-          ? recordFailedLogin(policy.maxLoginAttempts, policy.lockMinutes * 60 * 1000)
-          : recordFailedLogin();
-        if (guard.lockUntil > Date.now()) setLockSeconds(Math.ceil((guard.lockUntil - Date.now()) / 1000));
+        applyLoginFailure(policy);
         setError('Email atau kata sandi salah.');
       };
       if (!found || found.user.isActive === false || !found.user.passwordHash) {
@@ -107,6 +156,39 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
     } finally {
       setBusy(false);
     }
+  };
+
+  // Masuk demo 1-klik (mode lokal): memakai jalur verifikasi yang sama
+  // persis dengan formulir masuk — cari akun, verifikasi hash sandi bawaan,
+  // hormati kunci brute-force — hanya tanpa mengetik.
+  const handleDemoLogin = async (accountEmail: string) => {
+    if (apiMode || lockSeconds > 0 || busy) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const found = findAccount(accountEmail);
+      const policy = found ? readClinicSettings(found.clinicId) : null;
+      const fail = () => {
+        applyLoginFailure(policy);
+        setError('Akun demo tidak dapat masuk — kata sandi akun ini mungkin sudah diganti. Gunakan formulir masuk di atas.');
+      };
+      if (!found || found.user.isActive === false || !found.user.passwordHash) {
+        fail();
+        return;
+      }
+      const candidate = await hashPassword(found.user.id, DEFAULT_PASSWORD);
+      if (candidate !== found.user.passwordHash) {
+        fail();
+        return;
+      }
+      startSession(found.clinicId, found.user.id, found.user.email, remember);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const trackCapsLock = (e: React.KeyboardEvent) => {
+    if (typeof e.getModifierState === 'function') setCapsLock(e.getModifierState('CapsLock'));
   };
 
   // ---- Register state ----
@@ -266,20 +348,23 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
               </div>
               <div>
                 <label className={labelCls} htmlFor="login-email">Email</label>
-                <input id="login-email" type="email" autoComplete="username" className={inputCls}
+                <input id="login-email" type="email" autoComplete="username" className={inputCls} autoFocus={!hadPrefill}
                   placeholder="nama@klinikanda.id" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <div>
                 <label className={labelCls} htmlFor="login-password">Kata Sandi</label>
                 <div className="relative">
                   <input id="login-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
-                    className={`${inputCls} pr-16`} placeholder="••••••••" value={password}
-                    onChange={(e) => setPassword(e.target.value)} required />
+                    className={`${inputCls} pr-16`} placeholder="••••••••" value={password} autoFocus={hadPrefill}
+                    onChange={(e) => setPassword(e.target.value)} onKeyDown={trackCapsLock} onKeyUp={trackCapsLock} required />
                   <button type="button" onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-[#2F698B]">
                     {showPassword ? 'Sembunyi' : 'Lihat'}
                   </button>
                 </div>
+                {capsLock && (
+                  <p className="text-[11px] font-semibold text-amber-600 mt-1.5">Caps Lock aktif — periksa huruf besar/kecil kata sandi Anda.</p>
+                )}
               </div>
               <label className="flex items-center gap-2 text-xs text-slate-600 select-none">
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
@@ -294,6 +379,27 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
                 style={{ background: 'linear-gradient(90deg, #84E488, #6BCE90)' }}>
                 {lockSeconds > 0 ? `Terkunci — coba lagi dalam ${lockSeconds} detik` : busy ? 'Memeriksa…' : 'Masuk ke Aplikasi'}
               </button>
+              {apiChecked && !apiMode && demoAccounts.length > 0 && (
+                <div className="rounded-2xl border border-dashed border-[#409DA1]/50 bg-[#409DA1]/5 px-4 py-3.5">
+                  <p className="text-xs font-extrabold text-[#17155E]">Coba demo — masuk 1 klik</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Masuk langsung sebagai petugas Klinik Tong Fang Ashiap tanpa mengetik kata sandi.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {demoAccounts.map((account) => (
+                      <button
+                        key={account.user.id}
+                        type="button"
+                        disabled={busy || lockSeconds > 0}
+                        onClick={() => void handleDemoLogin(account.user.email)}
+                        className="px-3 py-1.5 rounded-full bg-white border border-slate-300 text-[11px] font-bold text-slate-700 hover:border-[#409DA1] hover:text-[#17155E] transition disabled:opacity-60"
+                      >
+                        {DEMO_ROLE_LABELS[account.role]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <p className="text-[11px] text-slate-500 text-center">
                 Lupa kata sandi? Hubungi administrator klinik Anda untuk reset.<br />
                 {apiMode ? (
