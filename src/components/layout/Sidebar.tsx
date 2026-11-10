@@ -27,6 +27,7 @@ import {
 import { clsx } from 'clsx';
 import { useStore } from '../../context/StoreContext';
 import { canAccess } from '../../lib/permissions';
+import { moduleToPath } from '../../lib/router';
 
 interface SidebarProps {
   currentModule: string;
@@ -172,8 +173,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Navigation Menus */}
-        <div className="flex-1 overflow-y-auto py-3 px-2 space-y-5 custom-scrollbar">
+        {/* Navigation Menus — tautan sungguhan: bisa dibuka di tab baru,
+            dibaca pembaca layar, dan mencerminkan URL halaman aktif */}
+        <nav aria-label="Menu utama" className="flex-1 overflow-y-auto py-3 px-2 space-y-5 custom-scrollbar">
           {menuSections
             .map((section) => ({
               ...section,
@@ -192,11 +194,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const Icon = item.icon;
                   const isActive = currentModule === item.id;
                   return (
-                    <button
+                    <a
                       key={item.id}
-                      onClick={() => {
-                        onNavigate(item.id);
-                        onCloseMobile();
+                      href={moduleToPath(item.id)}
+                      aria-current={isActive ? 'page' : undefined}
+                      onClick={(e) => {
+                        // Klik kiri biasa tanpa pengubah -> navigasi SPA;
+                        // Ctrl/Cmd/tombol tengah tetap membuka tab baru.
+                        if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                          e.preventDefault();
+                          onNavigate(item.id);
+                          onCloseMobile();
+                        }
                       }}
                       title={isCollapsed ? item.label : undefined}
                       className={clsx(
@@ -231,13 +240,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       {isCollapsed && item.badge !== undefined && (
                         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-clinical-sidebar" />
                       )}
-                    </button>
+                    </a>
                   );
                 })}
               </div>
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Footer Collapse Toggle for Collapsed state */}
         {isCollapsed && (

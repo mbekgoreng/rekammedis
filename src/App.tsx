@@ -128,9 +128,16 @@ export default function App() {
     );
   }
 
+  const handleLogout = () => {
+    setSession(null);
+    // Keluar -> bersihkan URL halaman internal, kembali ke pintu masuk /app/
+    window.history.replaceState({}, '', '/app/');
+    document.title = 'RekamMedis — Sistem Rekam Medis Elektronik';
+  };
+
   return (
     <Suspense fallback={<ShellLoadingScreen />}>
-      <Workspace clinicId={session.clinicId} onLogout={() => setSession(null)} />
+      <Workspace clinicId={session.clinicId} onLogout={handleLogout} />
     </Suspense>
   );
 }
