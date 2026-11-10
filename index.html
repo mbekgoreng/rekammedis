@@ -256,6 +256,25 @@ section{padding:104px 0}
 .faq summary::after{content:"";position:absolute;right:4px;top:50%;width:11px;height:11px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:translateY(-70%) rotate(45deg);transition:transform .4s var(--ease)}
 .faq details[open ] summary::after{transform:translateY(-30%) rotate(225deg)}
 .faq details p{padding:0 40px 24px 0;color:var(--ink-2);font-size:15.5px;max-width:44em}
+/* harga & trial */
+.trialbar{display:flex;gap:16px;align-items:flex-start;max-width:900px;background:linear-gradient(120deg,var(--navy-900,#213A75),#17155E);color:#e8ecf8;border-radius:18px;padding:22px 26px;margin-bottom:22px}
+.trialbar b{color:#84E488}
+.trialbar p{font-size:15px;line-height:1.65;margin:0}
+.trialbar .tb-ic{flex:none;width:38px;height:38px;border-radius:11px;background:rgba(132,228,136,.16);display:flex;align-items:center;justify-content:center;color:#84E488}
+.pricing{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:900px}
+.pcard{border:1px solid var(--line);border-radius:20px;padding:30px;background:#fff;position:relative;display:flex;flex-direction:column}
+.pcard.pro{border:2px solid #409DA1;box-shadow:0 24px 48px -24px rgba(23,21,94,.25)}
+.pcard .disc{display:inline-block;background:#17155E;color:#84E488;font-size:11px;font-weight:800;letter-spacing:.08em;padding:5px 10px;border-radius:999px}
+.pcard h3{font-size:20px;margin:14px 0 2px;letter-spacing:-.01em}
+.pcard .normal{color:var(--ink-3);font-size:13.5px;text-decoration:line-through}
+.pcard .price{font-size:38px;font-weight:800;letter-spacing:-.02em;color:#17155E;margin:2px 0 4px}
+.pcard .price span{font-size:14px;font-weight:600;color:var(--ink-3);letter-spacing:0}
+.pcard ul{list-style:none;margin:16px 0 22px;padding:0;display:grid;gap:9px;font-size:14.5px;color:var(--ink-2)}
+.pcard ul li{display:flex;gap:9px;align-items:flex-start}
+.pcard ul li svg{flex:none;margin-top:2px;color:#409DA1}
+.pcard .btn{margin-top:auto;justify-content:center}
+.pcard .pop{position:absolute;top:-13px;right:22px;background:#84E488;color:#17155E;font-size:11px;font-weight:800;letter-spacing:.06em;padding:5px 12px;border-radius:999px}
+@media (max-width:760px){.pricing{grid-template-columns:1fr}.trialbar{flex-direction:column}}
 
 /* cta + footer */
 .cta{background:var(--navy-900);border-radius:26px;padding:64px 56px;position:relative;overflow:hidden;color:#fff}
@@ -376,6 +395,7 @@ header.hide{transform:translateY(-100%)}
       <a href="#keamanan">Keamanan</a>
       <a href="#status">Status &amp; Roadmap</a>
       <a href="#faq">FAQ</a>
+      <a href="#harga">Harga</a>
       <a href="/app/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2"/></svg>Login</a>
       <a class="btn btn-sky btn-app" href="/app/" target="_blank" rel="noopener">Buka Aplikasi
         <span class="chip" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
@@ -407,6 +427,7 @@ header.hide{transform:translateY(-100%)}
         <div><b>11 modul</b><span>saling terhubung</span></div>
         <div><b>5 poli</b><span>umum s.d. gigi &amp; mulut</span></div>
         <div><b>SOAP + ICD</b><span>format pencatatan klinis</span></div>
+        <div><b>7 hari</b><span>free trial semua fitur</span></div>
       </div>
     </div>
 
@@ -618,9 +639,56 @@ header.hide{transform:translateY(-100%)}
         <p>Tiga dokumen resmi yang berjalan saat ini: Surat Keterangan Sakit (dengan jumlah hari istirahat), Surat Keterangan Berbadan Sehat, dan Surat Rujukan — semuanya terisi otomatis dari data kunjungan pasien dan siap dicetak dari aplikasi.</p>
       </details>
       <details>
+        <summary>Apakah ada free trial sebelum berlangganan?</summary>
+        <p>Ada — setiap klinik yang mendaftar mendapat <strong>free trial 7 hari</strong> dengan semua fitur aktif, tanpa kartu kredit. Setelah masa trial selesai, data klinik tetap aman tersimpan: lanjutkan dengan paket Basic atau Pro dari menu Pengaturan &rarr; Langganan, atau unduh data Anda dan berhenti — tidak ada kewajiban apa pun.</p>
+      </details>
+      <details>
         <summary>Kalau klinik ingin berhenti memakai sistem ini, bagaimana data pasiennya?</summary>
         <p>Data dapat diunduh sebagai file backup JSON dari menu Pengaturan kapan saja, tanpa perlu menghubungi siapa pun. Data pasien adalah milik faskes — sistem tidak menahannya.</p>
       </details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HARGA ================= -->
+<section id="harga" style="padding-top:20px">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Dua paket, harga tertulis apa adanya.</h2>
+      <p>Mulai dengan free trial, lanjutkan hanya bila cocok. Tidak ada biaya per pasien, tidak ada biaya pemasangan.</p>
+    </div>
+    <div class="trialbar rv d1">
+      <span class="tb-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <p><b>Free trial 7 hari</b> untuk setiap klinik yang mendaftar — semua fitur aktif, tanpa kartu kredit. Selesai trial, data Anda tetap aman: lanjutkan berlangganan atau unduh data Anda kapan saja.</p>
+    </div>
+    <div class="pricing rv d2">
+      <div class="pcard">
+        <div><span class="disc">DISKON 50%</span></div>
+        <h3>Basic</h3>
+        <div class="normal">Rp158.000</div>
+        <div class="price">Rp79.000<span> / bulan</span></div>
+        <ul>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Semua 11 modul RME</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Multi-petugas dengan peran &amp; hak akses</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Jejak audit &amp; backup data</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Integrasi SATUSEHAT</li>
+        </ul>
+        <a class="btn btn-sky" href="/app/" target="_blank" rel="noopener">Mulai Free Trial 7 Hari</a>
+      </div>
+      <div class="pcard pro">
+        <span class="pop">PALING LENGKAP</span>
+        <div><span class="disc">DISKON 50%</span></div>
+        <h3>Pro</h3>
+        <div class="normal">Rp298.000</div>
+        <div class="price">Rp149.000<span> / bulan</span></div>
+        <ul>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Semua fitur Basic</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Bridging P-Care BPJS</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Antrean Mobile JKN</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Prioritas dukungan</li>
+        </ul>
+        <a class="btn btn-sky" href="/app/" target="_blank" rel="noopener">Mulai Free Trial 7 Hari</a>
+      </div>
     </div>
   </div>
 </section>
