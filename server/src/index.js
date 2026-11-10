@@ -37,6 +37,24 @@ const config = {
   midtransIsProduction: process.env.MIDTRANS_ENV === 'production'
 };
 
+// Fail-fast production: JANGAN PERNAH jalan dengan secret bawaan.
+// Tanpa JWT_SECRET/VAULT_KEY yang sah, siapa pun yang membaca repo bisa
+// memalsukan token dan membuka brankas kredensial — lebih aman menolak start.
+if (config.nodeEnv === 'production') {
+  const problems = [];
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 ||
+      process.env.JWT_SECRET === 'dev-secret-ganti-di-produksi-minimal-32-karakter') {
+    problems.push('JWT_SECRET wajib diisi string acak minimal 32 karakter');
+  }
+  if (!/^[0-9a-fA-F]{64}$/.test(process.env.VAULT_KEY || '') || /^0+$/.test(process.env.VAULT_KEY || '')) {
+    problems.push('VAULT_KEY wajib 64 karakter hex acak (bukan bawaan nol)');
+  }
+  if (problems.length) {
+    console.error('[rekammedis-server] MENOLAK START (production): ' + problems.join('; '));
+    process.exit(1);
+  }
+}
+
 const db = openDb(config.dbPath);
 const ctx = { db, config };
 
@@ -122,7 +140,7 @@ const server = http.createServer(async (req, rawRes) => {
   const pathname = url.pathname;
 
   if (pathname === '/api/health') {
-    return res.json(200, { ok: true, service: 'rekammedis-server', env: config.nodeEnv, time: nowIso() });
+    return res.json(200, { ok: true, service: 'rekammedis-server', time: nowIso() });
   }
 
   // Panel platform (statis)

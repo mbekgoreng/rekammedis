@@ -19,11 +19,24 @@ export function registerPlatformRoutes(router, ctx) {
   const { db } = ctx;
   const guard = requirePlatform(ctx);
 
+  // Kunci anti-brute-force sama seperti login klinik: 8 gagal -> 15 menit.
+  const failedLogins = new Map(); // email -> {count, lockedUntil}
+
   router.post('/api/platform/login', (req, res, body) => {
-    const admin = db.prepare('SELECT * FROM platform_admins WHERE email = ?').get(String(body?.email || '').toLowerCase());
+    const email = String(body?.email || '').toLowerCase();
+    const lock = failedLogins.get(email);
+    if (lock && lock.lockedUntil > Date.now()) {
+      return res.json(423, { error: 'Terlalu banyak percobaan gagal. Login platform dikunci sementara 15 menit.' });
+    }
+    const admin = db.prepare('SELECT * FROM platform_admins WHERE email = ?').get(email);
     if (!admin || !verifyPassword(String(body?.password || ''), admin.password_hash)) {
+      const entry = failedLogins.get(email) || { count: 0, lockedUntil: 0 };
+      entry.count += 1;
+      if (entry.count >= 8) { entry.lockedUntil = Date.now() + 15 * 60 * 1000; entry.count = 0; }
+      failedLogins.set(email, entry);
       return res.json(401, { error: 'Email atau kata sandi platform salah.' });
     }
+    failedLogins.delete(email);
     const token = signJwt({ sub: admin.id, email: admin.email, kind: 'platform' }, ctx.config.jwtSecret, 8 * 3600);
     return res.json(200, { token, email: admin.email });
   });

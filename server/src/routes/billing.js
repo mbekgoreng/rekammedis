@@ -93,7 +93,11 @@ export function registerBillingRoutes(router, ctx) {
     const { order_id, status_code, gross_amount, signature_key, transaction_status } = body || {};
     const expected = crypto.createHash('sha512')
       .update(`${order_id}${status_code}${gross_amount}${config.midtransServerKey}`).digest('hex');
-    if (signature_key !== expected) return res.json(403, { error: 'Signature tidak valid.' });
+    const sigBuf = Buffer.from(String(signature_key || ''));
+    const expBuf = Buffer.from(expected);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      return res.json(403, { error: 'Signature tidak valid.' });
+    }
     const payment = db.prepare('SELECT * FROM payments WHERE gateway_ref = ?').get(order_id);
     if (!payment) return res.json(404, { error: 'Pembayaran tidak ditemukan.' });
     if (transaction_status === 'settlement' || transaction_status === 'capture') {

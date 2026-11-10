@@ -75,6 +75,11 @@
 </main>
 <script>
 const token = () => localStorage.getItem('rm_platform_token') || '';
+// Semua kolom dari input publik (nama klinik, email, subjek, dst) WAJIB
+// di-escape sebelum masuk innerHTML — mencegah stored XSS ke superadmin.
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[c]));
 const rp = (n) => 'Rp' + Number(n || 0).toLocaleString('id-ID');
 async function api(path, opts = {}) {
   const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token(), ...(opts.headers || {}) } });
@@ -97,20 +102,20 @@ async function loadAll() {
   stClinics.textContent = ov.clinics; stUsers.textContent = ov.users;
   stRevenue.textContent = rp(ov.revenueTotal); stPending.textContent = ov.pendingPayments;
   paymentsBody.innerHTML = pay.payments.length ? pay.payments.map(p => `<tr>
-    <td>${p.created_at.slice(0, 16).replace('T', ' ')}</td><td>${p.clinic_name}</td>
-    <td>${p.plan} × ${p.months} bln</td><td>${rp(p.amount)}</td><td>${p.gateway || '-'}</td>
+    <td>${p.created_at.slice(0, 16).replace('T', ' ')}</td><td>${esc(p.clinic_name)}</td>
+    <td>${esc(p.plan)} × ${p.months} bln</td><td>${rp(p.amount)}</td><td>${esc(p.gateway || '-')}</td>
     <td>${p.status === 'paid' ? badge('LUNAS', 'b-green') : p.status === 'awaiting_confirmation' ? badge('MENUNGGU KONFIRMASI', 'b-amber') : badge(p.status.toUpperCase(), 'b-slate')}</td>
     <td>${p.status === 'awaiting_confirmation' ? `<button onclick="confirmPay('${p.id}')">Konfirmasi</button>` : ''}</td></tr>`).join('')
     : '<tr><td colspan="7">Belum ada pembayaran.</td></tr>';
   clinicsBody.innerHTML = cl.clinics.map(c => `<tr>
-    <td><strong>${c.name}</strong><br><small>${c.faskes_code || ''} • daftar ${c.created_at.slice(0, 10)}</small></td>
-    <td>${c.email || '-'}</td><td>${c.user_count}</td><td>${subBadge(c.subscription)}</td>
+    <td><strong>${esc(c.name)}</strong><br><small>${esc(c.faskes_code || '')} • daftar ${c.created_at.slice(0, 10)}</small></td>
+    <td>${esc(c.email || '-')}</td><td>${c.user_count}</td><td>${subBadge(c.subscription)}</td>
     <td><div class="row" style="align-items:center">
       <select id="plan-${c.id}"><option value="basic">Basic</option><option value="pro">Pro</option></select>
       <select id="mo-${c.id}"><option>1</option><option>3</option><option>6</option><option>12</option></select>
       <button onclick="activate('${c.id}')">Aktifkan</button></div></td></tr>`).join('');
   outboxBody.innerHTML = out.outbox.length ? out.outbox.map(m => `<tr>
-    <td>${m.created_at.slice(0, 16).replace('T', ' ')}</td><td>${m.to_email}</td><td>${m.subject}</td>
+    <td>${m.created_at.slice(0, 16).replace('T', ' ')}</td><td>${esc(m.to_email)}</td><td>${esc(m.subject)}</td>
     <td>${m.sent_at ? badge('TERKIRIM', 'b-green') : badge('DI OUTBOX', 'b-slate')}</td></tr>`).join('')
     : '<tr><td colspan="4">Outbox kosong.</td></tr>';
 }

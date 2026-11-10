@@ -11,6 +11,12 @@ import { sendMail } from '../mailer.js';
 
 const failedLogins = new Map(); // email -> {count, lockedUntil}
 
+// Nama klinik/admin berasal dari input publik — wajib di-escape sebelum
+// masuk HTML email agar tidak menyuntikkan markup ke kotak surat admin.
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[c]));
+
 function publicUser(u) {
   return {
     id: u.id, clinicId: u.clinic_id, email: u.email, name: u.name,
@@ -73,7 +79,7 @@ export function registerAuthRoutes(router, ctx) {
     const mail = await sendMail(ctx, {
       to: user.email,
       subject: 'Verifikasi email RekamMedis',
-      html: `<p>Halo ${adminName},</p><p>Klinik <strong>${clinicName}</strong> berhasil didaftarkan. Klik tautan berikut untuk memverifikasi email Anda (berlaku 48 jam):</p><p><a href="${link}">${link}</a></p>`
+      html: `<p>Halo ${escHtml(adminName)},</p><p>Klinik <strong>${escHtml(clinicName)}</strong> berhasil didaftarkan. Klik tautan berikut untuk memverifikasi email Anda (berlaku 48 jam):</p><p><a href="${link}">${link}</a></p>`
     });
     audit(ctx, clinicId, userId, 'clinic.registered', clinicName, req);
     const session = issueSession(ctx, user, true);
