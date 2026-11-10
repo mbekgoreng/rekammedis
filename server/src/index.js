@@ -97,9 +97,25 @@ const platformDir = path.join(__dirname, '..', 'public', 'platform');
 
 const server = http.createServer(async (req, rawRes) => {
   const res = makeRes(rawRes);
-  rawRes.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*');
-  rawRes.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  rawRes.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  // Header keamanan dasar untuk semua respons API/panel.
+  rawRes.setHeader('X-Content-Type-Options', 'nosniff');
+  rawRes.setHeader('X-Frame-Options', 'DENY');
+  rawRes.setHeader('Referrer-Policy', 'no-referrer');
+  if (config.nodeEnv === 'production') {
+    rawRes.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  // CORS: JANGAN wildcard. Tanpa CORS_ORIGIN, API hanya untuk origin yang
+  // sama (frontend satu origin / reverse proxy). Bila frontend beda origin,
+  // set CORS_ORIGIN ke daftar origin persis (pisahkan koma) di .env.
+  const allowedOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',').map((o) => o.trim()).filter(Boolean);
+  const reqOrigin = req.headers.origin;
+  if (reqOrigin && allowedOrigins.includes(reqOrigin)) {
+    rawRes.setHeader('Access-Control-Allow-Origin', reqOrigin);
+    rawRes.setHeader('Vary', 'Origin');
+    rawRes.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    rawRes.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  }
   if (req.method === 'OPTIONS') { rawRes.writeHead(204); rawRes.end(); return; }
 
   const url = new URL(req.url, 'http://localhost');
