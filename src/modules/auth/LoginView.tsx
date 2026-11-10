@@ -418,6 +418,15 @@ export const LoginView: React.FC<{ onAuthenticated: () => void }> = ({ onAuthent
                   Ruang kerja klinik dibuat atas nama klinik Anda — lengkap dengan akun admin pertama.
                   Staf lain ditambahkan nanti lewat Manajemen Pengguna.
                 </p>
+                {apiChecked && (apiMode ? (
+                  <p className="text-xs leading-relaxed text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mt-3">
+                    <strong>Free trial 7 hari</strong> — klinik baru langsung mendapat masa coba 7 hari dengan semua fitur aktif, tanpa kartu kredit. Setelah trial, lanjutkan lewat Pengaturan → Langganan.
+                  </p>
+                ) : (
+                  <p className="text-xs leading-relaxed text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mt-3">
+                    Mode lokal (demo): ruang kerja langsung aktif di perangkat ini. Free trial 7 hari berlaku untuk pendaftaran klinik yang terhubung ke server RekamMedis.
+                  </p>
+                ))}
               </div>
               <fieldset className="space-y-3">
                 <legend className="text-[11px] font-extrabold uppercase tracking-wider text-[#2F698B]">Data Klinik</legend>

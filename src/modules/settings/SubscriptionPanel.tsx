@@ -67,7 +67,7 @@ export const SubscriptionPanel: React.FC = () => {
         <BadgeCheck className="w-5 h-5 shrink-0 text-clinical-600" />
         <div className="text-xs text-slate-700 leading-relaxed">
           <p className="font-bold text-slate-800">
-            Status: {sub ? (sub.expired ? 'BERAKHIR — perpanjang untuk melanjutkan pencatatan ke server' : sub.status === 'trialing' ? `Masa trial sampai ${sub.trialEndsAt?.slice(0, 10)}` : `Paket ${sub.plan.toUpperCase()} aktif sampai ${sub.currentPeriodEnd?.slice(0, 10)}`) : 'Memuat…'}
+            Status: {sub ? (sub.expired ? 'BERAKHIR — perpanjang untuk melanjutkan pencatatan ke server' : sub.status === 'trialing' ? `Masa trial sampai ${sub.trialEndsAt?.slice(0, 10)}${sub.trialEndsAt ? ` (sisa ${Math.max(0, Math.ceil((new Date(sub.trialEndsAt).getTime() - Date.now()) / 86400000))} hari)` : ''}` : `Paket ${sub.plan.toUpperCase()} aktif sampai ${sub.currentPeriodEnd?.slice(0, 10)}`) : 'Memuat…'}
           </p>
           <p>Data klinik Anda tetap aman tersimpan meski langganan berakhir; penulisan data baru ke server dijeda sampai perpanjangan aktif.</p>
         </div>

@@ -81,6 +81,13 @@ const SubscriptionBanner: React.FC = () => {
       </div>
     );
   }
+  if (info.status === 'trialing' && trialDays !== null) {
+    return (
+      <div className="bg-clinical-600 text-white text-center text-xs font-semibold px-4 py-2">
+        Free trial aktif — tersisa {Math.max(trialDays, 0)} hari. Semua fitur tersedia; aktifkan langganan kapan pun di Pengaturan → Langganan.
+      </div>
+    );
+  }
   return null;
 };
 
