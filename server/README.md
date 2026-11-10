@@ -19,7 +19,7 @@ node src/index.js      # Node >= 22, tanpa npm install (nol dependensi)
 
 | Bagian | Isi |
 |---|---|
-| `src/routes/auth.js` | Registrasi klinik (trial 14 hari), login JWT, ganti/reset sandi, verifikasi email, kunci brute-force |
+| `src/routes/auth.js` | Registrasi klinik (trial 7 hari), login JWT, ganti/reset sandi, verifikasi email, kunci brute-force |
 | `src/routes/data.js` | Data aplikasi per klinik (`clinic_data`), isolasi tenant, optimistic concurrency (versi), gerbang langganan berakhir (402 untuk penulisan) |
 | `src/routes/clinicUsers.js` | Akun petugas per klinik (hanya admin): buat, reset sandi, aktif/nonaktifkan |
 | `src/routes/integrations.js` | Brankas kredensial terenkripsi AES-256-GCM (SATUSEHAT & P-Care), uji koneksi, sinkron rekam medis, cek peserta |

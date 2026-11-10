@@ -1,5 +1,5 @@
 // Rute autentikasi & registrasi klinik.
-// - Registrasi klinik: membuat klinik + akun admin + langganan trial 14 hari +
+// - Registrasi klinik: membuat klinik + akun admin + langganan trial 7 hari +
 //   token verifikasi email. Email admin unik lintas klinik.
 // - Login: JWT (12 jam, atau 7 hari bila "ingat saya"), memuat clinicId & peran.
 // - Lupa sandi: token sekali pakai (hash disimpan), tautan dikirim via mailer.
@@ -55,7 +55,8 @@ export function registerAuthRoutes(router, ctx) {
     const clinicId = newId('clinic');
     const userId = newId('user');
     const now = nowIso();
-    const trialEnd = new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString();
+    // Free trial 7 hari untuk setiap klinik baru (keputusan owner 2026-11-10).
+    const trialEnd = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
     db.exec('BEGIN');
     try {
       db.prepare('INSERT INTO clinics (id, name, faskes_code, email, phone, address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
