@@ -16,6 +16,7 @@ import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { LabOrder } from '../../types';
+import { isAbnormalResult, labPanelItems, findCriticalResults } from '../../lib/labReference';
 
 export const LaboratoryView: React.FC = () => {
   const {
@@ -44,29 +45,9 @@ export const LaboratoryView: React.FC = () => {
   // Input result state for selected test
   const [editingResultValues, setEditingResultValues] = useState<Record<number, string>>({});
 
-  // Kelainan dinilai dari rentang rujukan MASING-MASING parameter, bukan ambang tunggal.
-  const parseBound = (raw: string): number => {
-    const t = raw.trim().replace(',', '.');
-    // "4.000" (titik = pemisah ribuan) vs "13.0" (titik = desimal)
-    if (/^\d{1,3}\.\d{3}$/.test(t)) return parseFloat(t.replace('.', ''));
-    return parseFloat(t);
-  };
-
-  const computeAbnormal = (value: string, referenceRange: string): boolean => {
-    const v = value.trim();
-    if (!v) return false;
-    const parts = referenceRange.split('-').map((p) => p.trim());
-    if (parts.length === 2) {
-      const lo = parseBound(parts[0]);
-      const hi = parseBound(parts[1]);
-      const num = parseBound(v);
-      if (!Number.isNaN(lo) && !Number.isNaN(hi) && !Number.isNaN(num)) {
-        return num < lo || num > hi;
-      }
-    }
-    // Rentang non-numerik (mis. "Negatif"): hasil berbeda dari rujukan = abnormal
-    return v.toLowerCase() !== referenceRange.trim().toLowerCase();
-  };
+  // Kelainan dinilai oleh mesin rujukan bersama (src/lib/labReference.ts):
+  // memahami rentang '< x' / '> x' dan rentang per jenis kelamin.
+  const computeAbnormal = (value: string, referenceRange: string): boolean => isAbnormalResult(value, referenceRange);
 
   const handleSaveResultValues = (orderId: string) => {
     const order = labOrders.find((o) => o.id === orderId);
@@ -87,29 +68,7 @@ export const LaboratoryView: React.FC = () => {
     const patient = patients.find((p) => p.id === selectedPatientId);
     if (!patient) return;
 
-    let items = [
-      { testName: 'Hemoglobin (Hb)', category: 'Hematologi', referenceRange: '13.0 - 17.5', unit: 'g/dL' },
-      { testName: 'Leukosit', category: 'Hematologi', referenceRange: '4.000 - 10.000', unit: '/µL' },
-      { testName: 'Trombosit', category: 'Hematologi', referenceRange: '150.000 - 450.000', unit: '/µL' },
-      { testName: 'Hematokrit', category: 'Hematologi', referenceRange: '40 - 52', unit: '%' }
-    ];
-
-    if (testCategory === 'Kimia Klinik') {
-      items = [
-        { testName: 'Glukosa Darah Puasa (GDP)', category: 'Kimia Klinik', referenceRange: '70 - 100', unit: 'mg/dL' },
-        { testName: 'Ureum Darah', category: 'Fungsi Ginjal', referenceRange: '15 - 45', unit: 'mg/dL' },
-        { testName: 'Kreatinin Serum', category: 'Fungsi Ginjal', referenceRange: '0.7 - 1.3', unit: 'mg/dL' },
-        { testName: 'SGOT (AST)', category: 'Fungsi Hati', referenceRange: '< 35', unit: 'U/L' },
-        { testName: 'SGPT (ALT)', category: 'Fungsi Hati', referenceRange: '< 45', unit: 'U/L' }
-      ];
-    } else if (testCategory === 'Profil Lipid') {
-      items = [
-        { testName: 'Kolesterol Total', category: 'Profil Lipid', referenceRange: '< 200', unit: 'mg/dL' },
-        { testName: 'Kolesterol HDL', category: 'Profil Lipid', referenceRange: '> 40', unit: 'mg/dL' },
-        { testName: 'Kolesterol LDL', category: 'Profil Lipid', referenceRange: '< 100', unit: 'mg/dL' },
-        { testName: 'Trigliserida', category: 'Profil Lipid', referenceRange: '< 150', unit: 'mg/dL' }
-      ];
-    }
+    const items = labPanelItems(testCategory, patient.gender);
 
     const created = createLabOrder({
       patientId: patient.id,
@@ -260,12 +219,19 @@ export const LaboratoryView: React.FC = () => {
                           </td>
                           <td className="py-2 px-2.5">
                             {item.resultValue ? (
-                              <span
-                                className={`font-mono font-bold ${
-                                  item.isAbnormal ? 'text-red-600 bg-red-50 px-1 rounded' : 'text-slate-900'
-                                }`}
-                              >
-                                {item.resultValue} {item.unit}
+                              <span className="inline-flex items-center gap-1.5">
+                                <span
+                                  className={`font-mono font-bold ${
+                                    item.isAbnormal ? 'text-red-600 bg-red-50 px-1 rounded' : 'text-slate-900'
+                                  }`}
+                                >
+                                  {item.resultValue} {item.unit}
+                                </span>
+                                {findCriticalResults([item]).length > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[10px] font-black animate-pulse">
+                                    KRITIS
+                                  </span>
+                                )}
                               </span>
                             ) : (
                               <input

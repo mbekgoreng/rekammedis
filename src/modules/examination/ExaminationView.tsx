@@ -20,7 +20,9 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
 import { Badge } from '../../components/common/Badge';
-import { COMMON_ICD10_LIST } from '../../data/mockData';
+import { ICD10_PRIMARY_CARE } from '../../data/icd10';
+import { findAllergyConflict } from '../../lib/allergy';
+import { labPanelItems } from '../../lib/labReference';
 import {
   Patient,
   DiagnosisItem,
@@ -34,35 +36,6 @@ interface ExaminationViewProps {
   onNavigate: (module: string) => void;
   onSelectPatient: (patientId: string) => void;
 }
-
-// Paket panel laboratorium — daftar yang SAMA PERSIS dengan yang dipakai
-// LaboratoryView saat membuat order (jangan diubah sepihak di sini saja).
-const labPanelItems = (category: string) => {
-  if (category === 'Kimia Klinik') {
-    return [
-      { testName: 'Glukosa Darah Puasa (GDP)', category: 'Kimia Klinik', referenceRange: '70 - 100', unit: 'mg/dL' },
-      { testName: 'Ureum Darah', category: 'Fungsi Ginjal', referenceRange: '15 - 45', unit: 'mg/dL' },
-      { testName: 'Kreatinin Serum', category: 'Fungsi Ginjal', referenceRange: '0.7 - 1.3', unit: 'mg/dL' },
-      { testName: 'SGOT (AST)', category: 'Fungsi Hati', referenceRange: '< 35', unit: 'U/L' },
-      { testName: 'SGPT (ALT)', category: 'Fungsi Hati', referenceRange: '< 45', unit: 'U/L' }
-    ];
-  }
-  if (category === 'Profil Lipid') {
-    return [
-      { testName: 'Kolesterol Total', category: 'Profil Lipid', referenceRange: '< 200', unit: 'mg/dL' },
-      { testName: 'Kolesterol HDL', category: 'Profil Lipid', referenceRange: '> 40', unit: 'mg/dL' },
-      { testName: 'Kolesterol LDL', category: 'Profil Lipid', referenceRange: '< 100', unit: 'mg/dL' },
-      { testName: 'Trigliserida', category: 'Profil Lipid', referenceRange: '< 150', unit: 'mg/dL' }
-    ];
-  }
-  // Hematologi (panel default LaboratoryView)
-  return [
-    { testName: 'Hemoglobin (Hb)', category: 'Hematologi', referenceRange: '13.0 - 17.5', unit: 'g/dL' },
-    { testName: 'Leukosit', category: 'Hematologi', referenceRange: '4.000 - 10.000', unit: '/µL' },
-    { testName: 'Trombosit', category: 'Hematologi', referenceRange: '150.000 - 450.000', unit: '/µL' },
-    { testName: 'Hematokrit', category: 'Hematologi', referenceRange: '40 - 52', unit: '%' }
-  ];
-};
 
 export const ExaminationView: React.FC<ExaminationViewProps> = ({
   selectedPatientId,
@@ -78,6 +51,7 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     medicalRecords,
     labOrders,
     radiologyOrders,
+    queues,
     createLabOrder,
     createRadiologyOrder
   } = useStore();
@@ -94,32 +68,35 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
   const [pastIllness, setPastIllness] = useState('');
   const [currentMedications, setCurrentMedications] = useState('');
 
-  // Objective - Vital Signs
+  // Objective - Vital Signs — WAJIB KOSONG secara default (0 = belum diisi).
+  // Nilai "normal" karangan pada form pemeriksaan adalah fabrikasi data pada
+  // dokumen legal; tanda vital hanya boleh berisi angka yang benar-benar
+  // diukur pada kunjungan ini (atau dimuat dari draft milik pasien ini).
   const [vitals, setVitals] = useState({
-    systolic: 120,
-    diastolic: 80,
-    heartRate: 78,
-    temperature: 36.5,
-    respiratoryRate: 18,
-    spO2: 99,
-    weight: 65,
-    height: 168
+    systolic: 0,
+    diastolic: 0,
+    heartRate: 0,
+    temperature: 0,
+    respiratoryRate: 0,
+    spO2: 0,
+    weight: 0,
+    height: 0
   });
 
-  // Physical Exam
+  // Physical Exam — kosong secara default (temuan hanya yang benar-benar diperiksa)
   const [physicalExam, setPhysicalExam] = useState({
-    head: 'Mesocephal, jejas (-)',
-    eyes: 'Konjungtiva anemis (-/-), sklera ikterik (-/-)',
-    ears: 'Normotia, sekret (-/-)',
-    nose: 'Deformitas (-), sekret (-)',
-    throat: 'Faring hiperemis (-), tonsil T1/T1 tenang',
-    neck: 'Pembesaran KGB (-), JVP normal',
-    thorax: 'Simetris, retraksi (-)',
-    heart: 'S1-S2 murni reguler, murmur (-), gallop (-)',
-    lungs: 'Vesikuler (+/+), rhonki (-/-), wheezing (-/-)',
-    abdomen: 'Supel, bising usus (+) normal, nyeri tekan (-)',
-    extremities: 'Akral hangat, CRT < 2 detik, edema (-/-)',
-    neurological: 'GCS E4M6V5 (15), reflek fisiologis (+)'
+    head: '',
+    eyes: '',
+    ears: '',
+    nose: '',
+    throat: '',
+    neck: '',
+    thorax: '',
+    heart: '',
+    lungs: '',
+    abdomen: '',
+    extremities: '',
+    neurological: ''
   });
 
   // Assessment - Diagnoses (mulai kosong: diagnosa tidak boleh terisi karangan)
@@ -130,9 +107,9 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
   const [icdSearchQuery, setIcdSearchQuery] = useState('');
 
   // Plan
-  const [therapyPlan, setTherapyPlan] = useState('Edukasi pola hidup sehat, kurangi konsumsi natrium, istirahat cukup.');
+  const [therapyPlan, setTherapyPlan] = useState('');
   const [doctorNotes, setDoctorNotes] = useState('');
-  const [nextVisitDate, setNextVisitDate] = useState('2026-03-15');
+  const [nextVisitDate, setNextVisitDate] = useState('');
 
   // Procedures
   const [procedures, setProcedures] = useState<MedicalProcedure[]>([
@@ -149,6 +126,7 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
   const [medQty, setMedQty] = useState(15);
   const [medInstruction, setMedInstruction] = useState('Minum teratur setelah makan');
   const [rxError, setRxError] = useState<string | null>(null);
+  const [manualDxName, setManualDxName] = useState('');
 
   // Penunjang: order lab & radiologi dari pemeriksaan (paket/jenis sama
   // dengan yang dipakai LaboratoryView & RadiologyView)
@@ -174,7 +152,7 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     setPresentIllness('');
     setPastIllness('');
     setCurrentMedications('');
-    setVitals({ systolic: 120, diastolic: 80, heartRate: 78, temperature: 36.5, respiratoryRate: 18, spO2: 99, weight: 65, height: 168 });
+    setVitals({ systolic: 0, diastolic: 0, heartRate: 0, temperature: 0, respiratoryRate: 0, spO2: 0, weight: 0, height: 0 });
     setPhysicalExam({
       head: '', eyes: '', ears: '', nose: '', throat: '', neck: '',
       thorax: '', heart: '', lungs: '', abdomen: '', extremities: '', neurological: ''
@@ -183,6 +161,7 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     setClinicalImpression('');
     setTherapyPlan('');
     setDoctorNotes('');
+    setNextVisitDate('');
     setProcedures([{ id: 'p-1', code: '00.01', name: 'Pemeriksaan Klinis & Konsultasi Dokter', cost: 150000 }]);
     setPrescriptions([]);
     setSaveError(null);
@@ -253,7 +232,16 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
   };
 
   const handleRemoveDiagnosis = (id: string) => {
-    setDiagnoses((prev) => prev.filter((d) => d.id !== id));
+    setDiagnoses((prev) => {
+      const removed = prev.find((d) => d.id === id);
+      const rest = prev.filter((d) => d.id !== id);
+      // Diagnosa primer tidak boleh hilang diam-diam: bila yang dihapus
+      // adalah primer, diagnosa pertama yang tersisa naik menjadi primer.
+      if (removed?.isPrimary && rest.length > 0 && !rest.some((d) => d.isPrimary)) {
+        rest[0] = { ...rest[0], isPrimary: true };
+      }
+      return rest;
+    });
   };
 
   // Add prescription item — qty wajib bilangan bulat >= 1 dan total qty obat
@@ -263,6 +251,18 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     if (!med) return;
     setRxError(null);
 
+    // Satu obat = satu baris resep. Baris ganda merusak agregasi stok saat
+    // penyerahan dan membingungkan telaah apoteker.
+    if (prescriptions.some((p) => p.medicineId === med.id)) {
+      setRxError(`${med.name} sudah ada di resep ini — sesuaikan jumlah pada baris yang ada, jangan menambahkan baris ganda.`);
+      return;
+    }
+    // Obat kedaluwarsa tidak boleh diresepkan.
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (med.expiryDate && med.expiryDate < todayStr) {
+      setRxError(`${med.name} sudah melewati tanggal kedaluwarsa (${med.expiryDate}) dan tidak boleh diresepkan.`);
+      return;
+    }
     if (!Number.isInteger(medQty) || medQty < 1) {
       setRxError(`Jumlah obat ${med.name} tidak valid: harus bilangan bulat minimal 1 (terisi ${medQty}).`);
       return;
@@ -302,17 +302,13 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     setPrescriptions((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Check allergy conflict — SATU logika pencocokan untuk banner peringatan
-  // maupun pemblokiran simpan final: kembalikan nama alergi yang cocok.
+  // Check allergy conflict — pencocokan berbasis GOLONGAN obat
+  // (src/lib/allergy.ts): alergi "Penicillin" menangkap "Amoxicillin",
+  // bukan lagi substring nama semata. Satu logika untuk banner peringatan
+  // maupun pemblokiran simpan final.
   const getAllergyConflict = (medName: string): string | null => {
     if (!activePatient || activePatient.allergies.length === 0) return null;
-    return (
-      activePatient.allergies.find(
-        (allergy) =>
-          medName.toLowerCase().includes(allergy.toLowerCase()) ||
-          allergy.toLowerCase().includes(medName.toLowerCase())
-      ) || null
-    );
+    return findAllergyConflict(medName, activePatient.allergies);
   };
 
   const checkAllergyWarning = (medName: string) => getAllergyConflict(medName) !== null;
@@ -323,6 +319,18 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
   const validateVitalsForFinal = (): string[] => {
     const errs: string[] = [];
     const filled = (v: number) => Number.isFinite(v) && v !== 0;
+    // Vital inti WAJIB benar-benar diukur untuk rekam final — final dengan
+    // TD/nadi/suhu/SpO2 kosong berarti pemeriksaan tidak terdokumentasi.
+    const required: [string, number][] = [
+      ['Tekanan darah sistol', vitals.systolic],
+      ['Tekanan darah diastol', vitals.diastolic],
+      ['Denyut nadi', vitals.heartRate],
+      ['Suhu tubuh', vitals.temperature],
+      ['SpO2', vitals.spO2]
+    ];
+    required.forEach(([label, v]) => {
+      if (!filled(v)) errs.push(`${label} belum diisi — ukur dan catat tanda vital pasien untuk rekam final`);
+    });
     const check = (label: string, value: number, min: number, max: number, unit: string) => {
       if (filled(value) && (value < min || value > max)) {
         errs.push(`${label} ${value} ${unit} di luar rentang aman (${min}–${max} ${unit})`);
@@ -344,6 +352,24 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
     return errs;
   };
 
+  // Kunjungan final terakhir pasien ini — kesinambungan antar kunjungan:
+  // dokter tidak boleh memeriksa "buta" tanpa konteks terapi sebelumnya.
+  const lastFinalRecords = medicalRecords
+    .filter((r) => r.patientId === currentPatientId && r.status === 'Final')
+    .sort((a, b) => (b.visitDate + b.updatedAt).localeCompare(a.visitDate + a.updatedAt))
+    .slice(0, 3);
+
+  const handleCopyLastTherapy = () => {
+    const last = lastFinalRecords[0];
+    if (!last) return;
+    setPrescriptions(
+      last.plan.prescriptions.map((p, i) => ({ ...p, id: `rx-item-copy-${Date.now()}-${i}` }))
+    );
+    if (last.subjective.currentMedications) {
+      setCurrentMedications(last.subjective.currentMedications);
+    }
+  };
+
   // Order penunjang untuk pasien yang sedang diperiksa
   const patientLabOrders = labOrders.filter((o) => o.patientId === currentPatientId);
   const patientRadOrders = radiologyOrders.filter((o) => o.patientId === currentPatientId);
@@ -357,7 +383,7 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
       patientName: activePatient.name,
       mrNumber: activePatient.mrNumber,
       doctorName: currentUser.name,
-      items: labPanelItems(labCategory),
+      items: labPanelItems(labCategory, activePatient.gender),
       notes: `Order ${labCategory} rujukan klinis`
     });
     setOrderSuccess(`Order laboratorium ${created.orderNumber} (${labCategory}) dibuat untuk ${activePatient.name} dan diteruskan ke instalasi laboratorium.`);
@@ -398,6 +424,10 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
       setSaveError('Rekam medis final wajib memiliki minimal satu diagnosa ICD-10.');
       return;
     }
+    if (!isDraft && diagnoses.filter((d) => d.isPrimary).length !== 1) {
+      setSaveError('Rekam medis final wajib memiliki tepat satu diagnosa primer. Tandai satu diagnosa sebagai diagnosa utama.');
+      return;
+    }
 
     // Keamanan simpan FINAL (draft sengaja dibiarkan longgar agar pekerjaan
     // dokter tidak hilang): tanda vital wajib dalam rentang aman, dan obat
@@ -432,7 +462,16 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
       doctorName: currentUser.name,
       department: currentUser.department || 'Poli Umum',
       visitDate: new Date().toISOString().split('T')[0],
-      visitType: 'Kontrol Rutin' as const,
+      // Jenis kunjungan diteruskan dari antrean aktif pasien — dulu selalu
+      // ter-hardcode 'Kontrol Rutin' sehingga kunjungan baru/darurat/rujukan
+      // tercatat salah secara sistematis.
+      visitType: (() => {
+        const q = queues
+          .filter((x) => x.patientId === activePatient.id && x.status !== 'Selesai' && x.status !== 'Dibatalkan')
+          .sort((a, b) => (b.registeredTime || '').localeCompare(a.registeredTime || ''))[0];
+        const allowed = ['Baru', 'Kontrol Rutin', 'Rujukan', 'Darurat'];
+        return (q && q.visitType && allowed.includes(q.visitType) ? q.visitType : 'Baru') as 'Baru' | 'Kontrol Rutin' | 'Rujukan' | 'Darurat';
+      })(),
       subjective: {
         chiefComplaint: chiefComplaint.trim(),
         historyOfPresentIllness: presentIllness,
@@ -548,6 +587,52 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
         </div>
       )}
 
+      {/* Kesinambungan: kunjungan terakhir, penyakit kronis, tren TD */}
+      {activePatient && (lastFinalRecords.length > 0 || (activePatient.chronicDiseases || []).length > 0) && (
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm text-xs space-y-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="font-extrabold text-slate-800">Kunjungan Terakhir & Konteks Kronis</span>
+            {lastFinalRecords.length > 0 && (
+              <button
+                type="button"
+                onClick={handleCopyLastTherapy}
+                className="px-2.5 py-1 rounded-lg bg-clinical-600 hover:bg-clinical-700 text-white font-bold"
+              >
+                Salin Terapi Terakhir ke Resep
+              </button>
+            )}
+          </div>
+          {(activePatient.chronicDiseases || []).length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-slate-500 font-semibold">Penyakit kronis:</span>
+              {activePatient.chronicDiseases.map((c) => (
+                <span key={c} className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">{c}</span>
+              ))}
+            </div>
+          )}
+          {lastFinalRecords.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              {lastFinalRecords.map((r) => (
+                <div key={r.id} className="border border-slate-100 bg-slate-50 rounded-lg p-2.5 space-y-1">
+                  <div className="font-bold text-slate-700">{r.visitDate} — {r.doctorName}</div>
+                  <div className="text-slate-600">
+                    {(r.assessment.diagnoses.find((d) => d.isPrimary) || r.assessment.diagnoses[0])
+                      ? `${(r.assessment.diagnoses.find((d) => d.isPrimary) || r.assessment.diagnoses[0]).icd10Code} — ${(r.assessment.diagnoses.find((d) => d.isPrimary) || r.assessment.diagnoses[0]).nameIndonesian}`
+                      : 'Tanpa diagnosa tercatat'}
+                  </div>
+                  <div className="text-slate-500">
+                    TD {r.objective.vitals.systolic}/{r.objective.vitals.diastolic} mmHg • Nadi {r.objective.vitals.heartRate}x • BB {r.objective.vitals.weight} kg
+                  </div>
+                  {r.plan.prescriptions.length > 0 && (
+                    <div className="text-slate-500">Terapi: {r.plan.prescriptions.map((p) => p.medicineName).join(', ')}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Success Notification */}
       {saveSuccessMsg && (
         <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
@@ -654,21 +739,21 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
                 <Input
                   label="TD Sistol"
                   type="number"
-                  value={vitals.systolic}
+                  value={vitals.systolic || ""}
                   onChange={(e) => setVitals({ ...vitals, systolic: parseInt(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">mmHg</span>}
                 />
                 <Input
                   label="TD Diastol"
                   type="number"
-                  value={vitals.diastolic}
+                  value={vitals.diastolic || ""}
                   onChange={(e) => setVitals({ ...vitals, diastolic: parseInt(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">mmHg</span>}
                 />
                 <Input
                   label="Denyut Nadi"
                   type="number"
-                  value={vitals.heartRate}
+                  value={vitals.heartRate || ""}
                   onChange={(e) => setVitals({ ...vitals, heartRate: parseInt(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">bpm</span>}
                 />
@@ -676,35 +761,35 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
                   label="Suhu Tubuh"
                   type="number"
                   step="0.1"
-                  value={vitals.temperature}
+                  value={vitals.temperature || ""}
                   onChange={(e) => setVitals({ ...vitals, temperature: parseFloat(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">°C</span>}
                 />
                 <Input
                   label="Respirasi"
                   type="number"
-                  value={vitals.respiratoryRate}
+                  value={vitals.respiratoryRate || ""}
                   onChange={(e) => setVitals({ ...vitals, respiratoryRate: parseInt(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">x/m</span>}
                 />
                 <Input
                   label="SpO2"
                   type="number"
-                  value={vitals.spO2}
+                  value={vitals.spO2 || ""}
                   onChange={(e) => setVitals({ ...vitals, spO2: parseInt(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">%</span>}
                 />
                 <Input
                   label="Berat Badan"
                   type="number"
-                  value={vitals.weight}
+                  value={vitals.weight || ""}
                   onChange={(e) => setVitals({ ...vitals, weight: parseFloat(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">kg</span>}
                 />
                 <Input
                   label="Tinggi Badan"
                   type="number"
-                  value={vitals.height}
+                  value={vitals.height || ""}
                   onChange={(e) => setVitals({ ...vitals, height: parseFloat(e.target.value) || 0 })}
                   rightIcon={<span className="text-[10px] text-slate-400">cm</span>}
                 />
@@ -795,11 +880,11 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
               {/* Suggestions */}
               {icdSearchQuery.trim() && (
                 <div className="mt-2 bg-white border border-slate-200 rounded-lg p-2 max-h-36 overflow-y-auto space-y-1 shadow-2xs">
-                  {COMMON_ICD10_LIST.filter(
+                  {ICD10_PRIMARY_CARE.filter(
                     (i) =>
                       i.code.toLowerCase().includes(icdSearchQuery.toLowerCase()) ||
                       i.name.toLowerCase().includes(icdSearchQuery.toLowerCase())
-                  ).map((item) => (
+                  ).slice(0, 30).map((item) => (
                     <button
                       key={item.code}
                       type="button"
@@ -815,6 +900,35 @@ export const ExaminationView: React.FC<ExaminationViewProps> = ({
                       <span className="text-[10px] text-clinical-600 font-semibold">+ Tambah</span>
                     </button>
                   ))}
+                  {/* Entri kode manual: kode di luar subset tetap bisa dicatat
+                      asal polanya sahih ICD-10 — dokter tidak boleh dipaksa
+                      memilih kode "yang mirip". */}
+                  {/^[A-Za-z]\d{2}(\.\d{1,2})?$/.test(icdSearchQuery.trim()) &&
+                    !ICD10_PRIMARY_CARE.some((i) => i.code.toLowerCase() === icdSearchQuery.trim().toLowerCase()) && (
+                      <div className="flex items-center gap-2 pt-1.5 border-t border-slate-100">
+                        <span className="font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-xs">
+                          {icdSearchQuery.trim().toUpperCase()}
+                        </span>
+                        <input
+                          type="text"
+                          value={manualDxName}
+                          onChange={(e) => setManualDxName(e.target.value)}
+                          placeholder="Nama diagnosis untuk kode ini (wajib)"
+                          className="flex-1 text-xs bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 focus:outline-none focus:ring-2 focus:ring-clinical-500"
+                        />
+                        <button
+                          type="button"
+                          disabled={!manualDxName.trim()}
+                          onClick={() => {
+                            handleAddDiagnosis(icdSearchQuery.trim().toUpperCase(), manualDxName.trim());
+                            setManualDxName('');
+                          }}
+                          className="text-[11px] font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-40 px-2 py-1 rounded-lg"
+                        >
+                          Tambah Kode Manual
+                        </button>
+                      </div>
+                    )}
                 </div>
               )}
             </div>

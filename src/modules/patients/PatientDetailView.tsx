@@ -40,7 +40,8 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
     radiologyOrders,
     invoices,
     certificates,
-    queues
+    queues,
+    currentUser
   } = useStore();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -67,17 +68,22 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
   const patientCertificates = certificates.filter((c) => c.patientId === patient.id);
   const patientQueues = queues.filter((q) => q.patientId === patient.id);
 
-  const tabs = [
+  // Kerahasiaan rekam medis: peran nonklinis (kasir/pendaftaran) hanya
+  // memerlukan identitas, kunjungan, dan tagihan — isi klinis (SOAP,
+  // diagnosa, resep, lab, radiologi) disembunyikan dari tab mereka.
+  const isClinicalRole = ['admin', 'doctor', 'nurse', 'pharmacist', 'lab'].includes(currentUser.role);
+  const allTabs = [
     { id: 'overview', label: 'Ringkasan Pasien' },
-    { id: 'records', label: 'Rekam Medis (SOAP)', count: patientRecords.length },
+    { id: 'records', label: 'Rekam Medis (SOAP)', count: patientRecords.length, clinical: true },
     { id: 'visits', label: 'Riwayat Kunjungan', count: patientQueues.length },
-    { id: 'diagnoses', label: 'Riwayat Diagnosa' },
-    { id: 'prescriptions', label: 'Obat & Resep', count: patientPrescriptions.length },
-    { id: 'lab', label: 'Laboratorium', count: patientLabOrders.length },
-    { id: 'radiology', label: 'Radiologi', count: patientRadOrders.length },
+    { id: 'diagnoses', label: 'Riwayat Diagnosa', clinical: true },
+    { id: 'prescriptions', label: 'Obat & Resep', count: patientPrescriptions.length, clinical: true },
+    { id: 'lab', label: 'Laboratorium', count: patientLabOrders.length, clinical: true },
+    { id: 'radiology', label: 'Radiologi', count: patientRadOrders.length, clinical: true },
     { id: 'documents', label: 'Surat & Dokumen', count: patientCertificates.length },
     { id: 'billing', label: 'Pembayaran & Invoice', count: patientInvoices.length }
   ];
+  const tabs = allTabs.filter((t) => isClinicalRole || !t.clinical);
 
   return (
     <div className="space-y-5">
@@ -608,11 +614,20 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                       <span className="font-bold text-slate-900">{lab.orderNumber}</span>
                       <span className="text-slate-500 block text-[11px]">Tanggal: {lab.orderDate}</span>
                     </div>
-                    <Badge variant="success" size="sm">
-                      {lab.status}
+                    <Badge
+                      variant={lab.status === 'Validated' ? 'success' : lab.status === 'Processing' ? 'warning' : 'neutral'}
+                      size="sm"
+                    >
+                      {lab.status === 'Validated' ? 'Tervalidasi' : lab.status === 'Processing' ? 'Sedang Diproses — hasil belum resmi' : lab.status}
                     </Badge>
                   </div>
 
+                  {lab.status !== 'Validated' ? (
+                    <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 font-semibold">
+                      Hasil laboratorium ini BELUM divalidasi analis/penanggung jawab lab, sehingga angka hasil tidak ditampilkan.
+                      Nilai mentah yang belum tervalidasi tidak boleh menjadi dasar keputusan klinis.
+                    </p>
+                  ) : (
                   <table className="w-full text-left text-xs bg-white rounded-lg border border-slate-200 overflow-hidden">
                     <thead className="bg-slate-100 text-slate-600 font-semibold">
                       <tr>
@@ -635,6 +650,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                       ))}
                     </tbody>
                   </table>
+                  )}
                 </div>
               ))}
             </div>
