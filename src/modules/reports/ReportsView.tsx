@@ -86,9 +86,11 @@ export const ReportsView: React.FC = () => {
     .filter((p) => p.status === 'Selesai')
     .reduce((sum, p) => sum + p.items.reduce((s, item) => s + item.quantity, 0), 0);
 
-  // Morbiditas dari diagnosis nyata pada periode terpilih
+  // Morbiditas dari diagnosis nyata pada periode terpilih — HANYA dari
+  // rekam medis berstatus Final. Draft adalah dokumen kerja, bukan fakta
+  // epidemiologi; menghitungnya mengotori angka resmi faskes.
   const diagnosesMap: Record<string, { code: string; name: string; count: number }> = {};
-  periodRecords.forEach((rec) => {
+  periodRecords.filter((rec) => rec.status === 'Final').forEach((rec) => {
     rec.assessment.diagnoses.forEach((d) => {
       if (!diagnosesMap[d.icd10Code]) {
         diagnosesMap[d.icd10Code] = { code: d.icd10Code, name: d.nameIndonesian, count: 0 };
@@ -260,6 +262,58 @@ export const ReportsView: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* KLPCM — kelengkapan pengisian rekam medis (fungsi inti unit RM):
+          berkas Final dinilai kelengkapan intinya, Draft yang menua menjadi
+          daftar kerja yang harus dikejar, bukan menggantung selamanya. */}
+      {(() => {
+        const finals = medicalRecords.filter((r) => r.status === 'Final');
+        const complete = finals.filter(
+          (r) =>
+            r.assessment.diagnoses.length > 0 &&
+            r.objective.vitals.systolic > 0 &&
+            r.objective.vitals.heartRate > 0 &&
+            r.subjective.chiefComplaint.trim() !== ''
+        ).length;
+        const pct = finals.length ? Math.round((complete / finals.length) * 100) : 100;
+        const staleDrafts = medicalRecords
+          .filter((r) => r.status === 'Draft' && Date.now() - new Date(r.updatedAt).getTime() > 24 * 3600 * 1000)
+          .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+        return (
+          <Card
+            title="Kelengkapan Berkas Rekam Medis (KLPCM)"
+            subtitle="Analisis kuantitatif berkas Final & daftar kerja berkas belum lengkap"
+          >
+            <div className="flex flex-wrap gap-8 text-xs items-start">
+              <span>
+                Berkas Final lengkap
+                <br />
+                <strong className={`text-base ${pct >= 95 ? 'text-emerald-700' : pct >= 80 ? 'text-amber-600' : 'text-red-600'}`}>
+                  {complete}/{finals.length} ({pct}%)
+                </strong>{' '}
+                <span className="text-slate-400">/ target ≥95%</span>
+              </span>
+              <span>
+                Draft menua (&gt; 24 jam)
+                <br />
+                <strong className={`text-base ${staleDrafts.length === 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                  {staleDrafts.length} berkas
+                </strong>
+              </span>
+              {staleDrafts.length > 0 && (
+                <ul className="text-[11px] text-slate-600 space-y-0.5">
+                  {staleDrafts.slice(0, 5).map((r) => (
+                    <li key={r.id}>
+                      • {r.patientName} — kunjungan {r.visitDate}, terakhir diubah {r.updatedAt.slice(0, 10)} ({r.doctorName})
+                    </li>
+                  ))}
+                  {staleDrafts.length > 5 && <li>… dan {staleDrafts.length - 5} berkas lain</li>}
+                </ul>
+              )}
+            </div>
+          </Card>
+        );
+      })()}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Morbiditas nyata */}
