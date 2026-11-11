@@ -21,9 +21,9 @@ import { Select } from '../../components/common/Select';
 import { Medicine } from '../../types';
 
 export const PharmacyView: React.FC = () => {
-  const { medicines, addMedicine, updateMedicineStock, prescriptions, updatePrescriptionStatus, settings } = useStore();
+  const { medicines, addMedicine, updateMedicineStock, prescriptions, updatePrescriptionStatus, verifyPrescription, patients, currentUser, settings } = useStore();
   const activePrescriptions = prescriptions.filter(
-    (p) => p.status === 'Menunggu Farmasi' || p.status === 'Diproses' || p.status === 'Siap Diambil'
+    (p) => p.status === 'Menunggu Farmasi' || p.status === 'Terverifikasi' || p.status === 'Diproses' || p.status === 'Siap Diambil'
   );
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('ALL');
@@ -144,6 +144,12 @@ export const PharmacyView: React.FC = () => {
                     const med = medicines.find((m) => m.id === item.medicineId);
                     return med ? med.stock < item.quantity : false;
                   });
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const hasExpiredItem = rx.items.some((item) => {
+                    const med = medicines.find((m) => m.id === item.medicineId);
+                    return med ? !!med.expiryDate && med.expiryDate < todayStr : false;
+                  });
+                  const rxPatient = patients.find((p) => p.id === rx.patientId);
                   return (
                     <tr key={rx.id} className="hover:bg-slate-50">
                       <td className="py-2.5 px-4">
@@ -158,14 +164,34 @@ export const PharmacyView: React.FC = () => {
                             Stok tidak mencukupi untuk salah satu item
                           </span>
                         )}
+                        {hasExpiredItem && (
+                          <span className="block text-[10px] font-bold text-red-700 mt-0.5">
+                            ⚠ Mengandung obat kedaluwarsa — penyerahan akan DITOLAK sistem
+                          </span>
+                        )}
+                        {rxPatient && rxPatient.allergies.length > 0 && (
+                          <span className="block text-[10px] font-bold text-red-600 mt-0.5">
+                            ⚠ Alergi pasien: {rxPatient.allergies.join(', ')}
+                          </span>
+                        )}
+                        {rx.screening && (
+                          <span className="block text-[10px] font-semibold text-emerald-700 mt-0.5">
+                            Sudah ditelaah: {rx.screening.by}
+                          </span>
+                        )}
                       </td>
                       <td className="py-2.5 px-4">
-                        <Badge variant={rx.status === 'Siap Diambil' ? 'success' : rx.status === 'Diproses' ? 'info' : 'warning'} size="sm" dot>
+                        <Badge variant={rx.status === 'Siap Diambil' ? 'success' : rx.status === 'Diproses' || rx.status === 'Terverifikasi' ? 'info' : 'warning'} size="sm" dot>
                           {rx.status}
                         </Badge>
                       </td>
                       <td className="py-2.5 px-4 text-right whitespace-nowrap">
                         {rx.status === 'Menunggu Farmasi' && (
+                          <Button variant="primary" size="sm" onClick={() => verifyPrescription(rx.id, currentUser.name)}>
+                            Telaah & Verifikasi
+                          </Button>
+                        )}
+                        {rx.status === 'Terverifikasi' && (
                           <Button variant="outline" size="sm" onClick={() => updatePrescriptionStatus(rx.id, 'Diproses')}>
                             Proses
                           </Button>
@@ -179,7 +205,7 @@ export const PharmacyView: React.FC = () => {
                           <Button
                             variant="primary"
                             size="sm"
-                            disabled={insufficient}
+                            disabled={insufficient || hasExpiredItem}
                             onClick={() => updatePrescriptionStatus(rx.id, 'Selesai')}
                           >
                             Serahkan ke Pasien

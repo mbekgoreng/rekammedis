@@ -42,6 +42,7 @@ import { dataKey, DEFAULT_CLINIC_ID } from '../lib/clinics';
 import { persistSlice, syncActiveFor } from '../lib/sync';
 import { apiFetch } from '../lib/api';
 import { themeById } from '../lib/themes';
+import { findCriticalResults } from '../lib/labReference';
 import { type ClinicSettings, DEFAULT_CLINIC_SETTINGS, mergeSettings } from '../lib/settings';
 
 // Transisi status antrean yang sah (sumber kebenaran — ditegakkan di store):
@@ -67,12 +68,14 @@ const RADIOLOGY_TRANSITIONS: Record<RadiologyOrder['status'], RadiologyOrder['st
 };
 
 // Transisi status resep yang sah (ditegakkan di store): alur farmasi berurutan
-// Menunggu Farmasi → Diproses → Siap Diambil → Selesai. Pembatalan hanya dari
-// Menunggu Farmasi/Diproses; Selesai dan Dibatalkan adalah status akhir.
+// Menunggu Farmasi → Terverifikasi (telaah apoteker) → Diproses → Siap Diambil
+// → Selesai. Pembatalan hanya dari Menunggu Farmasi/Terverifikasi/Diproses;
+// Selesai dan Dibatalkan adalah status akhir.
 // Stok obat hanya berkurang saat transisi ke Selesai (bukan saat dibatalkan).
 const PRESCRIPTION_TRANSITIONS: Record<Prescription['status'], Prescription['status'][]> = {
   'Draft': ['Menunggu Farmasi'],
-  'Menunggu Farmasi': ['Diproses', 'Dibatalkan'],
+  'Menunggu Farmasi': ['Terverifikasi', 'Dibatalkan'],
+  'Terverifikasi': ['Diproses', 'Dibatalkan'],
   'Diproses': ['Siap Diambil', 'Dibatalkan'],
   'Siap Diambil': ['Selesai'],
   'Selesai': [],
@@ -140,6 +143,7 @@ interface StoreContextType {
   // Prescription Actions
   createPrescription: (prescription: Omit<Prescription, 'id' | 'date'>) => Prescription;
   updatePrescriptionStatus: (id: string, status: Prescription['status']) => void;
+  verifyPrescription: (id: string, pharmacistName: string, notes?: string) => void;
 
   // Pharmacy Actions
   addMedicine: (medicine: Omit<Medicine, 'id'>) => Medicine;
@@ -765,18 +769,47 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     // Selesai, atau melompat dari Menunggu Farmasi langsung ke Selesai) —
     // status tidak berubah dan stok tidak tersentuh.
     if (!PRESCRIPTION_TRANSITIONS[target.status].includes(status)) return;
+    // Gerbang kedaluwarsa: obat yang sudah melewati tanggal ED TIDAK BOLEH
+    // diserahkan. Penyerahan dibatalkan utuh (bukan sebagian) dan tercatat.
+    if (status === 'Selesai') {
+      const today = new Date().toISOString().split('T')[0];
+      const expired = target.items
+        .map(i => medicines.find(m => m.id === i.medicineId))
+        .filter(m => m && m.expiryDate && m.expiryDate < today);
+      if (expired.length > 0) {
+        logAudit('Farmasi', 'Penyerahan DITOLAK — Obat Kedaluwarsa', `Resep ${target.patientName} ditolak diserahkan: ${expired.map(m => m!.name).join(', ')} melewati tanggal kedaluwarsa`);
+        return;
+      }
+    }
     setPrescriptions(prev => prev.map(rx => (rx.id === id ? { ...rx, status } : rx)));
     // Dispensing final: kurangi stok obat tepat sekali saat resep mencapai
     // Selesai. Pembatalan TIDAK mengurangi stok (obat belum diserahkan).
+    // Jumlah diagregasi per obat — item yang sama dapat muncul sebagai
+    // beberapa baris (signa berbeda); dulu hanya baris pertama yang
+    // dikurangkan sehingga stok sistematis lebih tinggi dari fisik.
     if (status === 'Selesai') {
+      const qtyByMed = new Map<string, number>();
+      target.items.forEach(i => qtyByMed.set(i.medicineId, (qtyByMed.get(i.medicineId) || 0) + i.quantity));
       setMedicines(prev => prev.map(med => {
-        const item = target.items.find(i => i.medicineId === med.id);
-        if (!item) return med;
-        return { ...med, stock: Math.max(0, med.stock - item.quantity) };
+        const qty = qtyByMed.get(med.id);
+        if (!qty) return med;
+        return { ...med, stock: Math.max(0, med.stock - qty) };
       }));
-      logAudit('Farmasi', 'Penyerahan Obat (Dispensing)', `Resep ${target.patientName} diserahkan; stok ${target.items.length} item obat dikurangi`);
+      logAudit('Farmasi', 'Penyerahan Obat (Dispensing)', `Resep ${target.patientName} diserahkan; stok ${qtyByMed.size} jenis obat dikurangi`);
     }
     logAudit('Resep', 'Perubahan Status Resep', `Status resep ${target.id} (${target.patientName}) diubah ke ${status}`);
+  };
+
+  // Telaah kefarmasian: gerbang klinis apoteker sebelum resep diproses.
+  // Hanya sah dari 'Menunggu Farmasi'; mencatat penelaah, waktu, dan catatan
+  // telaah pada resep itu sendiri sebagai bukti pelayanan kefarmasian.
+  const verifyPrescription = (id: string, pharmacistName: string, notes?: string) => {
+    const target = prescriptions.find(rx => rx.id === id);
+    if (!target || target.status !== 'Menunggu Farmasi') return;
+    setPrescriptions(prev => prev.map(rx => (rx.id === id
+      ? { ...rx, status: 'Terverifikasi' as const, screening: { by: pharmacistName, at: formatLocalTimestamp(new Date()), notes } }
+      : rx)));
+    logAudit('Farmasi', 'Telaah Resep Apoteker', `Resep ${target.patientName} ditelaah & diverifikasi oleh ${pharmacistName}${notes ? `: ${notes}` : ''}`);
   };
 
   // Pharmacy Actions
@@ -845,6 +878,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
     const target = labOrders.find(l => l.id === orderId);
     if (target) {
       logAudit('Laboratorium', 'Validasi Hasil Lab', `Hasil laboratorium ${target.orderNumber} (${target.patientName}) divalidasi oleh ${validatorName}`);
+      // Nilai kritis (panic values): hasil yang menyentuh ambang kritis WAJIB
+      // sampai ke dokter pengirim saat itu juga — bukan menunggu kebetulan
+      // dibuka. Notifikasi bertipe 'critical' dibuat di sini, di titik
+      // validasi, satu-satunya momen hasil menjadi resmi.
+      const criticals = findCriticalResults(target.items);
+      if (criticals.length > 0) {
+        const detail = criticals.map(c => `${c.testName}: ${c.value}`).join('; ');
+        setNotifications(prev => [{
+          id: 'notif-crit-' + Date.now(),
+          title: 'HASIL LAB KRITIS — tindak lanjut segera',
+          message: `${target.orderNumber} — ${target.patientName} (${target.mrNumber}): ${detail}. Segera hubungi pasien/dokter penanggung jawab.`,
+          time: 'Baru saja',
+          type: 'critical' as const,
+          read: false,
+          linkModule: 'laboratory'
+        }, ...prev]);
+        logAudit('Laboratorium', 'Nilai Kritis Terdeteksi', `${target.orderNumber} (${target.patientName}): ${detail}`);
+      }
     }
   };
 
@@ -1035,6 +1086,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; clinicId: stri
         updateMedicalRecord,
         createPrescription,
         updatePrescriptionStatus,
+        verifyPrescription,
         addMedicine,
         updateMedicineStock,
         createLabOrder,

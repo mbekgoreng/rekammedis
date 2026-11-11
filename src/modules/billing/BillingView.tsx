@@ -53,7 +53,9 @@ export const BillingView: React.FC = () => {
         subtotal: proc.cost
       });
     });
-    const linkedRx = prescriptions.find((p) => p.medicalRecordId === selectedRecord.id);
+    // Resep yang DIBATALKAN tidak boleh ditagih — cari resep terhubung yang
+    // masih berlaku untuk kunjungan ini.
+    const linkedRx = prescriptions.find((p) => p.medicalRecordId === selectedRecord.id && p.status !== 'Dibatalkan');
     if (linkedRx) {
       items.push({
         id: 'bi-rx',

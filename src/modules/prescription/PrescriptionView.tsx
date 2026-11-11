@@ -32,6 +32,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
     currentUser,
     createPrescription,
     updatePrescriptionStatus,
+    verifyPrescription,
     clinicProfile
   } = useStore();
 
@@ -101,6 +102,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
               >
                 <option value="ALL">Semua Status</option>
                 <option value="Menunggu Farmasi">Menunggu Farmasi</option>
+                <option value="Terverifikasi">Terverifikasi Apoteker</option>
                 <option value="Diproses">Diproses</option>
                 <option value="Siap Diambil">Siap Diambil</option>
                 <option value="Selesai">Selesai</option>
@@ -136,6 +138,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                       const statusVariant = {
                         Draft: 'neutral',
                         'Menunggu Farmasi': 'warning',
+                        Terverifikasi: 'info',
                         Diproses: 'info',
                         'Siap Diambil': 'primary',
                         Selesai: 'success',
@@ -227,17 +230,37 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                   </p>
                 </div>
 
-                {/* Patient Info */}
+                {/* Patient Info — termasuk alergi & umur: apoteker WAJIB bisa
+                    menelaah keduanya dari lembar resep itu sendiri */}
                 <div className="flex justify-between text-[11px] text-slate-600 border-b border-slate-200 pb-2">
                   <div>
                     <span>Pasien: </span>
                     <strong className="text-slate-900">{selectedRx.patientName}</strong>
+                    {(() => {
+                      const p = patients.find((x) => x.id === selectedRx.patientId);
+                      return p ? <span> • {p.age} Thn • {p.gender}</span> : null;
+                    })()}
                   </div>
                   <div>
                     <span>No. RM: </span>
                     <strong className="font-mono">{selectedRx.mrNumber}</strong>
                   </div>
                 </div>
+                {(() => {
+                  const p = patients.find((x) => x.id === selectedRx.patientId);
+                  if (!p || p.allergies.length === 0) return null;
+                  return (
+                    <div className="p-2 bg-red-50 border border-red-300 rounded text-[11px] text-red-800 font-bold">
+                      ⚠ ALERGI PASIEN: {p.allergies.join(', ')} — telaah setiap item resep terhadap alergi ini sebelum verifikasi.
+                    </div>
+                  );
+                })()}
+                {selectedRx.screening && (
+                  <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-[11px] text-emerald-800">
+                    <strong>Telaah Apoteker:</strong> diverifikasi oleh {selectedRx.screening.by} pada {selectedRx.screening.at}
+                    {selectedRx.screening.notes ? ` — ${selectedRx.screening.notes}` : ''}
+                  </div>
+                )}
 
                 {/* Recipe Symbol & Drugs */}
                 <div className="space-y-3 py-2">
@@ -283,6 +306,15 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                     <Button
                       variant="primary"
                       size="sm"
+                      onClick={() => verifyPrescription(selectedRx.id, currentUser.name)}
+                    >
+                      Telaah & Verifikasi Apoteker
+                    </Button>
+                  )}
+                  {selectedRx.status === 'Terverifikasi' && (
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => updatePrescriptionStatus(selectedRx.id, 'Diproses')}
                     >
                       Proses di Farmasi
@@ -297,7 +329,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                       Siap Diambil Pasien
                     </Button>
                   )}
-                  {(selectedRx.status === 'Menunggu Farmasi' || selectedRx.status === 'Diproses') && (
+                  {(selectedRx.status === 'Menunggu Farmasi' || selectedRx.status === 'Terverifikasi' || selectedRx.status === 'Diproses') && (
                     <Button
                       variant="danger"
                       size="sm"
@@ -308,7 +340,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({
                   )}
                 </div>
               </div>
-              {(selectedRx.status === 'Menunggu Farmasi' || selectedRx.status === 'Diproses') && (
+              {(selectedRx.status === 'Menunggu Farmasi' || selectedRx.status === 'Terverifikasi' || selectedRx.status === 'Diproses') && (
                 <p className="mt-2 text-[10px] text-slate-400 text-right">
                   Pembatalan tidak mengubah stok obat — stok hanya berkurang saat resep Selesai diserahkan.
                 </p>

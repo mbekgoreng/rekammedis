@@ -125,10 +125,14 @@ export interface Prescription {
   doctorName: string;
   medicalRecordId: string;
   date: string;
-  status: 'Draft' | 'Menunggu Farmasi' | 'Diproses' | 'Siap Diambil' | 'Selesai' | 'Dibatalkan';
+  status: 'Draft' | 'Menunggu Farmasi' | 'Terverifikasi' | 'Diproses' | 'Siap Diambil' | 'Selesai' | 'Dibatalkan';
   items: PrescriptionItem[];
   notes?: string;
   totalCost: number;
+  // Telaah kefarmasian oleh apoteker (gerbang sebelum resep boleh diproses):
+  // siapa menelaah, kapan, dan catatan telaahnya. Tanpa ini, resep hanya
+  // mengalir administratif dari dokter ke pasien tanpa second check klinis.
+  screening?: { by: string; at: string; notes?: string };
 }
 
 export interface MedicalRecord {
