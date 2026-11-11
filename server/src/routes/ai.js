@@ -47,7 +47,7 @@ export function registerAiRoutes(router, ctx) {
     const creds = loadCredentials(ctx, req.authUser.clinic_id, 'ai');
     if (!creds?.apiKey) {
       return res.json(400, {
-        error: 'API key AI belum diatur. Isi API key penyedia AI di Pengaturan → Integrasi (tersimpan terenkripsi di server) terlebih dahulu.',
+        error: 'API key AI belum diatur. Isi API key penyedia AI di Pengaturan → Pengaturan AI (tersimpan terenkripsi di server) terlebih dahulu.',
         code: 'AI_NOT_CONFIGURED'
       });
     }

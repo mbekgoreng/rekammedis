@@ -9,6 +9,7 @@ import { APP_THEMES, themeById } from '../../lib/themes';
 import { dataKey } from '../../lib/clinics';
 import type { ClinicSettings } from '../../lib/settings';
 import { ServerIntegrations } from './ServerIntegrations';
+import { AiSettings } from './AiSettings';
 import { SubscriptionPanel } from './SubscriptionPanel';
 
 // Pengaturan Klinik — semua konfigurasi klinik dalam satu halaman bertab.
@@ -21,7 +22,7 @@ const inputCls = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 t
 const labelCls = 'block text-xs font-bold text-slate-600 mb-1';
 const hintCls = 'text-[10px] text-slate-400 mt-1 leading-relaxed';
 
-type TabId = 'profil' | 'tema' | 'operasional' | 'tarif' | 'farmasi' | 'dokumen' | 'keamanan' | 'notifikasi' | 'integrasi' | 'layanan' | 'langganan' | 'backup';
+type TabId = 'profil' | 'tema' | 'operasional' | 'tarif' | 'farmasi' | 'dokumen' | 'keamanan' | 'notifikasi' | 'integrasi' | 'ai' | 'layanan' | 'langganan' | 'backup';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'profil', label: 'Profil Klinik' },
@@ -33,6 +34,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'keamanan', label: 'Keamanan' },
   { id: 'notifikasi', label: 'Notifikasi' },
   { id: 'integrasi', label: 'Integrasi' },
+  { id: 'ai', label: 'Pengaturan AI' },
   { id: 'layanan', label: 'Cabang & Layanan' },
   { id: 'langganan', label: 'Langganan' },
   { id: 'backup', label: 'Backup Data' }
@@ -47,7 +49,18 @@ export const ClinicSettingsView: React.FC = () => {
     auditLogs, notifications, users, clinicId, settings, updateSettings
   } = useStore();
 
-  const [tab, setTab] = useState<TabId>('profil');
+  const [tab, setTab] = useState<TabId>(() => {
+    // Halaman lain (mis. Tanya AI) dapat meminta tab tertentu dibuka lewat
+    // sessionStorage 'rm-settings-tab'.
+    try {
+      const want = window.sessionStorage.getItem('rm-settings-tab');
+      if (want) {
+        window.sessionStorage.removeItem('rm-settings-tab');
+        if (TABS.some((t) => t.id === want)) return want as TabId;
+      }
+    } catch { /* abaikan */ }
+    return 'profil';
+  });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const flashSaved = () => {
     setSavedSuccess(true);
@@ -449,6 +462,8 @@ export const ClinicSettingsView: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {tab === 'ai' && <AiSettings />}
 
       {tab === 'langganan' && (
         <Card title="Langganan RekamMedis" subtitle="Paket layanan klinik Anda pada platform RekamMedis">

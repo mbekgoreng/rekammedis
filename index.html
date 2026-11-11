@@ -198,6 +198,8 @@ section{padding:104px 0}
 /* module explorer */
 .explorer{display:grid;grid-template-columns:340px 1fr;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--white);box-shadow:0 24px 48px -30px rgba(23,21,94,.22)}
 .modlist{background:var(--paper-2);border-right:1px solid var(--line);padding:12px}
+.modbadge{margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:linear-gradient(120deg,#409da1,#7c5cd6,#e15a97);padding:2.5px 9px;border-radius:99px;box-shadow:0 4px 10px -4px rgba(124,92,214,.65)}
+.moddetail .modbadge{margin-left:10px;vertical-align:middle}
 .modlist button{display:flex;width:100%;align-items:center;gap:12px;background:none;border:none;text-align:left;padding:11px 13px;border-radius:11px;font-size:14.5px;font-weight:600;color:var(--ink-2);transition:all .3s var(--ease)}
 .modlist button svg{width:17px;height:17px;flex:none;color:var(--ink-3);transition:color .3s}
 .modlist button:hover{background:#e2f3ea;color:var(--ink)}
@@ -589,7 +591,8 @@ header.hide{transform:translateY(-100%)}
       <div class="status-card rv">
         <h3><span class="sdot"></span>Sudah berjalan di aplikasi</h3>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>11 modul klinis &amp; operasional dalam satu aplikasi</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>12 modul klinis &amp; operasional dalam satu aplikasi</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Tanya AI khusus admin — API key penyedia AI milik klinik sendiri (mode server)</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Pencatatan SOAP dengan diagnosis berkode ICD</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Jejak audit &amp; notifikasi antar-peran</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Surat keterangan sakit, sehat, dan rujukan siap cetak</li>
@@ -834,6 +837,7 @@ var ICONS={
  jadwal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
  kasir:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6.5 9.5h.01M17.5 15.5h.01"/></svg>',
  laporan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20v-8M11 20V5M17 20v-11M3 20h18"/></svg>',
+ ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9Z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/></svg>',
  atur:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.14-1.4l2-1.55-2-3.46-2.35.95A7 7 0 0 0 14.1 5.1L13.75 2.6h-3.5L9.9 5.1a7 7 0 0 0-2.41 1.44l-2.35-.95-2 3.46 2 1.55a7 7 0 0 0 0 2.8l-2 1.55 2 3.46 2.35-.95a7 7 0 0 0 2.41 1.44l.35 2.5h3.5l.35-2.5a7 7 0 0 0 2.41-1.44l2.35.95 2-3.46-2-1.55c.1-.45.14-.92.14-1.4Z"/></svg>'
 };
 var modules=[
@@ -847,6 +851,7 @@ var modules=[
  {i:"jadwal", n:"Jadwal Dokter", d:"Jadwal praktik dokter per poli yang menjadi rujukan saat registrasi: pasien hanya dapat didaftarkan ke dokter yang memang praktik pada jadwal tersebut, sehingga antrian tidak terbentuk untuk dokter yang tidak ada.", tags:["Jadwal per poli","Rujukan saat registrasi"], s:[["Per poli","jadwal terpisah"],["Sinkron","dengan pilihan registrasi"]]},
  {i:"kasir", n:"Pembayaran & Kasir", d:"Invoice terbentuk dari layanan dalam satu kunjungan dengan nomor dan total otomatis. Kasir mencatat pembayaran, status berubah menjadi lunas, dan dari kunjungan yang sama dapat diterbitkan surat keterangan sakit, surat berbadan sehat, atau surat rujukan siap cetak.", tags:["Invoice bernomor","Status lunas terpantau","Surat resmi siap cetak"], s:[["Otomatis","total dari layanan"],["3 surat","dari satu kunjungan"]]},
  {i:"laporan", n:"Laporan Fasilitas", d:"Laporan operasional faskes: kunjungan per periode dan per poli, serta pendapatan yang memisahkan sumber penjaminan — termasuk porsi kunjungan BPJS — agar manajemen membaca kinerja klinik dari data transaksi yang sebenarnya terjadi.", tags:["Kunjungan per poli","Pendapatan per penjamin","Periode fleksibel"], s:[["Per penjamin","pemisahan BPJS"],["Per poli","rincian kunjungan"]]},
+ {i:"ai", n:"Tanya AI", b:"AI", d:"Asisten AI serbaguna khusus administrator klinik: tanya apa saja — penjelasan kode ICD, draf pengumuman & surat, ringkasan regulasi, sampai ide promosi klinik. Berjalan dengan API key penyedia AI milik klinik sendiri (OpenAI-compatible) yang disimpan terenkripsi di server; hanya admin yang dapat memakai dan mengaturnya, dan tidak ada data pasien yang dikirim ke penyedia AI.", tags:["Khusus admin","API key klinik sendiri","Tanya apa saja","Aktif pada mode server"], s:[["1 menu","khusus administrator"],["Terenkripsi","API key di server"]]},
  {i:"atur", n:"Pengaturan Klinik", d:"Identitas faskes diatur di sini: nama klinik, alamat, nomor telepon, dan Kode Faskes Nasional Kemenkes/BPJS. Di menu ini pula snapshot basis data dapat diunduh sebagai file backup JSON, dan jejak audit aktivitas seluruh pengguna dapat ditinjau.", tags:["Profil & kode faskes","Backup JSON","Jejak audit aktivitas"], s:[["JSON","format backup"],["Penuh","audit semua modul"]]}
 ];
 var list=$("#modlist"), detail=$("#moddetail");
@@ -854,7 +859,7 @@ modules.forEach(function(m,idx){
   var b=document.createElement("button");
   b.setAttribute("role","tab"); b.setAttribute("aria-selected", idx===0?"true":"false");
   if(idx===0) b.classList.add("on");
-  b.innerHTML=ICONS[m.i]+"<span>"+m.n+"</span>";
+  b.innerHTML=ICONS[m.i]+"<span>"+m.n+"</span>"+(m.b?'<span class="modbadge">'+m.b+"</span>":"");
   b.addEventListener("click", function(){
     $$("button", list).forEach(function(x){ x.classList.remove("on"); x.setAttribute("aria-selected","false"); });
     b.classList.add("on"); b.setAttribute("aria-selected","true");
@@ -864,7 +869,7 @@ modules.forEach(function(m,idx){
 });
 function renderModule(i){
   var m=modules[i];
-  detail.innerHTML='<div class="swap"><h3>'+m.n+'</h3><p>'+m.d+'</p><div class="tags">'+
+  detail.innerHTML='<div class="swap"><h3>'+m.n+(m.b?'<span class="modbadge">'+m.b+'</span>':'')+'</h3><p>'+m.d+'</p><div class="tags">'+
     m.tags.map(function(t){return "<span>"+t+"</span>"}).join("")+'</div><div class="mstat">'+
     m.s.map(function(x){return "<div><b>"+x[0]+"</b><span>"+x[1]+"</span></div>"}).join("")+'</div></div>';
 }
