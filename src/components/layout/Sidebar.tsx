@@ -22,7 +22,8 @@ import {
   Activity,
   BookOpen,
   Pencil,
-  HeartPulse
+  HeartPulse,
+  Sparkles
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStore } from '../../context/StoreContext';
@@ -91,6 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'Sistem & Keamanan',
       items: [
+        { id: 'ai_assistant', label: 'Tanya AI', icon: Sparkles },
         { id: 'users', label: 'Manajemen Pengguna', icon: ShieldCheck },
         { id: 'audit', label: 'Audit Trail', icon: History },
         { id: 'settings', label: 'Pengaturan Klinik', icon: Settings },

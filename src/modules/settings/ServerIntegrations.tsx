@@ -36,14 +36,15 @@ export const ServerIntegrations: React.FC = () => {
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const save = async (provider: 'satusehat' | 'pcare', fields: string[]) => {
+  const save = async (provider: 'satusehat' | 'pcare' | 'ai', fields: string[]) => {
     setBusy(true); setMsg(null);
     const body: Record<string, string> = {};
     for (const f of fields) if (form[`${provider}.${f}`]) body[f] = form[`${provider}.${f}`];
     if (form[`${provider}.environment`]) body.environment = form[`${provider}.environment`];
     const { status: code, data } = await apiFetch<{ error?: string }>(`/api/integrations/credentials/${provider}`, { method: 'PUT', body });
     setBusy(false);
-    setMsg(code === 200 ? `Kredensial ${provider === 'satusehat' ? 'SATUSEHAT' : 'P-Care'} tersimpan terenkripsi di server.` : data.error || 'Gagal menyimpan.');
+    const label = provider === 'satusehat' ? 'SATUSEHAT' : provider === 'pcare' ? 'P-Care' : 'AI';
+    setMsg(code === 200 ? `Kredensial ${label} tersimpan terenkripsi di server.` : data.error || 'Gagal menyimpan.');
     if (code === 200) void loadStatus();
   };
 
@@ -128,6 +129,25 @@ export const ServerIntegrations: React.FC = () => {
           </button>
         </div>
         {pesertaResult && <pre className="text-[10px] bg-slate-50 border border-slate-200 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">{pesertaResult}</pre>}
+      </div>
+
+      <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+        <p className="text-xs font-bold text-slate-700 flex items-center gap-2"><PlugZap className="w-4 h-4 text-clinical-600" /> AI (Tanya AI — hanya admin) — Status: {status.ai?.configured
+          ? <span className="text-emerald-700 font-bold">TERSIMPAN DI SERVER</span>
+          : <span className="text-amber-700 font-bold">BELUM DIISI</span>}</p>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          API key penyedia AI eksternal untuk menu <strong>Tanya AI</strong>. Mendukung penyedia
+          <strong> OpenAI-compatible</strong> (OpenAI, OpenRouter, AtmoRouter, Gemini endpoint kompatibel, dsb.).
+          Key hanya dipakai server untuk meneruskan pertanyaan admin — tidak pernah dikirim ke browser pengguna lain.
+        </p>
+        {isAdmin ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><label className={labelCls}>API Key</label><input type="password" className={inputCls} value={form['ai.apiKey'] || ''} onChange={set('ai.apiKey')} placeholder="sk-..." /></div>
+            <div><label className={labelCls}>Model</label><input className={inputCls} value={form['ai.model'] || ''} onChange={set('ai.model')} placeholder="gpt-4o-mini (bawaan bila kosong)" /></div>
+            <div className="md:col-span-2"><label className={labelCls}>Base URL (endpoint OpenAI-compatible)</label><input className={inputCls} value={form['ai.baseUrl'] || ''} onChange={set('ai.baseUrl')} placeholder="https://api.openai.com/v1 (bawaan bila kosong)" /></div>
+          </div>
+        ) : <p className="text-[11px] text-slate-500">Hanya administrator klinik yang dapat mengubah kredensial.</p>}
+        {isAdmin && <button disabled={busy} onClick={() => void save('ai', ['apiKey', 'baseUrl', 'model'])} className="px-3 py-2 bg-clinical-600 text-white rounded-lg text-xs font-bold disabled:opacity-50">Simpan ke Server</button>}
       </div>
     </div>
   );

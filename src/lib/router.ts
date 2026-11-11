@@ -34,6 +34,7 @@ export const ROUTES: RouteDef[] = [
   { module: 'billing', segment: '/kasir', title: 'Pembayaran & Kasir' },
   { module: 'bpjs', segment: '/bpjs', title: 'BPJS & Kapitasi' },
   { module: 'reports', segment: '/laporan', title: 'Laporan Fasilitas' },
+  { module: 'ai_assistant', segment: '/tanya-ai', title: 'Tanya AI' },
   { module: 'users', segment: '/pengguna', title: 'Manajemen Pengguna' },
   { module: 'audit', segment: '/audit', title: 'Audit Trail' },
   { module: 'settings', segment: '/pengaturan', title: 'Pengaturan Klinik' },

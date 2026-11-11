@@ -9,7 +9,10 @@ import { getPeserta } from '../integrations/pcare.js';
 
 const PROVIDERS = {
   satusehat: { fields: ['clientId', 'clientSecret', 'organizationId', 'environment'], label: 'SATUSEHAT' },
-  pcare: { fields: ['consId', 'secretKey', 'username', 'password', 'kdAplikasi', 'userKey', 'environment'], label: 'P-Care BPJS' }
+  pcare: { fields: ['consId', 'secretKey', 'username', 'password', 'kdAplikasi', 'userKey', 'environment'], label: 'P-Care BPJS' },
+  // API key AI eksternal (OpenAI-compatible) untuk mode "Tanya AI" khusus
+  // admin — disimpan terenkripsi sama seperti kredensial integrasi lain.
+  ai: { fields: ['apiKey', 'baseUrl', 'model'], label: 'AI (Tanya AI)' }
 };
 
 export function loadCredentials(ctx, clinicId, provider) {
@@ -45,7 +48,7 @@ export function registerIntegrationRoutes(router, ctx) {
     for (const f of spec.fields) if (body?.[f] !== undefined) clean[f] = String(body[f]);
     const existing = loadCredentials(ctx, req.authUser.clinic_id, req.params.provider) || {};
     const merged = { ...existing, ...clean };
-    const missing = spec.fields.filter((f) => ['clientId', 'clientSecret', 'organizationId', 'consId', 'secretKey', 'username', 'password'].includes(f) && !merged[f]);
+    const missing = spec.fields.filter((f) => ['clientId', 'clientSecret', 'organizationId', 'consId', 'secretKey', 'username', 'password', 'apiKey'].includes(f) && !merged[f]);
     const payload = vaultEncrypt(JSON.stringify(merged), config.vaultKey);
     db.prepare(`INSERT INTO integration_credentials (clinic_id, provider, enc_payload, updated_at) VALUES (?, ?, ?, ?)
       ON CONFLICT(clinic_id, provider) DO UPDATE SET enc_payload = excluded.enc_payload, updated_at = excluded.updated_at`)

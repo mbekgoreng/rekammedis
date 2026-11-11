@@ -12,6 +12,7 @@ import { registerDataRoutes } from './routes/data.js';
 import { registerClinicUserRoutes } from './routes/clinicUsers.js';
 import { registerIntegrationRoutes } from './routes/integrations.js';
 import { registerBillingRoutes } from './routes/billing.js';
+import { registerAiRoutes } from './routes/ai.js';
 import { registerPlatformRoutes } from './routes/platform.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -109,6 +110,7 @@ registerDataRoutes(router, ctx);
 registerClinicUserRoutes(router, ctx);
 registerIntegrationRoutes(router, ctx);
 registerBillingRoutes(router, ctx);
+registerAiRoutes(router, ctx);
 registerPlatformRoutes(router, ctx);
 
 const platformDir = path.join(__dirname, '..', 'public', 'platform');

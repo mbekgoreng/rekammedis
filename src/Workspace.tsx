@@ -36,6 +36,7 @@ const ClinicSettingsView = lazyView(() => import('./modules/settings/ClinicSetti
 const ChangePasswordView = lazyView(() => import('./modules/auth/ChangePasswordView'), 'ChangePasswordView');
 const GuideView = lazyView(() => import('./modules/guide/GuideView'), 'GuideView');
 const BpjsView = lazyView(() => import('./modules/bpjs/BpjsView'), 'BpjsView');
+const AiAssistantView = lazyView(() => import('./modules/ai/AiAssistantView'), 'AiAssistantView');
 
 import { TourOverlay, tourStorageKey } from './components/onboarding/TourOverlay';
 import { DEFAULT_CLINIC_ID } from './lib/clinics';
@@ -293,6 +294,8 @@ const MainLayout: React.FC = () => {
             {currentModule === 'reports' && <ReportsView />}
 
             {currentModule === 'bpjs' && <BpjsView />}
+
+            {currentModule === 'ai_assistant' && <AiAssistantView />}
 
             {currentModule === 'users' && <UserManagementView />}
 
